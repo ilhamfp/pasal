@@ -1,1 +1,22 @@
+# Environment
 .env
+.env.*
+!.env.example
+
+# Data (local only)
+data/raw/
+data/parsed/
+
+# Node
+node_modules/
+.next/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
