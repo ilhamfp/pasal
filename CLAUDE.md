@@ -32,7 +32,7 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 
 | Layer | Technology | Key Details |
 |-------|-----------|-------------|
-| Frontend | Next.js 14+ (App Router) | TypeScript, Tailwind CSS, deployed on Vercel |
+| Frontend | Next.js 16+ (App Router) | TypeScript, Tailwind CSS, shadcn/ui, deployed on Vercel |
 | Database | Supabase (PostgreSQL) | Full-text search with `indonesian` stemmer, RLS enabled |
 | MCP Server | Python + FastMCP | Streamable HTTP transport, deployed on Railway/Fly.io |
 | Scraper/Pipeline | Python | httpx, BeautifulSoup, pdfplumber |
