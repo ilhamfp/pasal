@@ -1,0 +1,6 @@
+httpx
+beautifulsoup4
+pdfplumber
+supabase
+tqdm
+python-dotenv

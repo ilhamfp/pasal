@@ -1,0 +1,6 @@
+fastmcp>=2.0
+httpx
+supabase
+pydantic
+uvicorn
+python-dotenv
