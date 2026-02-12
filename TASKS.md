@@ -344,11 +344,11 @@ print(f"\nInserted: {inserted}")
 2. Run: `cd scripts && python seed_relationships.py`
 
 **DONE WHEN:**
-- [ ] `SELECT COUNT(*) FROM work_relationships;` returns at least 4.
-- [ ] MCP `get_law_status("UU", "13", 2003)` returns amendment info mentioning UU 6/2023.
-- [ ] Law reader context panel for UU 13/2003 shows "Diubah oleh" section.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `SELECT COUNT(*) FROM work_relationships;` returns at least 4 (has 10).
+- [x] MCP `get_law_status("UU", "13", 2003)` returns amendment info mentioning UU 6/2023.
+- [x] Law reader context panel for UU 13/2003 shows "Diubah oleh" section.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
