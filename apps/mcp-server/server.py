@@ -8,6 +8,7 @@ Provides Claude with grounded access to Indonesian legislation through 4 tools:
 """
 import logging
 import os
+import re
 import time
 
 from dotenv import load_dotenv
@@ -112,6 +113,40 @@ def _no_results_message(context: str) -> str:
         "This does NOT mean no such law exists — our database covers "
         "a limited set of Indonesian regulations."
     )
+
+
+# ---------------------------------------------------------------------------
+# Cross-reference extraction
+# ---------------------------------------------------------------------------
+
+CROSS_REF_PATTERN = re.compile(
+    r'(?:sebagaimana\s+dimaksud\s+(?:dalam|pada)\s+)?'
+    r'Pasal\s+(\d+[A-Z]?)'
+    r'(?:\s+ayat\s+\((\d+)\))?'
+    r'(?:\s+(?:huruf\s+([a-z])\.?))?'
+    r'(?:\s+(?:Undang-Undang|UU)\s+(?:Nomor\s+)?(\d+)\s+Tahun\s+(\d{4}))?',
+    re.IGNORECASE,
+)
+
+
+def extract_cross_references(text: str) -> list[dict]:
+    """Extract cross-references to other articles from legal text."""
+    refs, seen = [], set()
+    for m in CROSS_REF_PATTERN.finditer(text):
+        key = (m.group(1), m.group(2), m.group(4), m.group(5))
+        if key in seen:
+            continue
+        seen.add(key)
+        ref: dict[str, str | int] = {"pasal": m.group(1)}
+        if m.group(2):
+            ref["ayat"] = m.group(2)
+        if m.group(3):
+            ref["huruf"] = m.group(3)
+        if m.group(4) and m.group(5):
+            ref["law_number"] = m.group(4)
+            ref["law_year"] = int(m.group(5))
+        refs.append(ref)
+    return refs
 
 
 # ---------------------------------------------------------------------------
@@ -396,14 +431,21 @@ def get_pasal(
                 if p.get("heading"):
                     chapter_info += f" - {p['heading']}"
 
+        raw_content = node["content_text"] or ""
+        cross_refs = extract_cross_references(raw_content)
+        content = raw_content
+        if len(content) > 3000:
+            content = content[:3000] + f"\n\n[...truncated. Full: {len(raw_content)} chars. This article has {len(ayat_result.data or [])} ayat.]"
+
         logger.info("get_pasal: found pasal %s (%.0fms)", pasal_number, (time.time() - t0) * 1000)
         result = _with_disclaimer({
             "law_title": work["title_id"],
             "frbr_uri": work["frbr_uri"],
             "pasal_number": pasal_number,
             "chapter": chapter_info,
-            "content_id": node["content_text"],
+            "content_id": content,
             "ayat": [{"number": a["number"], "text": a["content_text"]} for a in (ayat_result.data or [])],
+            "cross_references": cross_refs,
             "status": work["status"],
             "source_url": work.get("source_url", ""),
         })

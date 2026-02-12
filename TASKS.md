@@ -553,10 +553,10 @@ def extract_cross_references(text: str) -> list[dict]:
 2. In `get_pasal` return dict, add: `"cross_references": extract_cross_references(node["content_text"] or "")`
 
 **DONE WHEN:**
-- [ ] `python server.py` starts without errors.
-- [ ] `get_pasal` for an article with cross-references returns a non-empty `cross_references` list.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `python server.py` starts without errors.
+- [x] `get_pasal` for an article with cross-references returns a non-empty `cross_references` list.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
@@ -579,11 +579,11 @@ if len(content) > 3000:
 ```
 
 **DONE WHEN:**
-- [ ] `search_laws` returns `snippet`, not raw `content`.
-- [ ] `get_pasal` for a very long article includes truncation notice.
-- [ ] Server starts without errors.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `search_laws` returns `snippet`, not raw `content`.
+- [x] `get_pasal` for a very long article includes truncation notice.
+- [x] Server starts without errors.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
