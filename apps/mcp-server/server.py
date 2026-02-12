@@ -35,7 +35,22 @@ mcp = FastMCP(
         "Provides grounded legal information with exact article citations "
         "to prevent hallucination. Covers 19+ major Indonesian laws "
         "including labor, marriage, criminal code, anti-corruption, "
-        "corporate, consumer protection, and data privacy laws."
+        "corporate, consumer protection, and data privacy laws.\n\n"
+        "LEGAL HIERARCHY (highest to lowest authority):\n"
+        "UUD (Constitution) → UU (Law) → PP (Govt Regulation) → "
+        "PERPRES (Presidential Reg) → PERMEN (Ministerial Reg) → PERDA (Regional Reg)\n\n"
+        "WORKFLOW — Follow this order for best results:\n"
+        "1. search_laws → Find relevant provisions by topic keyword\n"
+        "2. get_pasal → Get exact article text for citation\n"
+        "3. get_law_status → Verify the law is still in force before citing\n"
+        "4. list_laws → Browse available regulations if search is too narrow\n\n"
+        "CITATION FORMAT: Always cite as 'Pasal X UU No. Y Tahun Z'\n"
+        "Example: 'Pasal 81 UU No. 13 Tahun 2003 tentang Ketenagakerjaan'\n\n"
+        "SEARCH TIPS:\n"
+        "- Search in Bahasa Indonesia for best results (e.g., 'upah minimum' not 'minimum wage')\n"
+        "- Use specific legal terms: 'pemutusan hubungan kerja' not 'fired from job'\n"
+        "- The database covers a limited set of regulations — if no results, "
+        "it does NOT mean the law doesn't exist"
     ),
 )
 
@@ -191,6 +206,10 @@ def search_laws(
 ) -> list[dict]:
     """Search Indonesian laws and regulations by keyword.
 
+    USE WHEN: User asks about a legal topic, right, obligation, or regulation.
+    This should be your FIRST tool call for any legal question.
+    DO NEXT: Use get_pasal to retrieve the full text of relevant articles for citation.
+
     Uses PostgreSQL full-text search with Indonesian stemming.
     Returns relevant legal provisions with exact citations.
     IMPORTANT: Search in Indonesian for best results (e.g., "upah minimum" not "minimum wage").
@@ -299,7 +318,8 @@ def get_pasal(
 ) -> dict:
     """Get the exact text of a specific article (Pasal) from an Indonesian regulation.
 
-    Use this when you need the precise legal text for citation.
+    USE WHEN: You know which specific article to cite (from search_laws results).
+    DO NEXT: Use get_law_status to verify the law is still in force before presenting to user.
 
     Args:
         law_type: Regulation type code, e.g., "UU", "PP", "PERPRES"
@@ -336,6 +356,7 @@ def get_pasal(
         if not work_result.data:
             return _with_disclaimer({
                 "error": _no_results_message(f"'{law_type} {law_number}/{year}'"),
+                "suggestion": "Use list_laws to check available regulations, or verify type/number/year.",
             })
 
         work = work_result.data[0]
@@ -350,6 +371,7 @@ def get_pasal(
         if not node_result.data:
             return _with_disclaimer({
                 "error": f"Pasal {pasal_number} not found in {law_type} {law_number}/{year}",
+                "suggestion": "Check available_pasals below, or use search_laws to find the right article.",
                 "available_pasals": _get_available_pasals(work["id"]),
             })
 
@@ -400,6 +422,8 @@ def get_law_status(
 ) -> dict:
     """Check whether an Indonesian regulation is still in force, has been amended, or was revoked.
 
+    USE WHEN: You need to verify a law's validity before citing it to the user.
+    ALWAYS check status before presenting legal information — a revoked law is misleading.
     Returns the full amendment/revocation chain.
 
     Args:
@@ -521,6 +545,9 @@ def list_laws(
     per_page: int = 20,
 ) -> dict:
     """Browse available Indonesian regulations with optional filters.
+
+    USE WHEN: User wants to browse or list regulations, or when search_laws returned no results.
+    PREFER search_laws for specific legal questions — this tool is for discovery/browsing.
 
     Args:
         regulation_type: Filter by type — UU, PP, PERPRES, PERMEN, etc.

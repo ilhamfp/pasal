@@ -379,12 +379,12 @@ return {"error": f"Law not found: {law_type} {law_number}/{year}", "suggestion":
 ```
 
 **DONE WHEN:**
-- [ ] `python server.py` starts without errors.
-- [ ] The `instructions` field contains "LEGAL HIERARCHY" and "WORKFLOW".
-- [ ] Each tool docstring contains "USE WHEN" guidance.
-- [ ] Error returns include `"suggestion"` field.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `python server.py` starts without errors.
+- [x] The `instructions` field contains "LEGAL HIERARCHY" and "WORKFLOW".
+- [x] Each tool docstring contains "USE WHEN" guidance.
+- [x] Error returns include `"suggestion"` field.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
