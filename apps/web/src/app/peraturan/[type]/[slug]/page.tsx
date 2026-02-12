@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
 import Header from "@/components/Header";
+import DisclaimerBanner from "@/components/DisclaimerBanner";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
 import TableOfContents from "@/components/TableOfContents";
@@ -11,6 +12,45 @@ export const revalidate = 86400; // ISR: 24 hours
 
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
+}
+
+interface RelatedWork {
+  id: number;
+  title_id: string;
+  number: string;
+  year: number;
+  frbr_uri: string;
+  regulation_type_id: number;
+}
+
+interface ResolvedRelationship {
+  id: number;
+  nameId: string;
+  otherWork: RelatedWork;
+}
+
+function resolveRelationships(
+  relationships: Array<{
+    id: number;
+    source_work_id: number;
+    target_work_id: number;
+    relationship_types: { code: string; name_id: string; name_en: string };
+  }>,
+  workId: number,
+  relatedWorks: Record<number, RelatedWork>,
+): ResolvedRelationship[] {
+  const resolved: ResolvedRelationship[] = [];
+  for (const rel of relationships) {
+    const otherId = rel.source_work_id === workId ? rel.target_work_id : rel.source_work_id;
+    const otherWork = relatedWorks[otherId];
+    if (!otherWork) continue;
+    resolved.push({
+      id: rel.id,
+      nameId: (rel.relationship_types as { name_id: string }).name_id,
+      otherWork,
+    });
+  }
+  return resolved;
 }
 
 export default async function LawDetailPage({ params }: PageProps) {
@@ -60,15 +100,6 @@ export default async function LawDetailPage({ params }: PageProps) {
     .map((r) => (r.source_work_id === work.id ? r.target_work_id : r.source_work_id))
     .filter(Boolean);
 
-  interface RelatedWork {
-    id: number;
-    title_id: string;
-    number: string;
-    year: number;
-    frbr_uri: string;
-    regulation_type_id: number;
-  }
-
   let relatedWorks: Record<number, RelatedWork> = {};
   if (relatedWorkIds.length > 0) {
     const { data: rw } = await supabase
@@ -77,6 +108,8 @@ export default async function LawDetailPage({ params }: PageProps) {
       .in("id", relatedWorkIds);
     relatedWorks = Object.fromEntries((rw || []).map((w) => [w.id, w]));
   }
+
+  const resolvedRels = resolveRelationships(relationships || [], work.id, relatedWorks);
 
   // Build tree structure
   const allNodes = nodes || [];
@@ -101,13 +134,7 @@ export default async function LawDetailPage({ params }: PageProps) {
           </p>
         </div>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-200 mb-6">
-          Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
-          <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer" className="underline">
-            peraturan.go.id
-          </a>{" "}
-          untuk kepastian hukum.
-        </div>
+        <DisclaimerBanner className="mb-6" />
 
         {/* Mobile: context info (status + relationships) shown above content */}
         <div className="lg:hidden space-y-3 mb-6">
@@ -117,24 +144,18 @@ export default async function LawDetailPage({ params }: PageProps) {
               {STATUS_LABELS[work.status] || work.status}
             </Badge>
           </div>
-          {relationships && relationships.length > 0 && (
+          {resolvedRels.length > 0 && (
             <details className="rounded-lg border p-3">
               <summary className="font-semibold text-sm cursor-pointer">
-                Hubungan Hukum ({relationships.length})
+                Hubungan Hukum ({resolvedRels.length})
               </summary>
               <div className="mt-2 space-y-2">
-                {relationships.map((rel) => {
-                  const relType = rel.relationship_types as { code: string; name_id: string; name_en: string };
-                  const otherId = rel.source_work_id === work.id ? rel.target_work_id : rel.source_work_id;
-                  const otherWork = relatedWorks[otherId];
-                  if (!otherWork) return null;
-                  return (
-                    <div key={rel.id} className="text-sm">
-                      <span className="text-muted-foreground">{relType.name_id}: </span>
-                      <span className="font-medium">{type.toUpperCase()} {otherWork.number}/{otherWork.year}</span>
-                    </div>
-                  );
-                })}
+                {resolvedRels.map((rel) => (
+                  <div key={rel.id} className="text-sm">
+                    <span className="text-muted-foreground">{rel.nameId}: </span>
+                    <span className="font-medium">{type.toUpperCase()} {rel.otherWork.number}/{rel.otherWork.year}</span>
+                  </div>
+                ))}
               </div>
             </details>
           )}
@@ -208,32 +229,18 @@ export default async function LawDetailPage({ params }: PageProps) {
               </Badge>
             </div>
 
-            {relationships && relationships.length > 0 && (
+            {resolvedRels.length > 0 && (
               <div className="rounded-lg border p-4">
                 <h3 className="font-semibold text-sm mb-3">Hubungan Hukum</h3>
                 <div className="space-y-3">
-                  {relationships.map((rel) => {
-                    const relType = rel.relationship_types as {
-                      code: string;
-                      name_id: string;
-                      name_en: string;
-                    };
-                    const otherId =
-                      rel.source_work_id === work.id
-                        ? rel.target_work_id
-                        : rel.source_work_id;
-                    const otherWork = relatedWorks[otherId];
-                    if (!otherWork) return null;
-
-                    return (
-                      <div key={rel.id} className="text-sm">
-                        <p className="text-muted-foreground">{relType.name_id}</p>
-                        <p className="font-medium">
-                          {type.toUpperCase()} {otherWork.number}/{otherWork.year}
-                        </p>
-                      </div>
-                    );
-                  })}
+                  {resolvedRels.map((rel) => (
+                    <div key={rel.id} className="text-sm">
+                      <p className="text-muted-foreground">{rel.nameId}</p>
+                      <p className="font-medium">
+                        {type.toUpperCase()} {rel.otherWork.number}/{rel.otherWork.year}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

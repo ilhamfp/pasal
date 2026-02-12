@@ -23,7 +23,7 @@ list_laws = server.list_laws.fn
 # Helpers
 # ---------------------------------------------------------------------------
 
-_CHAINABLE_ATTRS = (
+_CHAINABLE = (
     "select", "eq", "neq", "in_", "ilike", "or_", "match",
     "order", "range", "limit", "single",
 )
@@ -32,7 +32,7 @@ _CHAINABLE_ATTRS = (
 def _qm(data: list | None = None, count: int = 0):
     """Chainable query mock that mimics the PostgREST query builder."""
     m = MagicMock()
-    for attr in _CHAINABLE_ATTRS:
+    for attr in _CHAINABLE:
         getattr(m, attr).return_value = m
     m.execute.return_value = MagicMock(data=data or [], count=count)
     return m
