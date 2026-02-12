@@ -17,6 +17,13 @@ __pycache__/
 .venv/
 *.egg-info/
 
+# IDE / tool config
+.agent/
+.agents/
+.claude/
+.cursor/
+.vercel
+
 # OS
 .DS_Store
 Thumbs.db
