@@ -472,14 +472,14 @@ $$;
 ```
 
 **DONE WHEN:**
-- [ ] Migration runs on Supabase without error.
-- [ ] `SELECT snippet FROM search_legal_chunks('upah minimum', 3, '{}'::jsonb);` returns text with `<mark>` tags.
-- [ ] MCP `search_laws` returns `snippet` field (not raw `content`).
-- [ ] Frontend search results show highlighted terms.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] Migration runs on Supabase without error.
+- [x] `SELECT snippet FROM search_legal_chunks('upah minimum', 3, '{}'::jsonb);` returns text with `<mark>` tags.
+- [x] MCP `search_laws` returns `snippet` field (not raw `content`).
+- [x] Frontend search results show highlighted terms.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 

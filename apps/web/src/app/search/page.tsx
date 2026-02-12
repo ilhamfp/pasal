@@ -19,6 +19,7 @@ interface ChunkResult {
   content: string;
   metadata: Record<string, string>;
   score: number;
+  snippet?: string;
 }
 
 interface WorkResult {
@@ -94,8 +95,7 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
         const regType = getRegTypeCode(work.regulation_types);
         const meta = chunk.metadata || {};
         const slug = `${regType.toLowerCase()}-${work.number}-${work.year}`;
-        // Skip header lines (type + title) and take a preview
-        const snippet = chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+        const snippetHtml = chunk.snippet || chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
 
         return (
           <Link key={chunk.id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
@@ -118,9 +118,10 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
                 {meta.pasal && (
                   <p className="text-sm font-medium mb-1">Pasal {meta.pasal}</p>
                 )}
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {snippet}...
-                </p>
+                <p
+                  className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
+                  dangerouslySetInnerHTML={{ __html: snippetHtml }}
+                />
                 <p className="text-xs text-muted-foreground mt-2">
                   Relevansi: {formatRelevance(chunk.score, maxScore)}
                 </p>
