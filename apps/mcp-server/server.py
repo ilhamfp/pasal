@@ -296,7 +296,7 @@ def search_laws(
             "regulation_type": reg_code,
             "year": work["year"],
             "pasal": f"Pasal {meta.get('pasal', '?')}",
-            "content": r["content"],
+            "snippet": r.get("snippet", r["content"][:300]),
             "status": work["status"],
             "relevance_score": round(r["score"], 4),
         })
