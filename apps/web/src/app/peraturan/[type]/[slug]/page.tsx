@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { parseSlug } from "@/lib/parse-slug";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
@@ -16,12 +17,10 @@ export default async function LawDetailPage({ params }: PageProps) {
   const { type, slug } = await params;
   const supabase = await createClient();
 
-  // Parse slug: "uu-13-2003" -> type=UU, number=13, year=2003
-  const parts = slug.split("-");
-  if (parts.length < 3) notFound();
-  const lawNumber = parts[parts.length - 2];
-  const lawYear = parseInt(parts[parts.length - 1]);
-  if (isNaN(lawYear)) notFound();
+  // Parse slug: "uu-13-2003" -> number=13, year=2003
+  const parsed = parseSlug(slug);
+  if (!parsed) notFound();
+  const { lawNumber, lawYear } = parsed;
 
   // Get regulation type ID
   const { data: regTypes } = await supabase
@@ -61,7 +60,16 @@ export default async function LawDetailPage({ params }: PageProps) {
     .map((r) => (r.source_work_id === work.id ? r.target_work_id : r.source_work_id))
     .filter(Boolean);
 
-  let relatedWorks: Record<number, { id: number; title_id: string; number: string; year: number; frbr_uri: string; regulation_type_id: number }> = {};
+  interface RelatedWork {
+    id: number;
+    title_id: string;
+    number: string;
+    year: number;
+    frbr_uri: string;
+    regulation_type_id: number;
+  }
+
+  let relatedWorks: Record<number, RelatedWork> = {};
   if (relatedWorkIds.length > 0) {
     const { data: rw } = await supabase
       .from("works")
@@ -101,15 +109,16 @@ export default async function LawDetailPage({ params }: PageProps) {
           <main className="min-w-0">
             {babNodes.length > 0 ? (
               babNodes.map((bab) => {
-                const babPasals = pasalNodes.filter((p) => p.parent_id === bab.id);
-                // Also get pasals under bagian/paragraf that are under this bab
-                const childNodeIds = allNodes
-                  .filter((n) => n.parent_id === bab.id)
-                  .map((n) => n.id);
-                const nestedPasals = pasalNodes.filter(
-                  (p) => childNodeIds.includes(p.parent_id ?? -1) && !babPasals.includes(p)
+                // Direct children + pasals nested under sub-sections (bagian/paragraf)
+                const directPasals = pasalNodes.filter((p) => p.parent_id === bab.id);
+                const directPasalIds = new Set(directPasals.map((p) => p.id));
+                const subSectionIds = new Set(
+                  allNodes.filter((n) => n.parent_id === bab.id).map((n) => n.id),
                 );
-                const allBabPasals = [...babPasals, ...nestedPasals];
+                const nestedPasals = pasalNodes.filter(
+                  (p) => subSectionIds.has(p.parent_id ?? -1) && !directPasalIds.has(p.id),
+                );
+                const allBabPasals = [...directPasals, ...nestedPasals];
 
                 return (
                   <section key={bab.id} id={`bab-${bab.number}`} className="mb-12">
