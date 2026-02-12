@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import SearchBar from "@/components/SearchBar";
+import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -124,14 +124,7 @@ export default async function SearchPage({
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto flex items-center gap-4 py-3 px-4">
-          <Link href="/" className="text-xl font-bold shrink-0">
-            Pasal<span className="text-primary/60">.id</span>
-          </Link>
-          <SearchBar defaultValue={query} />
-        </div>
-      </header>
+      <Header showSearch searchDefault={query} />
 
       {/* Results */}
       <main className="container mx-auto max-w-3xl px-4 py-8">

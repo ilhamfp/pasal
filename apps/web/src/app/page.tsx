@@ -36,7 +36,7 @@ export default function HomePage() {
           </Suspense>
 
           {/* MCP install hint */}
-          <div className="mt-8 rounded-lg border bg-card p-4 text-left max-w-xl w-full">
+          <Link href="/connect" className="mt-8 rounded-lg border bg-card p-4 text-left max-w-xl w-full block hover:border-primary/50 transition-colors">
             <p className="text-sm font-medium mb-2">
               Hubungkan ke Claude untuk akses hukum berbasis AI:
             </p>
@@ -44,7 +44,10 @@ export default function HomePage() {
               claude mcp add pasal-id --transport http --url
               https://pasal-mcp-server-production.up.railway.app/mcp/
             </code>
-          </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Klik untuk detail lebih lanjut →
+            </p>
+          </Link>
         </div>
       </main>
 

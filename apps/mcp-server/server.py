@@ -57,36 +57,48 @@ def search_laws(
     """Search Indonesian laws and regulations by keyword.
 
     Uses PostgreSQL full-text search with Indonesian stemming.
-    Returns relevant legal provisions with citations.
+    Returns relevant legal provisions with exact citations.
+    IMPORTANT: Search in Indonesian for best results (e.g., "upah minimum" not "minimum wage").
 
     Args:
-        query: Search query in Indonesian or English (e.g., "upah minimum pekerja", "korupsi")
+        query: Search query in Indonesian (e.g., "upah minimum pekerja", "korupsi", "perkawinan")
         regulation_type: Filter by type — UU (Law), PP (Govt Regulation), PERPRES (Presidential Reg), etc.
         year_from: Only return laws enacted after this year
         year_to: Only return laws enacted before this year
         limit: Maximum number of results (default 10)
     """
+    if not query or not query.strip():
+        return [{"error": "Query cannot be empty", "suggestion": "Provide a search term in Indonesian"}]
+
+    limit = min(limit, 50)
+
     # Build metadata filter
     metadata_filter: dict = {}
     if regulation_type:
         metadata_filter["type"] = regulation_type.upper()
 
-    # Call the search function
-    result = sb.rpc("search_legal_chunks", {
-        "query_text": query,
-        "match_count": limit * 2,  # fetch extra to filter
-        "metadata_filter": metadata_filter,
-    }).execute()
+    try:
+        # Call the search function
+        result = sb.rpc("search_legal_chunks", {
+            "query_text": query.strip(),
+            "match_count": limit * 3,  # fetch extra to filter
+            "metadata_filter": metadata_filter,
+        }).execute()
+    except Exception as e:
+        return [{"error": f"Search failed: {str(e)}"}]
 
     if not result.data:
         return [{"message": f"No results found for '{query}'", "suggestion": "Try simpler keywords or remove filters"}]
 
     # Enrich with work metadata
-    work_ids = list(set(r["work_id"] for r in result.data))
-    works_result = sb.table("works").select(
-        "id, frbr_uri, title_id, number, year, status, regulation_type_id"
-    ).in_("id", work_ids).execute()
-    works_map = {w["id"]: w for w in works_result.data}
+    try:
+        work_ids = list(set(r["work_id"] for r in result.data))
+        works_result = sb.table("works").select(
+            "id, frbr_uri, title_id, number, year, status, regulation_type_id"
+        ).in_("id", work_ids).execute()
+        works_map = {w["id"]: w for w in works_result.data}
+    except Exception as e:
+        return [{"error": f"Failed to fetch law metadata: {str(e)}"}]
 
     _get_reg_types()
 
@@ -111,7 +123,7 @@ def search_laws(
             "regulation_type": reg_code,
             "year": work["year"],
             "pasal": f"Pasal {meta.get('pasal', '?')}",
-            "snippet": r["content"][:300],
+            "content": r["content"],
             "status": work["status"],
             "relevance_score": round(r["score"], 4),
         })
@@ -139,67 +151,70 @@ def get_pasal(
         year: Year the law was enacted, e.g., 2003
         pasal_number: Article number, e.g., "81" or "81A"
     """
-    _get_reg_types()
-    reg_type_id = _reg_types.get(law_type.upper())
-    if not reg_type_id:
-        return {"error": f"Unknown regulation type: {law_type}"}
+    try:
+        _get_reg_types()
+        reg_type_id = _reg_types.get(law_type.upper())
+        if not reg_type_id:
+            return {"error": f"Unknown regulation type: {law_type}"}
 
-    # Find the work
-    work_result = sb.table("works").select("*").match({
-        "regulation_type_id": reg_type_id,
-        "number": law_number,
-        "year": year,
-    }).execute()
+        # Find the work
+        work_result = sb.table("works").select("*").match({
+            "regulation_type_id": reg_type_id,
+            "number": law_number,
+            "year": year,
+        }).execute()
 
-    if not work_result.data:
-        return {"error": f"Law not found: {law_type} {law_number}/{year}"}
+        if not work_result.data:
+            return {"error": f"Law not found: {law_type} {law_number}/{year}"}
 
-    work = work_result.data[0]
+        work = work_result.data[0]
 
-    # Find the pasal node
-    node_result = sb.table("document_nodes").select("*").match({
-        "work_id": work["id"],
-        "node_type": "pasal",
-        "number": pasal_number,
-    }).execute()
+        # Find the pasal node
+        node_result = sb.table("document_nodes").select("*").match({
+            "work_id": work["id"],
+            "node_type": "pasal",
+            "number": pasal_number,
+        }).execute()
 
-    if not node_result.data:
+        if not node_result.data:
+            return {
+                "error": f"Pasal {pasal_number} not found in {law_type} {law_number}/{year}",
+                "available_pasals": _get_available_pasals(work["id"]),
+            }
+
+        node = node_result.data[0]
+
+        # Get ayat children
+        ayat_result = sb.table("document_nodes").select("number, content_text").match({
+            "work_id": work["id"],
+            "parent_id": node["id"],
+            "node_type": "ayat",
+        }).order("sort_order").execute()
+
+        # Get parent (bab) info
+        chapter_info = ""
+        if node.get("parent_id"):
+            parent = sb.table("document_nodes").select(
+                "node_type, number, heading"
+            ).eq("id", node["parent_id"]).execute()
+            if parent.data:
+                p = parent.data[0]
+                chapter_info = f"{p['node_type'].upper()} {p['number']}"
+                if p.get("heading"):
+                    chapter_info += f" - {p['heading']}"
+
         return {
-            "error": f"Pasal {pasal_number} not found in {law_type} {law_number}/{year}",
-            "available_pasals": _get_available_pasals(work["id"]),
+            "law_title": work["title_id"],
+            "frbr_uri": work["frbr_uri"],
+            "pasal_number": pasal_number,
+            "chapter": chapter_info,
+            "content_id": node["content_text"],
+            "ayat": [{"number": a["number"], "text": a["content_text"]} for a in (ayat_result.data or [])],
+            "status": work["status"],
+            "source_url": work.get("source_url", ""),
         }
-
-    node = node_result.data[0]
-
-    # Get ayat children
-    ayat_result = sb.table("document_nodes").select("number, content_text").match({
-        "work_id": work["id"],
-        "parent_id": node["id"],
-        "node_type": "ayat",
-    }).order("sort_order").execute()
-
-    # Get parent (bab) info
-    chapter_info = ""
-    if node.get("parent_id"):
-        parent = sb.table("document_nodes").select(
-            "node_type, number, heading"
-        ).eq("id", node["parent_id"]).execute()
-        if parent.data:
-            p = parent.data[0]
-            chapter_info = f"{p['node_type'].upper()} {p['number']}"
-            if p.get("heading"):
-                chapter_info += f" - {p['heading']}"
-
-    return {
-        "law_title": work["title_id"],
-        "frbr_uri": work["frbr_uri"],
-        "pasal_number": pasal_number,
-        "chapter": chapter_info,
-        "content_id": node["content_text"],
-        "ayat": [{"number": a["number"], "text": a["content_text"]} for a in (ayat_result.data or [])],
-        "status": work["status"],
-        "source_url": work.get("source_url", ""),
-    }
+    except Exception as e:
+        return {"error": f"Failed to retrieve pasal: {str(e)}"}
 
 
 @mcp.tool
@@ -217,84 +232,88 @@ def get_law_status(
         law_number: The number of the law, e.g., "1"
         year: Year the law was enacted, e.g., 1974
     """
-    _get_reg_types()
-    reg_type_id = _reg_types.get(law_type.upper())
-    if not reg_type_id:
-        return {"error": f"Unknown regulation type: {law_type}"}
+    try:
+        _get_reg_types()
+        reg_type_id = _reg_types.get(law_type.upper())
+        if not reg_type_id:
+            return {"error": f"Unknown regulation type: {law_type}"}
 
-    work_result = sb.table("works").select("*").match({
-        "regulation_type_id": reg_type_id,
-        "number": law_number,
-        "year": year,
-    }).execute()
+        work_result = sb.table("works").select("*").match({
+            "regulation_type_id": reg_type_id,
+            "number": law_number,
+            "year": year,
+        }).execute()
 
-    if not work_result.data:
-        return {"error": f"Law not found: {law_type} {law_number}/{year}"}
+        if not work_result.data:
+            return {"error": f"Law not found: {law_type} {law_number}/{year}"}
 
-    work = work_result.data[0]
+        work = work_result.data[0]
 
-    # Get relationships
-    rels = sb.table("work_relationships").select(
-        "*, relationship_types(code, name_id, name_en)"
-    ).or_(
-        f"source_work_id.eq.{work['id']},target_work_id.eq.{work['id']}"
-    ).execute()
+        # Get relationships
+        rels = sb.table("work_relationships").select(
+            "*, relationship_types(code, name_id, name_en)"
+        ).or_(
+            f"source_work_id.eq.{work['id']},target_work_id.eq.{work['id']}"
+        ).execute()
 
-    # Get related work info
-    related_work_ids = set()
-    for r in (rels.data or []):
-        related_work_ids.add(r["source_work_id"])
-        related_work_ids.add(r["target_work_id"])
-    related_work_ids.discard(work["id"])
+        # Get related work info
+        related_work_ids = set()
+        for r in (rels.data or []):
+            related_work_ids.add(r["source_work_id"])
+            related_work_ids.add(r["target_work_id"])
+        related_work_ids.discard(work["id"])
 
-    related_works = {}
-    if related_work_ids:
-        rw = sb.table("works").select(
-            "id, frbr_uri, title_id, number, year, status, regulation_type_id"
-        ).in_("id", list(related_work_ids)).execute()
-        related_works = {w["id"]: w for w in rw.data}
+        related_works = {}
+        if related_work_ids:
+            rw = sb.table("works").select(
+                "id, frbr_uri, title_id, number, year, status, regulation_type_id"
+            ).in_("id", list(related_work_ids)).execute()
+            related_works = {w["id"]: w for w in rw.data}
 
-    # Build amendment chain
-    amendments = []
-    related = []
-    for r in (rels.data or []):
-        rel_type = r.get("relationship_types", {})
-        other_id = r["target_work_id"] if r["source_work_id"] == work["id"] else r["source_work_id"]
-        other_work = related_works.get(other_id)
-        if not other_work:
-            continue
+        # Build amendment chain
+        amendments = []
+        related = []
+        for r in (rels.data or []):
+            rel_type = r.get("relationship_types", {})
+            other_id = r["target_work_id"] if r["source_work_id"] == work["id"] else r["source_work_id"]
+            other_work = related_works.get(other_id)
+            if not other_work:
+                continue
 
-        other_code = _reg_types_by_id.get(other_work["regulation_type_id"], "")
-        other_title = f"{other_code} {other_work['number']}/{other_work['year']}"
+            other_code = _reg_types_by_id.get(other_work["regulation_type_id"], "")
+            other_title = f"{other_code} {other_work['number']}/{other_work['year']}"
 
-        entry = {
-            "relationship": rel_type.get("name_en", ""),
-            "relationship_id": rel_type.get("name_id", ""),
-            "law": other_title,
-            "full_title": other_work["title_id"],
-            "frbr_uri": other_work["frbr_uri"],
+            entry = {
+                "relationship": rel_type.get("name_en", ""),
+                "relationship_id": rel_type.get("name_id", ""),
+                "law": other_title,
+                "full_title": other_work["title_id"],
+                "frbr_uri": other_work["frbr_uri"],
+            }
+
+            if rel_type.get("code") in ("mengubah", "diubah_oleh", "mencabut", "dicabut_oleh"):
+                amendments.append(entry)
+            else:
+                related.append(entry)
+
+        status_explanations = {
+            "berlaku": "This law is currently in force.",
+            "diubah": "This law has been partially amended. Most provisions remain in force unless specifically changed.",
+            "dicabut": "This law has been revoked and is no longer in force.",
+            "tidak_berlaku": "This law is no longer effective.",
         }
 
-        if rel_type.get("code") in ("mengubah", "diubah_oleh", "mencabut", "dicabut_oleh"):
-            amendments.append(entry)
-        else:
-            related.append(entry)
-
-    status_explanations = {
-        "berlaku": "This law is currently in force.",
-        "diubah": "This law has been partially amended. Most provisions remain in force unless specifically changed.",
-        "dicabut": "This law has been revoked and is no longer in force.",
-        "tidak_berlaku": "This law is no longer effective.",
-    }
-
-    return {
-        "law_title": work["title_id"],
-        "frbr_uri": work["frbr_uri"],
-        "status": work["status"],
-        "status_explanation": status_explanations.get(work["status"], ""),
-        "amendments": amendments,
-        "related_laws": related,
-    }
+        return {
+            "law_title": work["title_id"],
+            "frbr_uri": work["frbr_uri"],
+            "status": work["status"],
+            "status_explanation": status_explanations.get(work["status"], ""),
+            "date_enacted": str(work.get("date_enacted", "")) if work.get("date_enacted") else None,
+            "amendments": amendments,
+            "related_laws": related,
+        }
+    except Exception as e:
+        return {"error": f"Failed to retrieve law status: {str(e)}"}
 
 
 @mcp.tool
@@ -363,7 +382,7 @@ def _get_available_pasals(work_id: int) -> list[str]:
     result = sb.table("document_nodes").select("number").match({
         "work_id": work_id,
         "node_type": "pasal",
-    }).order("sort_order").limit(20).execute()
+    }).order("sort_order").limit(200).execute()
     return [r["number"] for r in (result.data or [])]
 
 
