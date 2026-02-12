@@ -47,6 +47,8 @@ def _reset():
     """Clear caches and reset mocks between every test."""
     server._reg_types = {}
     server._reg_types_by_id = {}
+    server._law_count = None
+    server._law_count_ts = 0.0
     server.sb.reset_mock()
     yield
 
@@ -153,7 +155,7 @@ class TestGetPasal:
 
     def test_unknown_law_type_returns_error(self, reg_cache):
         result = get_pasal("FAKE", "1", 2003, "1")
-        assert result == {"error": "Unknown regulation type: FAKE"}
+        assert result["error"] == "Unknown regulation type: FAKE"
 
     def test_missing_pasal_returns_available_pasals(self, reg_cache):
         work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "13",
@@ -362,3 +364,183 @@ class TestGetRegTypesCaching:
 
         # table() called only once — second call hits the cache
         assert server.sb.table.call_count == 1
+
+
+# ===================================================================
+# Disclaimer presence in all tool responses
+# ===================================================================
+
+class TestDisclaimer:
+
+    def test_search_laws_results_have_disclaimer(self, reg_cache):
+        server.sb.rpc.return_value.execute.return_value = MagicMock(data=[
+            {"work_id": 1, "content": "text", "score": 0.5, "metadata": {"pasal": "1"}},
+        ])
+        works_mock = _qm(data=[
+            {"id": 1, "frbr_uri": "/a", "title_id": "T", "number": "1",
+             "year": 2020, "status": "berlaku", "regulation_type_id": 1},
+        ])
+        server.sb.table.side_effect = lambda n: works_mock if n == "works" else _qm()
+
+        result = search_laws("test")
+        assert all("disclaimer" in r for r in result)
+
+    def test_search_laws_no_results_has_disclaimer(self, reg_cache):
+        server.sb.rpc.return_value.execute.return_value = MagicMock(data=[])
+        # _get_law_count needs works table
+        count_mock = _qm(data=[], count=19)
+        server.sb.table.side_effect = lambda n: count_mock
+
+        result = search_laws("nonexistent query")
+        assert len(result) == 1
+        assert "disclaimer" in result[0]
+
+    def test_search_laws_empty_query_has_disclaimer(self):
+        result = search_laws("")
+        assert all("disclaimer" in r for r in result)
+
+    def test_get_pasal_has_disclaimer(self, reg_cache):
+        work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "1",
+                "year": 2020, "status": "berlaku", "regulation_type_id": 1, "source_url": ""}
+        node = {"id": 10, "content_text": "Text", "parent_id": None, "number": "1", "node_type": "pasal"}
+
+        node_calls = iter([_qm(data=[node]), _qm(data=[])])
+        server.sb.table.side_effect = lambda n: (
+            _qm(data=[work]) if n == "works" else next(node_calls)
+        )
+
+        result = get_pasal("UU", "1", 2020, "1")
+        assert "disclaimer" in result
+
+    def test_get_law_status_has_disclaimer(self, reg_cache):
+        work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "1",
+                "year": 2020, "status": "berlaku", "regulation_type_id": 1, "date_enacted": None}
+
+        works_calls = iter([_qm(data=[work]), _qm(data=[])])
+        server.sb.table.side_effect = lambda n: (
+            next(works_calls) if n == "works"
+            else _qm(data=[]) if n == "work_relationships"
+            else _qm()
+        )
+
+        result = get_law_status("UU", "1", 2020)
+        assert "disclaimer" in result
+
+    def test_list_laws_has_disclaimer(self, reg_cache):
+        works_mock = _qm(data=[], count=0)
+        server.sb.table.side_effect = lambda n: works_mock if n == "works" else _qm()
+
+        result = list_laws()
+        assert "disclaimer" in result
+
+
+# ===================================================================
+# search_laws with Supabase exception
+# ===================================================================
+
+class TestSearchLawsException:
+
+    def test_rpc_exception_returns_error(self, reg_cache):
+        server.sb.rpc.return_value.execute.side_effect = Exception("connection timeout")
+
+        result = search_laws("test query")
+        assert len(result) == 1
+        assert "error" in result[0]
+        assert "connection timeout" in result[0]["error"]
+        assert "disclaimer" in result[0]
+
+
+# ===================================================================
+# get_pasal with parent_id=None
+# ===================================================================
+
+class TestGetPasalNoParent:
+
+    def test_parent_id_none_returns_empty_chapter(self, reg_cache):
+        work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "1",
+                "year": 2020, "status": "berlaku", "regulation_type_id": 1, "source_url": ""}
+        node = {"id": 10, "content_text": "Text", "parent_id": None, "number": "5", "node_type": "pasal"}
+
+        node_calls = iter([_qm(data=[node]), _qm(data=[])])
+        server.sb.table.side_effect = lambda n: (
+            _qm(data=[work]) if n == "works" else next(node_calls)
+        )
+
+        result = get_pasal("UU", "1", 2020, "5")
+        assert result["chapter"] == ""
+
+
+# ===================================================================
+# get_law_status with no relationships
+# ===================================================================
+
+class TestGetLawStatusNoRelationships:
+
+    def test_no_relationships_returns_empty_lists(self, reg_cache):
+        work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "1",
+                "year": 2020, "status": "berlaku", "regulation_type_id": 1, "date_enacted": None}
+
+        works_calls = iter([_qm(data=[work]), _qm(data=[])])
+        server.sb.table.side_effect = lambda n: (
+            next(works_calls) if n == "works"
+            else _qm(data=[]) if n == "work_relationships"
+            else _qm()
+        )
+
+        result = get_law_status("UU", "1", 2020)
+        assert result["amendments"] == []
+        assert result["related_laws"] == []
+
+
+# ===================================================================
+# list_laws filter combinations
+# ===================================================================
+
+class TestListLawsFilters:
+
+    def test_all_filters(self, reg_cache):
+        works_mock = _qm(data=[
+            {"frbr_uri": "/a", "title_id": "T", "number": "1", "year": 2020,
+             "status": "berlaku", "regulation_types": {"code": "UU", "name_id": "Undang-Undang"}},
+        ], count=1)
+        server.sb.table.side_effect = lambda n: works_mock if n == "works" else _qm()
+
+        result = list_laws(regulation_type="UU", year=2020, status="berlaku", search="test")
+
+        assert result["total"] == 1
+        assert len(result["laws"]) == 1
+        works_mock.eq.assert_any_call("regulation_type_id", 1)
+        works_mock.eq.assert_any_call("year", 2020)
+        works_mock.eq.assert_any_call("status", "berlaku")
+        works_mock.ilike.assert_called_once_with("title_id", "%test%")
+
+    def test_type_only_filter(self, reg_cache):
+        works_mock = _qm(data=[], count=0)
+        server.sb.table.side_effect = lambda n: works_mock if n == "works" else _qm()
+
+        result = list_laws(regulation_type="PP")
+        assert "error" not in result
+        works_mock.eq.assert_any_call("regulation_type_id", 2)
+
+    def test_year_only_filter(self, reg_cache):
+        works_mock = _qm(data=[], count=0)
+        server.sb.table.side_effect = lambda n: works_mock if n == "works" else _qm()
+
+        result = list_laws(year=2023)
+        assert "error" not in result
+        works_mock.eq.assert_any_call("year", 2023)
+
+
+# ===================================================================
+# _no_results_message
+# ===================================================================
+
+class TestNoResultsMessage:
+
+    def test_includes_law_count(self, reg_cache):
+        count_mock = _qm(data=[], count=19)
+        server.sb.table.side_effect = lambda n: count_mock
+
+        msg = server._no_results_message("'test'")
+        assert "19" in msg
+        assert "does NOT mean" in msg.lower() or "does NOT" in msg
