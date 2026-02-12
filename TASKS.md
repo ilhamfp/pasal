@@ -925,14 +925,14 @@ Add sections below the search hero:
 5. Create `apps/web/src/app/api/page.tsx` — simple API docs page with examples.
 
 **DONE WHEN:**
-- [ ] `curl localhost:3000/api/v1/search?q=ketenagakerjaan` returns JSON.
-- [ ] `curl localhost:3000/api/v1/laws?type=UU` returns a list.
-- [ ] Response includes CORS headers (`Access-Control-Allow-Origin`).
-- [ ] `/api` page shows documentation.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] `curl localhost:3000/api/v1/search?q=ketenagakerjaan` returns JSON.
+- [x] `curl localhost:3000/api/v1/laws?type=UU` returns a list.
+- [x] Response includes CORS headers (`Access-Control-Allow-Origin`).
+- [x] `/api` page shows documentation.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
