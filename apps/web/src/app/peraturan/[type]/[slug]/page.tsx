@@ -101,6 +101,14 @@ export default async function LawDetailPage({ params }: PageProps) {
           </p>
         </div>
 
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-200 mb-6">
+          Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
+          <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer" className="underline">
+            peraturan.go.id
+          </a>{" "}
+          untuk kepastian hukum.
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_280px] gap-8">
           <aside className="hidden lg:block">
             <TableOfContents babs={babNodes} pasals={pasalNodes} />

@@ -69,8 +69,18 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
 
   const worksMap = new Map((works || []).map((w: WorkResult) => [w.id, w]));
 
+  const maxScore = Math.max(...chunks.map((c: ChunkResult) => c.score), 0.001);
+
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-200">
+        Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
+        <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer" className="underline">
+          peraturan.go.id
+        </a>{" "}
+        untuk kepastian hukum.
+      </div>
+
       <p className="text-sm text-muted-foreground">
         {chunks.length} hasil ditemukan untuk &ldquo;{query}&rdquo;
       </p>
@@ -110,7 +120,11 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
                   {snippet}...
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Relevansi: {(chunk.score * 100).toFixed(1)}%
+                  Relevansi: {(() => {
+                    const pct = Math.round((chunk.score / maxScore) * 100);
+                    const label = pct >= 70 ? "Sangat relevan" : pct >= 40 ? "Relevan" : "Mungkin relevan";
+                    return `${pct}% — ${label}`;
+                  })()}
                 </p>
               </CardContent>
             </Card>

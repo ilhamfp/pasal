@@ -38,6 +38,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <footer className="border-t mt-16 py-6 text-center text-xs text-muted-foreground px-4">
+          <p>
+            Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
+            <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              peraturan.go.id
+            </a>{" "}
+            untuk kepastian hukum.
+          </p>
+          <p className="mt-1">&copy; {new Date().getFullYear()} Pasal.id — Platform Hukum Indonesia Terbuka</p>
+        </footer>
       </body>
     </html>
   );

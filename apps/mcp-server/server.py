@@ -1,4 +1,4 @@
-"""Pasal.id MCP Server — Indonesian Legal Database (v0.2).
+"""Pasal.id MCP Server — Indonesian Legal Database (v0.3).
 
 Provides Claude with grounded access to Indonesian legislation through 4 tools:
 - search_laws: Full-text search across Indonesian legal provisions
@@ -6,7 +6,9 @@ Provides Claude with grounded access to Indonesian legislation through 4 tools:
 - get_law_status: Check if a law is still in force
 - list_laws: Browse available regulations
 """
+import logging
 import os
+import time
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -14,6 +16,18 @@ from fastmcp import FastMCP
 from supabase import create_client
 
 load_dotenv()
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger("pasal.mcp")
+
+DISCLAIMER = (
+    "Informasi ini bukan nasihat hukum. Selalu verifikasi dengan sumber resmi "
+    "di peraturan.go.id. Database Pasal.id saat ini mencakup sebagian kecil "
+    "peraturan Indonesia."
+)
 
 mcp = FastMCP(
     "Pasal.id — Indonesian Legal Database",
@@ -45,6 +59,45 @@ def _get_reg_types() -> dict[str, int]:
     return _reg_types
 
 
+_law_count: int | None = None
+_law_count_ts: float = 0.0
+
+
+def _get_law_count() -> int:
+    """Return cached count of laws in the database (5-min TTL)."""
+    global _law_count, _law_count_ts
+    if _law_count is not None and (time.time() - _law_count_ts) < 300:
+        return _law_count
+    try:
+        result = sb.table("works").select("id", count="exact").execute()
+        _law_count = result.count or 0
+    except Exception:
+        _law_count = _law_count if _law_count is not None else 0
+    _law_count_ts = time.time()
+    return _law_count
+
+
+def _with_disclaimer(result: dict | list) -> dict | list:
+    """Append legal disclaimer to every tool response."""
+    if isinstance(result, dict):
+        result["disclaimer"] = DISCLAIMER
+    elif isinstance(result, list):
+        for item in result:
+            if isinstance(item, dict):
+                item["disclaimer"] = DISCLAIMER
+    return result
+
+
+def _no_results_message(context: str) -> str:
+    """Build a 'not in DB' caveat message."""
+    n = _get_law_count()
+    return (
+        f"No results found for {context} in our database of {n} laws. "
+        "This does NOT mean no such law exists — our database covers "
+        "a limited set of Indonesian regulations."
+    )
+
+
 @mcp.tool
 def search_laws(
     query: str,
@@ -66,8 +119,14 @@ def search_laws(
         year_to: Only return laws enacted before this year
         limit: Maximum number of results (default 10)
     """
+    t0 = time.time()
+    logger.info("search_laws called: query=%r type=%s year_from=%s year_to=%s limit=%s",
+                query, regulation_type, year_from, year_to, limit)
+
     if not query or not query.strip():
-        return [{"error": "Query cannot be empty", "suggestion": "Provide a search term in Indonesian"}]
+        return _with_disclaimer(
+            [{"error": "Query cannot be empty", "suggestion": "Provide a search term in Indonesian"}]
+        )
 
     limit = min(limit, 50)
 
@@ -84,10 +143,15 @@ def search_laws(
             "metadata_filter": metadata_filter,
         }).execute()
     except Exception as e:
-        return [{"error": f"Search failed: {str(e)}"}]
+        logger.error("search_laws RPC failed: %s", e)
+        return _with_disclaimer([{"error": f"Search failed: {str(e)}"}])
 
     if not result.data:
-        return [{"message": f"No results found for '{query}'", "suggestion": "Try simpler keywords or remove filters"}]
+        logger.info("search_laws: no results for %r (%.0fms)", query, (time.time() - t0) * 1000)
+        return _with_disclaimer([{
+            "message": _no_results_message(f"'{query}'"),
+            "suggestion": "Try simpler keywords or remove filters",
+        }])
 
     # Enrich with work metadata
     try:
@@ -97,7 +161,8 @@ def search_laws(
         ).in_("id", work_ids).execute()
         works_map = {w["id"]: w for w in works_result.data}
     except Exception as e:
-        return [{"error": f"Failed to fetch law metadata: {str(e)}"}]
+        logger.error("search_laws metadata fetch failed: %s", e)
+        return _with_disclaimer([{"error": f"Failed to fetch law metadata: {str(e)}"}])
 
     _get_reg_types()
 
@@ -130,7 +195,9 @@ def search_laws(
         if len(enriched) >= limit:
             break
 
-    return enriched
+    logger.info("search_laws: %d results for %r (%.0fms)",
+                len(enriched), query, (time.time() - t0) * 1000)
+    return _with_disclaimer(enriched)
 
 
 @mcp.tool
@@ -150,11 +217,14 @@ def get_pasal(
         year: Year the law was enacted, e.g., 2003
         pasal_number: Article number, e.g., "81" or "81A"
     """
+    t0 = time.time()
+    logger.info("get_pasal called: %s %s/%d pasal %s", law_type, law_number, year, pasal_number)
+
     try:
         _get_reg_types()
         reg_type_id = _reg_types.get(law_type.upper())
         if not reg_type_id:
-            return {"error": f"Unknown regulation type: {law_type}"}
+            return _with_disclaimer({"error": f"Unknown regulation type: {law_type}"})
 
         # Find the work
         work_result = sb.table("works").select("*").match({
@@ -164,7 +234,9 @@ def get_pasal(
         }).execute()
 
         if not work_result.data:
-            return {"error": f"Law not found: {law_type} {law_number}/{year}"}
+            return _with_disclaimer({
+                "error": _no_results_message(f"'{law_type} {law_number}/{year}'"),
+            })
 
         work = work_result.data[0]
 
@@ -176,10 +248,10 @@ def get_pasal(
         }).execute()
 
         if not node_result.data:
-            return {
+            return _with_disclaimer({
                 "error": f"Pasal {pasal_number} not found in {law_type} {law_number}/{year}",
                 "available_pasals": _get_available_pasals(work["id"]),
-            }
+            })
 
         node = node_result.data[0]
 
@@ -202,7 +274,8 @@ def get_pasal(
                 if p.get("heading"):
                     chapter_info += f" - {p['heading']}"
 
-        return {
+        logger.info("get_pasal: found pasal %s (%.0fms)", pasal_number, (time.time() - t0) * 1000)
+        return _with_disclaimer({
             "law_title": work["title_id"],
             "frbr_uri": work["frbr_uri"],
             "pasal_number": pasal_number,
@@ -211,9 +284,10 @@ def get_pasal(
             "ayat": [{"number": a["number"], "text": a["content_text"]} for a in (ayat_result.data or [])],
             "status": work["status"],
             "source_url": work.get("source_url", ""),
-        }
+        })
     except Exception as e:
-        return {"error": f"Failed to retrieve pasal: {str(e)}"}
+        logger.error("get_pasal failed: %s", e)
+        return _with_disclaimer({"error": f"Failed to retrieve pasal: {str(e)}"})
 
 
 @mcp.tool
@@ -231,11 +305,14 @@ def get_law_status(
         law_number: The number of the law, e.g., "1"
         year: Year the law was enacted, e.g., 1974
     """
+    t0 = time.time()
+    logger.info("get_law_status called: %s %s/%d", law_type, law_number, year)
+
     try:
         _get_reg_types()
         reg_type_id = _reg_types.get(law_type.upper())
         if not reg_type_id:
-            return {"error": f"Unknown regulation type: {law_type}"}
+            return _with_disclaimer({"error": f"Unknown regulation type: {law_type}"})
 
         work_result = sb.table("works").select("*").match({
             "regulation_type_id": reg_type_id,
@@ -244,7 +321,9 @@ def get_law_status(
         }).execute()
 
         if not work_result.data:
-            return {"error": f"Law not found: {law_type} {law_number}/{year}"}
+            return _with_disclaimer({
+                "error": _no_results_message(f"'{law_type} {law_number}/{year}'"),
+            })
 
         work = work_result.data[0]
 
@@ -302,7 +381,9 @@ def get_law_status(
             "tidak_berlaku": "This law is no longer effective.",
         }
 
-        return {
+        logger.info("get_law_status: %s %s/%d status=%s (%.0fms)",
+                     law_type, law_number, year, work["status"], (time.time() - t0) * 1000)
+        return _with_disclaimer({
             "law_title": work["title_id"],
             "frbr_uri": work["frbr_uri"],
             "status": work["status"],
@@ -310,9 +391,10 @@ def get_law_status(
             "date_enacted": str(work["date_enacted"]) if work.get("date_enacted") else None,
             "amendments": amendments,
             "related_laws": related,
-        }
+        })
     except Exception as e:
-        return {"error": f"Failed to retrieve law status: {str(e)}"}
+        logger.error("get_law_status failed: %s", e)
+        return _with_disclaimer({"error": f"Failed to retrieve law status: {str(e)}"})
 
 
 @mcp.tool
@@ -334,6 +416,10 @@ def list_laws(
         page: Page number (default 1)
         per_page: Results per page (default 20)
     """
+    t0 = time.time()
+    logger.info("list_laws called: type=%s year=%s status=%s search=%s page=%d",
+                regulation_type, year, status, search, page)
+
     try:
         _get_reg_types()
 
@@ -369,14 +455,16 @@ def list_laws(
                 "status": w["status"],
             })
 
-        return {
+        logger.info("list_laws: %d/%d results (%.0fms)", len(laws), total, (time.time() - t0) * 1000)
+        return _with_disclaimer({
             "total": total,
             "page": page,
             "per_page": per_page,
             "laws": laws,
-        }
+        })
     except Exception as e:
-        return {"error": f"Failed to list laws: {str(e)}"}
+        logger.error("list_laws failed: %s", e)
+        return _with_disclaimer({"error": f"Failed to list laws: {str(e)}"})
 
 
 def _get_available_pasals(work_id: int) -> list[str]:
