@@ -956,13 +956,13 @@ Create `scripts/test_mcp_flow.py` that tests 3 scenarios by calling Supabase dir
 4. Print total law count and health status.
 
 **DONE WHEN:**
-- [ ] Script runs without errors.
-- [ ] All 3 scenarios produce meaningful results (not empty).
-- [ ] Marriage query finds UU 1/1974 or UU 16/2019.
-- [ ] Worker query finds UU 13/2003.
-- [ ] Cross-regulation test finds UU 6/2023 amendment link.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] Script runs without errors.
+- [x] All 3 scenarios produce meaningful results (not empty).
+- [x] Marriage query finds UU 1/1974 or UU 16/2019.
+- [x] Worker query finds UU 13/2003.
+- [x] Cross-regulation test finds UU 6/2023 amendment link.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
