@@ -142,15 +142,15 @@ In the metadata filter construction, add: `if language != "id": metadata_filter[
 ```
 
 **DONE WHEN:**
-- [ ] Migration 008 runs without error on Supabase.
-- [ ] `SELECT column_name FROM information_schema.columns WHERE table_name = 'document_nodes' AND column_name = 'language';` returns a row.
-- [ ] `SELECT column_name FROM information_schema.columns WHERE table_name = 'works' AND column_name = 'content_verified';` returns a row.
-- [ ] Existing data still works — `SELECT COUNT(*) FROM legal_chunks WHERE language = 'id';` returns all existing rows.
-- [ ] The law reader page shows a verification badge (yellow "Belum Diverifikasi" since no data is verified yet).
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] Migration 009 runs without error on Supabase.
+- [x] `SELECT column_name FROM information_schema.columns WHERE table_name = 'document_nodes' AND column_name = 'language';` returns a row.
+- [x] `SELECT column_name FROM information_schema.columns WHERE table_name = 'works' AND column_name = 'content_verified';` returns a row.
+- [x] Existing data still works — `SELECT COUNT(*) FROM legal_chunks WHERE language = 'id';` returns all existing rows (1654).
+- [x] The law reader page shows a verification badge (amber "Belum Diverifikasi" since no data is verified yet).
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
@@ -189,11 +189,11 @@ When in doubt, reference `BRAND_GUIDELINES.md` — it is the single source of tr
 ```
 
 **DONE WHEN:**
-- [ ] `CLAUDE.md` contains a "Brand & Visual Design" section referencing `BRAND_GUIDELINES.md`.
-- [ ] The pitfalls section mentions brand guidelines.
-- [ ] `git diff` shows only additions to `CLAUDE.md`, no deletions of existing content.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `CLAUDE.md` contains a "Brand & Visual Design" section referencing `BRAND_GUIDELINES.md`.
+- [x] The pitfalls section mentions brand guidelines.
+- [x] `git diff` shows only additions to `CLAUDE.md`, no deletions of existing content.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 

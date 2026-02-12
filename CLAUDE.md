@@ -146,6 +146,21 @@ These Indonesian legal terms appear throughout the codebase:
 | Lembaran Negara (LN) | State Gazette | Official publication for laws |
 | FRBR URI | — | Unique identifier: `/akn/id/act/uu/2003/13` |
 
+## Brand & Visual Design
+
+**All frontend work MUST follow the brand guidelines defined in `BRAND_GUIDELINES.md` in the project root.**
+
+Before creating or modifying any frontend component, page, or visual element:
+1. Read `BRAND_GUIDELINES.md` for the color system, typography, spacing, and component patterns.
+2. Use the defined color variables (CSS custom properties) — never hardcode hex colors.
+3. Follow the "modern public library, not dim government office" design philosophy.
+4. The primary color is Verdigris (#2B6150). Neutrals are warm graphite ("Batu Candi").
+5. Typography: Instrument Serif for headings, Instrument Sans for body/UI.
+6. All user-facing text should be in **Bahasa Indonesia** as primary, English as secondary.
+7. Show verification badges on all legal content (see Task 1 schema).
+
+When in doubt, reference `BRAND_GUIDELINES.md` — it is the single source of truth for visual decisions.
+
 ## Common Pitfalls to Avoid
 
 1. **Don't try to scrape 278,000 regulations.** Start with the 20 priority laws. The OTF corpus (5,817 docs) is your fallback data source.
@@ -163,6 +178,10 @@ These Indonesian legal terms appear throughout the codebase:
 7. **Don't add vector/embedding columns.** The MVP has no embedding columns anywhere. `legal_chunks` has a `fts TSVECTOR` column for keyword search — that's all you need. If you see references to `VECTOR(1536)` or pgvector, ignore them — those are for the post-MVP upgrade.
 
 8. **Don't forget RLS policies.** Supabase queries will return empty results if RLS is enabled but no policy exists. Always add a public read policy for legal data tables.
+
+9. **Don't ignore BRAND_GUIDELINES.md.** Every frontend component must use the defined color system and typography. No arbitrary colors, no generic shadcn defaults without brand customization.
+
+10. **Always update TASKS.md checkboxes** when completing a task. Check off the "DONE WHEN" items and the plugin checkboxes as you go.
 
 ## Environment Variables
 
