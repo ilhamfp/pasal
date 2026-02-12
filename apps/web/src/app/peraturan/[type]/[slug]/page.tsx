@@ -127,6 +127,15 @@ export default async function LawDetailPage({ params }: PageProps) {
             <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
               {STATUS_LABELS[work.status] || work.status}
             </Badge>
+            {work.content_verified ? (
+              <Badge className="bg-[#E8F5EC] text-[#2E7D52] border-[#2E7D52]/20" variant="outline">
+                ✓ Terverifikasi
+              </Badge>
+            ) : (
+              <Badge className="bg-[#FFF6E5] text-[#C47F17] border-[#C47F17]/20" variant="outline">
+                ⚠ Belum Diverifikasi
+              </Badge>
+            )}
           </div>
           <h1 className="text-2xl font-bold mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
