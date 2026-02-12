@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CopyButton from "@/components/CopyButton";
@@ -88,6 +89,16 @@ export default function ConnectPage() {
               </a>
             </CardContent>
           </Card>
+
+          {/* CTA to search */}
+          <div className="text-center pt-4">
+            <Link
+              href="/search"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Coba cari hukum Indonesia →
+            </Link>
+          </div>
         </div>
       </main>
     </div>

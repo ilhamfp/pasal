@@ -4,11 +4,18 @@ Removes wrong data (was Peraturan Bupati Sleman) and replaces with
 correct seed data for the key demo articles.
 """
 import json
+import os
 import httpx
 import sys
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 API_BASE = "https://api.supabase.com/v1/projects/jnnqvmfhkqwfdlzevfao/database/query"
-TOKEN = "sbp_44963a961c9477e6e3973cb0f621d819ec0b633e"
+TOKEN = os.environ.get("SUPABASE_ACCESS_TOKEN", "")
+if not TOKEN:
+    print("ERROR: Set SUPABASE_ACCESS_TOKEN in root .env")
+    sys.exit(1)
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
     "Content-Type": "application/json",

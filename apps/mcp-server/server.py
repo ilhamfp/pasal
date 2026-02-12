@@ -335,46 +335,49 @@ def list_laws(
         page: Page number (default 1)
         per_page: Results per page (default 20)
     """
-    _get_reg_types()
+    try:
+        _get_reg_types()
 
-    query = sb.table("works").select("*, regulation_types(code, name_id)", count="exact")
+        query = sb.table("works").select("*, regulation_types(code, name_id)", count="exact")
 
-    if regulation_type:
-        reg_type_id = _reg_types.get(regulation_type.upper())
-        if reg_type_id:
-            query = query.eq("regulation_type_id", reg_type_id)
+        if regulation_type:
+            reg_type_id = _reg_types.get(regulation_type.upper())
+            if reg_type_id:
+                query = query.eq("regulation_type_id", reg_type_id)
 
-    if year:
-        query = query.eq("year", year)
+        if year:
+            query = query.eq("year", year)
 
-    if status:
-        query = query.eq("status", status)
+        if status:
+            query = query.eq("status", status)
 
-    if search:
-        query = query.ilike("title_id", f"%{search}%")
+        if search:
+            query = query.ilike("title_id", f"%{search}%")
 
-    offset = (page - 1) * per_page
-    result = query.order("year", desc=True).range(offset, offset + per_page - 1).execute()
+        offset = (page - 1) * per_page
+        result = query.order("year", desc=True).range(offset, offset + per_page - 1).execute()
 
-    total = result.count or 0
-    laws = []
-    for w in (result.data or []):
-        reg = w.get("regulation_types", {})
-        laws.append({
-            "frbr_uri": w["frbr_uri"],
-            "title": w["title_id"],
-            "regulation_type": reg.get("code", ""),
-            "number": w["number"],
-            "year": w["year"],
-            "status": w["status"],
-        })
+        total = result.count or 0
+        laws = []
+        for w in (result.data or []):
+            reg = w.get("regulation_types", {})
+            laws.append({
+                "frbr_uri": w["frbr_uri"],
+                "title": w["title_id"],
+                "regulation_type": reg.get("code", ""),
+                "number": w["number"],
+                "year": w["year"],
+                "status": w["status"],
+            })
 
-    return {
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-        "laws": laws,
-    }
+        return {
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "laws": laws,
+        }
+    except Exception as e:
+        return {"error": f"Failed to list laws: {str(e)}"}
 
 
 def _get_available_pasals(work_id: int) -> list[str]:
