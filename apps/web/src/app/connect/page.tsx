@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CopyButton from "@/components/CopyButton";
 
@@ -17,13 +17,7 @@ export default function ConnectPage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto flex items-center gap-4 py-3 px-4">
-          <Link href="/" className="text-xl font-bold shrink-0">
-            Pasal<span className="text-primary/60">.id</span>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto max-w-2xl px-4 py-12">
         <div className="space-y-8">

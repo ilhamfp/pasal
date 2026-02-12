@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
 import TableOfContents from "@/components/TableOfContents";
@@ -91,16 +92,7 @@ export default async function LawDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto flex items-center gap-4 py-3 px-4">
-          <Link href="/" className="text-xl font-bold shrink-0">
-            Pasal<span className="text-primary/60">.id</span>
-          </Link>
-          <Link href="/search" className="text-sm text-muted-foreground hover:underline">
-            Cari
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <div className="container mx-auto px-4 py-6">
         {/* Law title & metadata */}
