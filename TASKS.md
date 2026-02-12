@@ -658,12 +658,12 @@ CREATE POLICY "Service role full access crawl_jobs" ON crawl_jobs FOR ALL TO ser
    - `run_pipeline(source_id, limit)` → process pending crawl jobs
 
 **DONE WHEN:**
-- [ ] `scripts/crawler/` exists with `__init__.py`, `config.py`, `models.py`, `state.py`, `pipeline.py`.
-- [ ] Migration 011 runs on Supabase. `crawl_jobs` table exists.
-- [ ] `python -c "from scripts.crawler.models import CrawlJob; print('OK')"` works.
-- [ ] `python -c "from scripts.crawler.state import get_pending_jobs; print(get_pending_jobs())"` returns empty list.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `scripts/crawler/` exists with `__init__.py`, `config.py`, `models.py`, `state.py`, `pipeline.py`.
+- [x] Migration 012 runs on Supabase. `crawl_jobs` table exists.
+- [x] `python -c "from scripts.crawler.models import CrawlJob; print('OK')"` works.
+- [x] `python -c "from scripts.crawler.state import get_pending_jobs; print(get_pending_jobs())"` returns empty list.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
@@ -697,11 +697,11 @@ Each source dict includes: `id`, `name`, `base_url`, `content_type`, `est_docume
 2. Add helper functions: `get_sources_by_priority()`, `get_source(id)`, `get_simple_http_sources()`.
 
 **DONE WHEN:**
-- [ ] File exists with 11+ sources.
-- [ ] `python -c "from scripts.crawler.source_registry import get_sources_by_priority; print(len(get_sources_by_priority()))"` prints 11+.
-- [ ] Each source has all required fields (no KeyError when accessing).
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] File exists with 11+ sources.
+- [x] `python -c "from scripts.crawler.source_registry import get_sources_by_priority; print(len(get_sources_by_priority()))"` prints 11.
+- [x] Each source has all required fields (no KeyError when accessing).
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
@@ -725,11 +725,11 @@ Each source dict includes: `id`, `name`, `base_url`, `content_type`, `est_docume
    - CLI interface: `python -m scripts.crawler.seed_jobs --source otf_corpus`
 
 **DONE WHEN:**
-- [ ] `dedup.py` and `seed_jobs.py` exist.
-- [ ] `build_frbr_uri('UU', '13', 2003)` returns `/akn/id/act/uu/2003/13`.
-- [ ] `is_work_duplicate` correctly finds existing works.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `dedup.py` and `seed_jobs.py` exist.
+- [x] `build_frbr_uri('UU', '13', 2003)` returns `/akn/id/act/uu/2003/13`.
+- [x] `is_work_duplicate` correctly finds existing works.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
