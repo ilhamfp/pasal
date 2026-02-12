@@ -3,21 +3,40 @@ import { createClient } from "@/lib/supabase/server";
 export default async function StatsBar() {
   const supabase = await createClient();
 
-  const [worksResult, chunksResult] = await Promise.all([
+  const [uuResult, totalWorksResult, pasalResult] = await Promise.all([
+    supabase
+      .from("works")
+      .select("id, regulation_types!inner(code)", { count: "exact", head: true })
+      .eq("regulation_types.code", "UU"),
     supabase.from("works").select("id", { count: "exact", head: true }),
-    supabase.from("legal_chunks").select("id", { count: "exact", head: true }),
+    supabase
+      .from("document_nodes")
+      .select("id", { count: "exact", head: true })
+      .eq("node_type", "pasal"),
   ]);
 
-  const works = worksResult.count ?? 0;
-  const chunks = chunksResult.count ?? 0;
+  const uuCount = uuResult.count ?? 0;
+  const totalWorks = totalWorksResult.count ?? 0;
+  const pasalCount = pasalResult.count ?? 0;
 
   return (
-    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-      <span>{works} undang-undang</span>
-      <span aria-hidden="true">·</span>
-      <span>{chunks} pasal tersedia</span>
-      <span aria-hidden="true">·</span>
-      <span>Gratis &amp; terbuka</span>
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+      <span className="flex items-center gap-1.5">
+        <span className="font-heading text-lg text-foreground">{uuCount}</span>
+        Undang-Undang
+      </span>
+      <span aria-hidden="true" className="hidden sm:inline">·</span>
+      <span className="flex items-center gap-1.5">
+        <span className="font-heading text-lg text-foreground">{totalWorks}</span>
+        Peraturan
+      </span>
+      <span aria-hidden="true" className="hidden sm:inline">·</span>
+      <span className="flex items-center gap-1.5">
+        <span className="font-heading text-lg text-foreground">{pasalCount}</span>
+        Pasal
+      </span>
+      <span aria-hidden="true" className="hidden sm:inline">·</span>
+      <span>100% Gratis &amp; Open Source</span>
     </div>
   );
 }

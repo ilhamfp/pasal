@@ -6,7 +6,9 @@ import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
+import BookmarkButton from "@/components/BookmarkButton";
 import TableOfContents from "@/components/TableOfContents";
+import AmendmentTimeline from "@/components/reader/AmendmentTimeline";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -211,7 +213,7 @@ export default async function LawDetailPage({ params }: PageProps) {
                     )}
 
                     {allBabPasals.map((pasal) => (
-                      <PasalBlock key={pasal.id} pasal={pasal} />
+                      <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} />
                     ))}
                   </section>
                 );
@@ -219,7 +221,7 @@ export default async function LawDetailPage({ params }: PageProps) {
             ) : (
               // No BAB structure — just show all pasals
               pasalNodes.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} />
+                <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} />
               ))
             )}
 
@@ -238,21 +240,11 @@ export default async function LawDetailPage({ params }: PageProps) {
               </Badge>
             </div>
 
-            {resolvedRels.length > 0 && (
-              <div className="rounded-lg border p-4">
-                <h3 className="font-semibold text-sm mb-3">Hubungan Hukum</h3>
-                <div className="space-y-3">
-                  {resolvedRels.map((rel) => (
-                    <div key={rel.id} className="text-sm">
-                      <p className="text-muted-foreground">{rel.nameId}</p>
-                      <p className="font-medium">
-                        {type.toUpperCase()} {rel.otherWork.number}/{rel.otherWork.year}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <AmendmentTimeline
+              currentWork={work}
+              relationships={resolvedRels}
+              regTypeCode={type.toUpperCase()}
+            />
 
             {work.source_url && (
               <div className="rounded-lg border p-4">
@@ -281,7 +273,7 @@ interface PasalNode {
   heading: string | null;
 }
 
-function PasalBlock({ pasal }: { pasal: PasalNode }) {
+function PasalBlock({ pasal, frbrUri, lawTitle }: { pasal: PasalNode; frbrUri: string; lawTitle: string }) {
   const content = pasal.content_text || "";
   const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
 
@@ -292,7 +284,10 @@ function PasalBlock({ pasal }: { pasal: PasalNode }) {
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-base font-bold">Pasal {pasal.number}</h3>
-        <CopyButton text={jsonData} label="JSON" />
+        <div className="flex items-center gap-1">
+          <BookmarkButton frbrUri={frbrUri} title={lawTitle} pasal={pasal.number} />
+          <CopyButton text={jsonData} label="JSON" />
+        </div>
       </div>
       <div className="text-sm leading-relaxed whitespace-pre-wrap">
         {content}

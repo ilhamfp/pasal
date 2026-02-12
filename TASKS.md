@@ -753,12 +753,12 @@ Each source dict includes: `id`, `name`, `base_url`, `content_type`, `est_docume
    - Use the existing `Header` component. All text in Bahasa Indonesia.
 
 **DONE WHEN:**
-- [ ] `/connect` renders with install command, example prompts, and tool descriptions.
-- [ ] `npm run build` succeeds.
-- [ ] Landing page link to `/connect` works.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] `/connect` renders with install command, example prompts, and tool descriptions.
+- [x] `npm run build` succeeds.
+- [x] Landing page link to `/connect` works.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
@@ -789,14 +789,14 @@ Add sections below the search hero:
 5. **CTA section**: "Mulai Cari" button + "Hubungkan ke Claude" button → `/connect`
 
 **DONE WHEN:**
-- [ ] Landing page has stats, audience, how-it-works, features, and CTA sections.
-- [ ] Stats bar fetches real counts from Supabase.
-- [ ] All text in Bahasa Indonesia.
-- [ ] Responsive on mobile.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] Landing page has stats, audience, how-it-works, features, and CTA sections.
+- [x] Stats bar fetches real counts from Supabase.
+- [x] All text in Bahasa Indonesia.
+- [x] Responsive on mobile.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
@@ -824,13 +824,13 @@ Add sections below the search hero:
 4. Add "Topik" link to Header navigation.
 
 **DONE WHEN:**
-- [ ] `/topik` shows a grid of 4 topic cards.
-- [ ] `/topik/ketenagakerjaan` renders with questions and pasal links.
-- [ ] Questions link to `/search?q=...` pre-filled.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] `/topik` shows a grid of 4 topic cards.
+- [x] `/topik/ketenagakerjaan` renders with questions and pasal links.
+- [x] Questions link to `/search?q=...` pre-filled.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
@@ -855,13 +855,13 @@ Add sections below the search hero:
 4. Add "Bookmark" and "Riwayat" (History) to Header.
 
 **DONE WHEN:**
-- [ ] Bookmark icon on a Pasal toggles save to localStorage.
-- [ ] `/bookmark` shows saved items and history.
-- [ ] Header has bookmark/history links.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] Bookmark icon on a Pasal toggles save to localStorage.
+- [x] `/bookmark` shows saved items and history.
+- [x] Header has bookmark/history links.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
@@ -890,13 +890,13 @@ Add sections below the search hero:
 4. Renders gracefully when no relationships exist (hidden, not broken).
 
 **DONE WHEN:**
-- [ ] Timeline renders on UU 1/1974 showing the 2019 amendment.
-- [ ] Timeline nodes link to related law pages.
-- [ ] Graceful fallback when no relationships exist.
-- [ ] `npm run build` succeeds.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] Timeline renders on UU 1/1974 showing the 2019 amendment.
+- [x] Timeline nodes link to related law pages.
+- [x] Graceful fallback when no relationships exist.
+- [x] `npm run build` succeeds.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 

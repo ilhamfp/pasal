@@ -2,9 +2,19 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CopyButton from "@/components/CopyButton";
+import { Search, FileText, ShieldCheck, BookOpen, MessageSquare, Database, Scale, Quote } from "lucide-react";
 
 const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp/";
 const INSTALL_CMD = `claude mcp add pasal-id --transport http --url ${MCP_URL}`;
+
+const CLAUDE_DESKTOP_CONFIG = `{
+  "mcpServers": {
+    "pasal-id": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-proxy", "https://pasal-mcp-server-production.up.railway.app/mcp/"]
+    }
+  }
+}`;
 
 const EXAMPLE_PROMPTS = [
   "Jelaskan Pasal 81 UU Cipta Kerja tentang ketenagakerjaan",
@@ -14,44 +24,180 @@ const EXAMPLE_PROMPTS = [
   "Bandingkan hak pekerja sebelum dan sesudah UU Cipta Kerja",
 ];
 
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: 1,
+    icon: MessageSquare,
+    title: "Ketik pertanyaan hukum",
+    description: "Tanyakan apa saja tentang hukum Indonesia kepada Claude, dalam bahasa sehari-hari.",
+  },
+  {
+    step: 2,
+    icon: Database,
+    title: "MCP mencari database",
+    description: "Claude secara otomatis memanggil Pasal.id untuk mencari peraturan yang relevan.",
+  },
+  {
+    step: 3,
+    icon: Scale,
+    title: "Dapatkan pasal yang tepat",
+    description: "Sistem mengembalikan teks pasal asli beserta metadata dan status hukumnya.",
+  },
+  {
+    step: 4,
+    icon: Quote,
+    title: "Jawaban dengan sitasi",
+    description: "Claude menjawab pertanyaan Anda dengan mengutip langsung dari sumber hukum resmi.",
+  },
+];
+
+const MCP_TOOLS = [
+  {
+    name: "search_laws",
+    description: "Cari peraturan berdasarkan topik",
+    detail: "Pencarian teks penuh dengan stemmer bahasa Indonesia. Mendukung filter berdasarkan jenis peraturan dan tahun.",
+    icon: Search,
+  },
+  {
+    name: "get_pasal",
+    description: "Ambil teks pasal tertentu",
+    detail: "Dapatkan isi lengkap satu pasal beserta ayat-ayatnya dari undang-undang tertentu.",
+    icon: FileText,
+  },
+  {
+    name: "get_law_status",
+    description: "Cek apakah UU masih berlaku",
+    detail: "Periksa status hukum: berlaku, diubah, atau dicabut, beserta riwayat perubahannya.",
+    icon: ShieldCheck,
+  },
+  {
+    name: "list_laws",
+    description: "Jelajahi daftar peraturan",
+    detail: "Lihat daftar semua peraturan yang tersedia, dengan filter jenis dan paginasi.",
+    icon: BookOpen,
+  },
+];
+
 export default function ConnectPage() {
   return (
     <div className="min-h-screen">
       <Header />
 
-      <main className="container mx-auto max-w-2xl px-4 py-12">
-        <div className="space-y-8">
+      <main className="container mx-auto max-w-3xl px-4 py-12">
+        <div className="space-y-12">
+          {/* Hero */}
           <div className="text-center space-y-3">
-            <h1 className="text-3xl font-bold">Hubungkan Pasal.id ke Claude</h1>
+            <h1 className="font-heading text-4xl tracking-tight">
+              Hubungkan ke Claude
+            </h1>
             <p className="text-lg text-muted-foreground">
               Berikan Claude akses langsung ke hukum Indonesia — tanpa halusinasi,
               dengan sitasi nyata.
             </p>
           </div>
 
+          {/* Install Command — Claude Code */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Perintah Instalasi</CardTitle>
+              <CardTitle className="font-heading text-xl">Claude Code</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Jalankan perintah ini di terminal Claude Code:
+              </p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
+                <code className="flex-1 rounded-lg bg-muted px-3 py-2 text-sm font-mono break-all">
                   {INSTALL_CMD}
                 </code>
                 <CopyButton text={INSTALL_CMD} label="Salin" />
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Jalankan perintah ini di terminal Claude Code atau tambahkan di
-                pengaturan Claude Desktop.
+            </CardContent>
+          </Card>
+
+          {/* Claude Desktop JSON Config */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading text-xl">Claude Desktop</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Tambahkan konfigurasi berikut ke file{" "}
+                <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                  claude_desktop_config.json
+                </code>{" "}
+                Anda:
+              </p>
+              <div className="relative">
+                <pre className="rounded-lg bg-muted px-4 py-3 text-sm font-mono overflow-x-auto">
+                  {CLAUDE_DESKTOP_CONFIG}
+                </pre>
+                <div className="absolute top-2 right-2">
+                  <CopyButton text={CLAUDE_DESKTOP_CONFIG} label="Salin" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Buka Claude Desktop, masuk ke Settings &rarr; Developer &rarr; Edit Config, lalu tempel konfigurasi di atas.
               </p>
             </CardContent>
           </Card>
 
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Coba Sekarang</h2>
+          {/* Cara Kerjanya — How it works */}
+          <section className="space-y-6">
+            <h2 className="font-heading text-2xl tracking-tight text-center">
+              Cara Kerjanya
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {HOW_IT_WORKS_STEPS.map((item) => (
+                <Card key={item.step}>
+                  <CardContent className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-sans font-semibold">
+                        {item.step}
+                      </div>
+                      <item.icon className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-heading text-lg">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* MCP Tools Grid */}
+          <section className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="font-heading text-2xl tracking-tight">
+                Tool yang Tersedia
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Empat tool MCP yang dapat digunakan Claude untuk mengakses database hukum Indonesia.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {MCP_TOOLS.map((tool) => (
+                <Card key={tool.name}>
+                  <CardContent className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <tool.icon className="w-5 h-5 text-primary" />
+                      <code className="font-mono text-sm text-primary">{tool.name}</code>
+                    </div>
+                    <p className="text-sm font-sans font-medium">{tool.description}</p>
+                    <p className="text-xs text-muted-foreground">{tool.detail}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Example Prompts */}
+          <section className="space-y-6">
+            <h2 className="font-heading text-2xl tracking-tight text-center">
+              Coba Sekarang
+            </h2>
             <div className="space-y-3">
               {EXAMPLE_PROMPTS.map((prompt, i) => (
-                <Card key={i} className="hover:bg-muted/50 transition-colors">
+                <Card key={i} className="transition-colors hover:border-primary/30">
                   <CardContent className="flex items-center justify-between py-3">
                     <p className="text-sm">&ldquo;{prompt}&rdquo;</p>
                     <CopyButton text={prompt} label="Salin" />
@@ -59,11 +205,12 @@ export default function ConnectPage() {
                 </Card>
               ))}
             </div>
-          </div>
+          </section>
 
+          {/* What is MCP */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Apa itu MCP?</CardTitle>
+              <CardTitle className="font-heading text-xl">Apa itu MCP?</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
               <p>
@@ -78,19 +225,20 @@ export default function ConnectPage() {
                 href="https://modelcontextprotocol.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+                className="inline-block text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Pelajari lebih lanjut tentang MCP →
+                Pelajari lebih lanjut tentang MCP &rarr;
               </a>
             </CardContent>
           </Card>
 
+          {/* CTA */}
           <div className="text-center pt-4">
             <Link
               href="/search"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-sans font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Coba cari hukum Indonesia →
+              Coba cari hukum Indonesia &rarr;
             </Link>
           </div>
         </div>

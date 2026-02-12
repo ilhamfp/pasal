@@ -18,6 +18,12 @@ export default function Header({ showSearch = false, searchDefault }: HeaderProp
           <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
             Cari
           </Link>
+          <Link href="/topik" className="text-muted-foreground hover:text-foreground transition-colors">
+            Topik
+          </Link>
+          <Link href="/bookmark" className="text-muted-foreground hover:text-foreground transition-colors">
+            Simpan
+          </Link>
           <Link href="/connect" className="text-muted-foreground hover:text-foreground transition-colors">
             Hubungkan
           </Link>
