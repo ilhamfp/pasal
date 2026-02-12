@@ -49,6 +49,10 @@ def _reset():
     server._reg_types_by_id = {}
     server._law_count = None
     server._law_count_ts = 0.0
+    server._pasal_cache.clear()
+    server._status_cache.clear()
+    for limiter in server._rate_limiters.values():
+        limiter.reset()
     server.sb.reset_mock()
     yield
 
@@ -544,3 +548,101 @@ class TestNoResultsMessage:
         msg = server._no_results_message("'test'")
         assert "19" in msg
         assert "does NOT mean" in msg.lower() or "does NOT" in msg
+
+
+# ===================================================================
+# TTL Cache tests
+# ===================================================================
+
+class TestTTLCache:
+
+    def test_set_and_get(self):
+        cache = server.TTLCache(ttl_seconds=60)
+        cache.set("key1", {"data": "value"})
+        assert cache.get("key1") == {"data": "value"}
+
+    def test_miss_returns_none(self):
+        cache = server.TTLCache(ttl_seconds=60)
+        assert cache.get("nonexistent") is None
+
+    def test_expiry(self):
+        cache = server.TTLCache(ttl_seconds=1)
+        cache.set("key1", "value")
+        import time as _time
+        _time.sleep(1.1)
+        assert cache.get("key1") is None
+
+    def test_clear(self):
+        cache = server.TTLCache(ttl_seconds=60)
+        cache.set("k1", "v1")
+        cache.set("k2", "v2")
+        cache.clear()
+        assert cache.get("k1") is None
+        assert cache.get("k2") is None
+
+
+# ===================================================================
+# get_pasal cache hit skips DB
+# ===================================================================
+
+class TestPasalCaching:
+
+    def test_second_call_skips_db(self, reg_cache):
+        work = {"id": 1, "title_id": "T", "frbr_uri": "/a", "number": "1",
+                "year": 2020, "status": "berlaku", "regulation_type_id": 1, "source_url": ""}
+        node = {"id": 10, "content_text": "Text", "parent_id": None, "number": "5", "node_type": "pasal"}
+
+        node_calls = iter([_qm(data=[node]), _qm(data=[])])
+        server.sb.table.side_effect = lambda n: (
+            _qm(data=[work]) if n == "works" else next(node_calls)
+        )
+
+        result1 = get_pasal("UU", "1", 2020, "5")
+        assert "error" not in result1
+
+        # Reset mock call tracking (but cache should still be populated)
+        server.sb.reset_mock()
+
+        result2 = get_pasal("UU", "1", 2020, "5")
+        assert result2 == result1
+        # DB should NOT have been called
+        server.sb.table.assert_not_called()
+
+
+# ===================================================================
+# Rate limiter tests
+# ===================================================================
+
+class TestRateLimiter:
+
+    def test_allows_within_limit(self):
+        rl = server.RateLimiter(5, window_seconds=60)
+        for _ in range(5):
+            assert rl.check() is None
+
+    def test_blocks_over_limit(self):
+        rl = server.RateLimiter(3, window_seconds=60)
+        for _ in range(3):
+            rl.check()
+        wait = rl.check()
+        assert wait is not None
+        assert wait > 0
+
+    def test_reset_clears(self):
+        rl = server.RateLimiter(2, window_seconds=60)
+        rl.check()
+        rl.check()
+        assert rl.check() is not None
+        rl.reset()
+        assert rl.check() is None
+
+    def test_search_laws_rate_limited(self, reg_cache):
+        # Fill up the limiter
+        limiter = server._rate_limiters["search_laws"]
+        for _ in range(30):
+            limiter.check()
+
+        server.sb.rpc.return_value.execute.return_value = MagicMock(data=[])
+        result = search_laws("test")
+        assert isinstance(result, list)
+        assert result[0].get("error") == "Rate limit exceeded"

@@ -40,9 +40,11 @@ mcp = FastMCP(
     ),
 )
 
+# Prefer anon key (read-only via RLS) over service role key
+_supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ["SUPABASE_KEY"]
 sb = create_client(
     os.environ["SUPABASE_URL"],
-    os.environ["SUPABASE_KEY"],
+    _supabase_key,
 )
 
 # Cache regulation types
@@ -98,6 +100,87 @@ def _no_results_message(context: str) -> str:
     )
 
 
+# ---------------------------------------------------------------------------
+# TTL Cache
+# ---------------------------------------------------------------------------
+
+class TTLCache:
+    """Simple in-memory cache with per-key TTL expiration."""
+
+    def __init__(self, ttl_seconds: int = 3600):
+        self._ttl = ttl_seconds
+        self._data: dict[str, tuple[float, object]] = {}
+
+    def get(self, key: str) -> object | None:
+        entry = self._data.get(key)
+        if entry is None:
+            return None
+        ts, value = entry
+        if time.time() - ts > self._ttl:
+            del self._data[key]
+            return None
+        return value
+
+    def set(self, key: str, value: object) -> None:
+        self._data[key] = (time.time(), value)
+
+    def clear(self) -> None:
+        self._data.clear()
+
+
+_pasal_cache = TTLCache(ttl_seconds=3600)    # 1 hour
+_status_cache = TTLCache(ttl_seconds=3600)   # 1 hour
+
+
+# ---------------------------------------------------------------------------
+# Rate Limiter
+# ---------------------------------------------------------------------------
+
+class RateLimiter:
+    """Simple sliding window rate limiter per tool."""
+
+    def __init__(self, max_calls: int, window_seconds: int = 60):
+        self._max = max_calls
+        self._window = window_seconds
+        self._calls: list[float] = []
+
+    def check(self) -> int | None:
+        """Return None if allowed, or seconds to wait if rate-limited."""
+        now = time.time()
+        cutoff = now - self._window
+        self._calls = [t for t in self._calls if t > cutoff]
+        if len(self._calls) >= self._max:
+            oldest = self._calls[0]
+            return int(oldest + self._window - now) + 1
+        self._calls.append(now)
+        return None
+
+    def reset(self) -> None:
+        self._calls.clear()
+
+
+_rate_limiters = {
+    "search_laws": RateLimiter(30),
+    "get_pasal": RateLimiter(60),
+    "get_law_status": RateLimiter(60),
+    "list_laws": RateLimiter(30),
+}
+
+
+def _check_rate_limit(tool_name: str) -> dict | None:
+    """Return rate limit error dict if exceeded, else None."""
+    limiter = _rate_limiters.get(tool_name)
+    if not limiter:
+        return None
+    wait = limiter.check()
+    if wait is not None:
+        return _with_disclaimer({
+            "error": "Rate limit exceeded",
+            "retry_after_seconds": wait,
+        })
+    return None
+
+
 @mcp.tool
 def search_laws(
     query: str,
@@ -119,6 +202,10 @@ def search_laws(
         year_to: Only return laws enacted before this year
         limit: Maximum number of results (default 10)
     """
+    rate_err = _check_rate_limit("search_laws")
+    if rate_err:
+        return [rate_err]
+
     t0 = time.time()
     logger.info("search_laws called: query=%r type=%s year_from=%s year_to=%s limit=%s",
                 query, regulation_type, year_from, year_to, limit)
@@ -217,6 +304,16 @@ def get_pasal(
         year: Year the law was enacted, e.g., 2003
         pasal_number: Article number, e.g., "81" or "81A"
     """
+    rate_err = _check_rate_limit("get_pasal")
+    if rate_err:
+        return rate_err
+
+    cache_key = f"{law_type.upper()}:{law_number}:{year}:{pasal_number}"
+    cached = _pasal_cache.get(cache_key)
+    if cached is not None:
+        logger.info("get_pasal cache hit: %s", cache_key)
+        return cached
+
     t0 = time.time()
     logger.info("get_pasal called: %s %s/%d pasal %s", law_type, law_number, year, pasal_number)
 
@@ -275,7 +372,7 @@ def get_pasal(
                     chapter_info += f" - {p['heading']}"
 
         logger.info("get_pasal: found pasal %s (%.0fms)", pasal_number, (time.time() - t0) * 1000)
-        return _with_disclaimer({
+        result = _with_disclaimer({
             "law_title": work["title_id"],
             "frbr_uri": work["frbr_uri"],
             "pasal_number": pasal_number,
@@ -285,6 +382,8 @@ def get_pasal(
             "status": work["status"],
             "source_url": work.get("source_url", ""),
         })
+        _pasal_cache.set(cache_key, result)
+        return result
     except Exception as e:
         logger.error("get_pasal failed: %s", e)
         return _with_disclaimer({"error": f"Failed to retrieve pasal: {str(e)}"})
@@ -305,6 +404,16 @@ def get_law_status(
         law_number: The number of the law, e.g., "1"
         year: Year the law was enacted, e.g., 1974
     """
+    rate_err = _check_rate_limit("get_law_status")
+    if rate_err:
+        return rate_err
+
+    cache_key = f"{law_type.upper()}:{law_number}:{year}"
+    cached = _status_cache.get(cache_key)
+    if cached is not None:
+        logger.info("get_law_status cache hit: %s", cache_key)
+        return cached
+
     t0 = time.time()
     logger.info("get_law_status called: %s %s/%d", law_type, law_number, year)
 
@@ -383,7 +492,7 @@ def get_law_status(
 
         logger.info("get_law_status: %s %s/%d status=%s (%.0fms)",
                      law_type, law_number, year, work["status"], (time.time() - t0) * 1000)
-        return _with_disclaimer({
+        result = _with_disclaimer({
             "law_title": work["title_id"],
             "frbr_uri": work["frbr_uri"],
             "status": work["status"],
@@ -392,6 +501,8 @@ def get_law_status(
             "amendments": amendments,
             "related_laws": related,
         })
+        _status_cache.set(cache_key, result)
+        return result
     except Exception as e:
         logger.error("get_law_status failed: %s", e)
         return _with_disclaimer({"error": f"Failed to retrieve law status: {str(e)}"})
@@ -416,6 +527,10 @@ def list_laws(
         page: Page number (default 1)
         per_page: Results per page (default 20)
     """
+    rate_err = _check_rate_limit("list_laws")
+    if rate_err:
+        return rate_err
+
     t0 = time.time()
     logger.info("list_laws called: type=%s year=%s status=%s search=%s page=%d",
                 regulation_type, year, status, search, page)
