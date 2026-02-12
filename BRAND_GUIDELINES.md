@@ -7,13 +7,12 @@
 ## Quick Reference (for fast lookups)
 
 ```
-PRIMARY COLOR:    oklch(0.544 0.114 26)   →  #A8524C  (volcanic earth rosewood, hue ~26°)
-ACCENT COLOR:     oklch(0.473 0.068 252)  →  #3F5E81  (warm steel-blue, hue ~252°)
-GOLD (decorative): oklch(0.667 0.108 88)  →  #B0903D  (antique gold)
-HEADING FONT:     Plus Jakarta Sans (font-heading)
-BODY FONT:        Inter (font-sans)
+PRIMARY COLOR:    oklch(0.450 0.065 170)  →  #2B6150  (verdigris — aged copper patina)
+SURFACE:          #F8F5F0 (warm stone)
+HEADING FONT:     Instrument Serif (font-heading)
+BODY FONT:        Instrument Sans (font-sans)
 MONO FONT:        JetBrains Mono (font-mono)
-DEFAULT RADIUS:   0.625rem (10px)
+DEFAULT RADIUS:   0.5rem (8px)
 BASE SPACING:     4px (0.25rem)
 MAX WIDTH:        1280px (80rem)
 READER WIDTH:     768px (48rem)
@@ -25,9 +24,11 @@ READER WIDTH:     768px (48rem)
 
 **Five words:** Trustworthy, Accessible, Clear, Modern, Open.
 
-**The feeling:** A modern, well-lit public library — not a dim government office. Calm authority. Quiet confidence. Clean typography, generous whitespace, warm but restrained color. The gravitas of a mahogany courtroom, the openness of a public resource. "Finally — someone built the legal resource Indonesia deserves."
+**The feeling:** A stone-walled museum gallery with excellent lighting. Quiet power. The restraint *is* the brand — color is earned, not given. Near-monochrome warm graphite provides the authority. One deliberate accent (verdigris) provides the life. Typography, whitespace, and the quality of the reading experience carry everything.
 
-**What this is NOT:** AI-slop purple gradients. Generic SaaS blue. Cold corporate gray. Busy government portals. Cheap teal/mint fintech aesthetic.
+**Design DNA:** Batu Candi — the weathered volcanic stone of Borobudur and Prambanan. Warm gray with depth, not cold corporate gray. Authority through material honesty and restraint, not decoration.
+
+**What this is NOT:** AI-slop purple gradients. Generic SaaS blue. Cheap fintech teal/mint. Over-decorated government portals. Busy, colorful dashboards. Gold-and-burgundy "luxury" theater.
 
 ---
 
@@ -35,138 +36,138 @@ READER WIDTH:     768px (48rem)
 
 ### 2.1 Design Rationale
 
-**Three-color hierarchy:**
+**Near-monochrome with one accent:**
 
-1. **Primary — Rosewood "Tanah Api"** (volcanic earth). Deep warm red-brown for brand identity, primary buttons, navigation, headers. Culturally rooted in Javanese volcanic soil, soga batik dye, Majapahit red-brick architecture, and sonokeling (Indonesian rosewood) heartwood.
+The Batu Candi palette is deliberately restrained. A warm graphite neutral scale handles 95% of the interface — backgrounds, text, borders, cards, navigation. One accent color (verdigris, an aged copper-green patina) handles all interactive elements: buttons, links, focus rings, status accents. Nothing else competes for attention. The content is the design.
 
-2. **Accent — Steel-Blue "Baja"** (warm steel). Muted warm-leaning blue for inline links, focus rings, secondary interactive elements, and data visualization. Provides cool counterpoint to the warm palette — prevents monotone warmth. Think aged steel, twilight, not corporate SaaS blue.
+**Why this works for a legal platform:**
+- Dense legal text needs zero visual competition — warm neutrals stay invisible
+- One accent color means links and actions are instantly identifiable
+- The warm undertone (hue 40–60° in neutrals) prevents the coldness of pure gray
+- Verdigris is culturally resonant (aged metal, patinated temple fixtures) without being literal
+- Error/destructive states (cool red) have zero collision with a green accent
 
-3. **Gold — "Emas"** (antique gold). Purely decorative — premium badges, highlights, special callouts, icons. References the Garuda Pancasila and songket gold-thread tradition. Never used for primary actions.
+**Scale generation:** Both the graphite and verdigris scales use smooth oklch curves with very low chroma. The graphite scale is near-achromatic (chroma 0.005–0.012) with a warm yellow-brown undertone. The verdigris scale peaks at chroma 0.065 — muted and earthy, not mint or emerald.
 
-**Distribution:** 60% warm neutrals, 30% rosewood (with steel-blue as a functional subset within the 30%), 10% gold decorative.
+### 2.2 Primary — "Patina" (Verdigris Accent)
 
-**Error-state differentiation:** The primary rosewood lives at hue ~26° with chroma ~0.114 (muted, earthy). Error/destructive states use a *cool vivid red* at hue ~23° with much higher chroma (~0.205). Combined with icon, container, and typography differentiation, this eliminates semantic collision. See Section 2.5.
+| Token   | Hex       | oklch                        | CR (stone) | Use                                |
+|---------|-----------|------------------------------|------------|------------------------------------|
+| `50`    | `#EAF7F2` | `oklch(0.965 0.015 170)`    | 1.0:1      | Subtle tinted backgrounds          |
+| `100`   | `#D8EEE5` | `oklch(0.930 0.025 170)`    | 1.1:1      | Selected states, hover bg          |
+| `200`   | `#BCDDCF` | `oklch(0.870 0.040 168)`    | 1.3:1      | Decorative, light accents          |
+| `300`   | `#96C3B1` | `oklch(0.780 0.055 168)`    | 1.8:1      | Dark mode primary, icons           |
+| `400`   | `#6B9B88` | `oklch(0.650 0.060 168)`    | 2.9:1      | Large text only, secondary icons   |
+| `500`   | `#437865` | `oklch(0.530 0.065 168)`    | 4.7:1 AA   | Links on white surfaces            |
+| `600`   | `#2B6150` | `oklch(0.450 0.065 170)`    | 6.6:1 AA   | **★ PRIMARY — buttons, links, UI** |
+| `700`   | `#204C3E` | `oklch(0.380 0.055 170)`    | 8.9:1 AAA  | Hover state                        |
+| `800`   | `#15382D` | `oklch(0.310 0.045 170)`    | 11.8:1 AAA | Pressed/active state               |
+| `900`   | `#0E271F` | `oklch(0.250 0.035 170)`    | 14.5:1 AAA | Deep accent                        |
+| `950`   | `#0C1C16` | `oklch(0.210 0.025 170)`    | 16.2:1 AAA | Near-black verdigris               |
 
-**Scale generation:** The rosewood and steel-blue scales are generated using smooth oklch curves — lightness ramps linearly, chroma follows a bell curve (peaking in the mid-range where color is most alive), and hue drifts gently (warmer in light steps, cooler in dark steps). This ensures perceptually uniform steps with no jarring jumps.
-
-### 2.2 Primary — "Tanah Api" (Volcanic Earth Rosewood)
-
-| Token   | Hex       | oklch                        | Use                                |
-|---------|-----------|------------------------------|------------------------------------|
-| `50`    | `#FFEBE3` | `oklch(0.960 0.030 38)`     | Subtle tinted backgrounds          |
-| `100`   | `#F9D3C9` | `oklch(0.896 0.045 35)`     | Selected states, hover bg          |
-| `200`   | `#E9AB9E` | `oklch(0.796 0.075 32)`     | Dark mode primary, decorative      |
-| `300`   | `#D8897C` | `oklch(0.708 0.100 30)`     | Majapahit terracotta — icons       |
-| `400`   | `#C26B61` | `oklch(0.624 0.113 28)`     | Large text, secondary buttons      |
-| `500`   | `#A8524C` | `oklch(0.544 0.114 26)`     | **★ PRIMARY — buttons, nav, UI**   |
-| `600`   | `#8B3F3C` | `oklch(0.467 0.105 24)`     | Hover state                        |
-| `700`   | `#6D2F2F` | `oklch(0.391 0.088 22)`     | Pressed/active state               |
-| `800`   | `#502223` | `oklch(0.318 0.069 20)`     | Dark accent, immersive sections    |
-| `900`   | `#351617` | `oklch(0.246 0.050 19)`     | Sonokeling dark — deep accents     |
-| `950`   | `#291011` | `oklch(0.210 0.042 18)`     | Near-black rosewood                |
-
-**NOTE:** The base primary is at the `500` step (#A8524C). This provides a comfortable balance of warmth, screen readability, and interactive headroom. Contrast with white: 5.3:1 (WCAG AA — passes for buttons, large text, and UI elements). Use `600` for hover, `700` for pressed. Steps `400` and lighter are decorative or for large text only.
+**NOTE:** The base primary is at the `600` step (#2B6150). Contrast with white: 7.2:1 (WCAG AA). Contrast with stone (#F8F5F0): 6.6:1 (AA). Use `700` for hover, `800` for pressed.
 
 **Button state mapping:**
-- Default: `500` (#A8524C)
-- Hover: `600` (#8B3F3C) — or white overlay at 10% for subtle lightening
-- Pressed: `700` (#6D2F2F) + `scale(0.98)`
-- Dark backgrounds, hero sections: `800`–`900`
+- Default: `600` (#2B6150)
+- Hover: `700` (#204C3E)
+- Pressed: `800` (#15382D) + `scale(0.98)`
+- On dark backgrounds: `300` (#96C3B1) text or filled buttons with dark text
 
-### 2.3 Accent — "Baja" (Warm Steel-Blue)
+### 2.3 Neutrals — "Batu" (Warm Graphite)
 
-| Token   | Hex       | oklch                        | Use                                |
-|---------|-----------|------------------------------|------------------------------------|
-| `50`    | `#EAF3FF` | `oklch(0.960 0.020 258)`    | Subtle info/link backgrounds       |
-| `100`   | `#D1DEF1` | `oklch(0.897 0.030 257)`    | Selected link states               |
-| `200`   | `#A9BFDE` | `oklch(0.799 0.050 256)`    | Dark mode accent, decorative       |
-| `300`   | `#87A4CA` | `oklch(0.711 0.065 255)`    | Icons (secondary)                  |
-| `400`   | `#698BB5` | `oklch(0.628 0.074 254)`    | Secondary interactive              |
-| `500`   | `#52749C` | `oklch(0.549 0.074 253)`    | Inline links in body text          |
-| `600`   | `#3F5E81` | `oklch(0.473 0.068 252)`    | **★ ACCENT — links, focus rings**  |
-| `700`   | `#2F4A66` | `oklch(0.399 0.058 251)`    | Link hover                         |
-| `800`   | `#21364B` | `oklch(0.326 0.046 250)`    | Pressed state                      |
-| `900`   | `#152433` | `oklch(0.255 0.034 249)`    | Dark accent text                   |
-| `950`   | `#0F1C27` | `oklch(0.220 0.029 248)`    | Near-black steel                   |
-
-**NOTE:** The accent base is at the `600` step (#3F5E81). Contrast with white: 6.7:1 (WCAG AA). Contrast with cream (#FAF6F0): 6.2:1. This is the default link color in body text and the focus-ring color for form elements.
-
-**Link hierarchy:**
-- Inline references in legal text: steel-blue `500`–`600`
-- Navigation CTAs ("Baca Selengkapnya →"): rosewood `500`
-- This separation gives users two clear signals: "reference link" vs "action link"
-
-### 2.4 Gold — "Emas" (Antique Gold, Decorative Only)
+Near-achromatic with warm undertone (hue 38–60°). NOT cool slate — these have a subtle yellow-brown warmth that harmonizes with verdigris and prevents clinical coldness.
 
 | Token   | Hex       | oklch                        | Use                            |
 |---------|-----------|------------------------------|--------------------------------|
-| `50`    | `#FBF7EE` | `oklch(0.977 0.013 87)`     | Callout/highlight bg           |
-| `100`   | `#F5F0E3` | `oklch(0.955 0.018 89)`     | Badge backgrounds              |
-| `200`   | `#E8DCC5` | `oklch(0.898 0.033 84)`     | Light accents                  |
-| `300`   | `#D7B18B` | `oklch(0.785 0.067 67)`     | Champagne — bridge tone ★      |
-| `400`   | `#C9A84C` | `oklch(0.743 0.117 90)`     | Premium badges, icons          |
-| `500`   | `#B0903D` | `oklch(0.667 0.108 88)`     | **GOLD — highlights, premium** |
-| `600`   | `#8B6914` | `oklch(0.541 0.104 84)`     | Solo keraton gold — hover      |
-| `700`   | `#6B4E06` | `oklch(0.443 0.088 83)`     | Active/pressed                 |
-| `800`   | `#4A3604` | `oklch(0.346 0.068 84)`     | Dark accent text               |
-| `900`   | `#332500` | `oklch(0.274 0.056 87)`     | Darkest accent                 |
+| `50`    | `#F6F3F0` | `oklch(0.965 0.005 60)`     | Alternate background           |
+| `100`   | `#EEE8E4` | `oklch(0.935 0.008 60)`     | Card background alt            |
+| `200`   | `#DDD6D1` | `oklch(0.880 0.010 60)`     | Borders, dividers              |
+| `300`   | `#C4BCB6` | `oklch(0.800 0.012 58)`     | Disabled states                |
+| `400`   | `#958D88` | `oklch(0.650 0.012 55)`     | Placeholder text, muted        |
+| `500`   | `#68625E` | `oklch(0.500 0.010 50)`     | Secondary text                 |
+| `600`   | `#524C48` | `oklch(0.420 0.010 48)`     | Body text                      |
+| `700`   | `#3F3936` | `oklch(0.350 0.010 45)`     | Strong body text               |
+| `800`   | `#2D2826` | `oklch(0.280 0.008 42)`     | Heading text                   |
+| `900`   | `#1D1A18` | `oklch(0.220 0.006 40)`     | Ink — primary text, nav        |
+| `950`   | `#141110` | `oklch(0.180 0.005 38)`     | True dark, near-black          |
 
-**Gold-300 (#D7B18B, "Champagne")** is the critical bridge tone. It connects rosewood warmth and gold richness. Use it for subtle dividers, premium card headers, or anywhere you need warmth without full gold saturation.
+**Key surface tokens:**
+- **Page background:** `#F8F5F0` (warm stone — between 50 and 100)
+- **Cards:** `#FFFFFF` (pure white — lifts off warm background)
+- **Ink (primary text):** `#1D1A18` (neutral-900)
+- **Body text:** `#524C48` (neutral-600)
+- **Muted text:** `#958D88` (neutral-400)
+- **Borders:** `#DDD6D1` (neutral-200)
 
-**Gold is decorative only.** Never use for primary/secondary actions. Never in the logo. Reserve for premium badges, star ratings, highlighted callouts, and sparse visual accents.
-
-### 2.5 Neutrals — "Batu" (Warm Stone)
-
-Warm-toned neutrals. NOT cool slate — these have a warm (yellow/ochre) undertone to harmonize with the rosewood + gold palette.
-
-| Token   | Hex       | oklch                        | Use                            |
-|---------|-----------|------------------------------|--------------------------------|
-| `0`     | `#FFFFFF` | `oklch(1 0 0)`              | Card surfaces (lifts off bg)   |
-| `25`    | `#FEFCFA` | `oklch(0.992 0.003 67)`     | Off-white                      |
-| `50`    | `#FAF6F0` | `oklch(0.975 0.009 78)`     | Page background (light mode)   |
-| `100`   | `#F5F0E8` | `oklch(0.957 0.012 80)`     | Card background alt            |
-| `200`   | `#E8DFD4` | `oklch(0.908 0.018 73)`     | Borders, dividers              |
-| `300`   | `#D4C9BB` | `oklch(0.841 0.023 74)`     | Disabled states                |
-| `400`   | `#A89A8A` | `oklch(0.694 0.028 71)`     | Placeholder text               |
-| `500`   | `#7A6E60` | `oklch(0.545 0.026 72)`     | Secondary text                 |
-| `600`   | `#5C534A` | `oklch(0.448 0.019 67)`     | Body text                      |
-| `700`   | `#433D36` | `oklch(0.364 0.014 72)`     | Heading text                   |
-| `800`   | `#2D2923` | `oklch(0.283 0.012 78)`     | Primary text (light mode)      |
-| `900`   | `#1C1916` | `oklch(0.216 0.007 67)`     | Near-black                     |
-| `950`   | `#0F0E0C` | `oklch(0.164 0.004 85)`     | True dark                      |
-
-### 2.6 Semantic Colors
-
-Error states use a **cool vivid red** that is perceptually distinct from the brand rosewood through three channels:
-- **Hue:** Brand ~26° (warm, toward brown) → Error ~23° oklch (cooler, toward pink-red)
-- **Chroma:** Brand ~0.114 (muted, earthy) → Error ~0.205 (vivid, alarming) — nearly 2x
-- **Context:** Brand = fills (buttons, headers). Error = borders on inputs, inline text with icon, contained alert boxes. Never share visual treatment.
-- **Always pair error with icons** (✕, ⚠) and explicit text — never rely on color alone.
+### 2.4 Semantic Colors
 
 | Purpose                | Light BG    | Base        | Dark text   |
 |------------------------|-------------|-------------|-------------|
-| Success (Hijau)        | `#ECFDF5`   | `#2E9958`   | `#065F46`   |
-| Warning (Kuning)       | `#FFF8EB`   | `#EB9114`   | `#92400E`   |
-| Error (Merah)          | `#FBE9EB`   | `#CF2233`   | `#991B1B`   |
-| Info (Biru)            | `#EAF3FF`   | `#3F5E81`   | `#21364B`   |
+| Success (Hijau)        | `#E8F5EC`   | `#2E7D52`   | `#065F46`   |
+| Warning (Kuning)       | `#FFF6E5`   | `#C47F17`   | `#92400E`   |
+| Error (Merah)          | `#FDF2F2`   | `#C53030`   | `#991B1B`   |
+| Info (Patina)          | `#EAF7F2`   | `#2B6150`   | `#15382D`   |
 
-**Note:** Info now uses steel-blue (`#3F5E81` / `#EAF3FF`) rather than a separate blue. This keeps the overall palette cohesive — steel-blue does double duty as accent and info semantic.
+**Note:** Info states use the primary verdigris — no extra color needed. Error/destructive uses cool red (#C53030), which has zero hue collision with the green accent. Success uses a slightly different green (warmer, more yellow-green) to remain distinguishable from the blue-green verdigris primary.
 
-### 2.7 Legal Status Colors
+### 2.5 Legal Status Colors
 
 | Status               | Color       | Label           | Badge treatment                       |
 |----------------------|-------------|-----------------|---------------------------------------|
-| Berlaku (In force)   | `#2E9958`   | ✅ Berlaku       | Green-tinted bg, green text           |
-| Diubah (Amended)     | `#EB9114`   | ⚠️ Diubah        | Amber-tinted bg, amber text           |
-| Dicabut (Revoked)    | `#CF2233`   | ❌ Dicabut       | Cool red-tinted bg, cool red text     |
-
-**Note on Dicabut:** Uses the cool vivid red (#CF2233), NOT the brand rosewood. The chroma difference (0.205 vs 0.114) ensures revoked status reads as a warning, not as a brand element.
+| Berlaku (In force)   | `#2E7D52`   | Berlaku          | Green-tinted bg (#E8F5EC), green text |
+| Diubah (Amended)     | `#C47F17`   | Diubah           | Amber-tinted bg (#FFF6E5), amber text |
+| Dicabut (Revoked)    | `#C53030`   | Dicabut          | Red-tinted bg (#FDF2F2), red text     |
 
 ---
 
-## 3. Implementation: globals.css
+## 3. Typography
 
-Drop-in replacement for `apps/web/src/app/globals.css`. This preserves full shadcn/ui compatibility.
+### 3.1 Typeface Selection
+
+| Role       | Typeface           | Why                                                                 |
+|------------|--------------------|---------------------------------------------------------------------|
+| Headings   | **Instrument Serif** | Refined, slightly condensed serif with beautiful italics. Formal without being stiff. Reads as editorial, scholarly, deliberate. Only weight 400 — hierarchy comes from size and italic, not boldness. |
+| Body / UI  | **Instrument Sans**  | Same designer, same proportions as Instrument Serif. Shared x-height and character width ensures seamless harmony. Clean enough for UI, warm enough for long-form reading. |
+| Code       | **JetBrains Mono**   | Clear, readable monospace for MCP commands, article numbers, code blocks. |
+
+**Why Instrument:** The serif and sans share DNA — designed as a family by Rodrigo Fuenzalida. This eliminates the "two fonts from different worlds" problem. The serif provides gravitas for headings; the sans provides clarity for body text and UI. They feel like one voice at two registers.
+
+**The italic:** Instrument Serif's italic is a key brand element. Use it for emphasis, for the secondary line in hero text (*dengan mudah*), for legal Latin terms, and for pull quotes. It adds editorial elegance that sans-serif cannot provide.
+
+### 3.2 Typography Scale
+
+Base: `16px` (`1rem`).
+
+| Level          | Size            | Weight | Line Height | Letter Spacing | Font            |
+|----------------|-----------------|--------|-------------|----------------|-----------------|
+| **Display**    | `2.75rem` (44px)| 400    | 1.15        | `-0.01em`      | `font-heading`  |
+| **H1**         | `2.375rem`(38px)| 400    | 1.2         | `-0.01em`      | `font-heading`  |
+| **H2**         | `1.75rem` (28px)| 400    | 1.25        | `-0.005em`     | `font-heading`  |
+| **H3**         | `1.25rem` (20px)| 400    | 1.35        | `0`            | `font-heading`  |
+| **H4**         | `1.125rem`(18px)| 400    | 1.4         | `0`            | `font-heading`  |
+| **Body Large** | `1.125rem`(18px)| 400    | 1.8         | `0`            | `font-sans`     |
+| **Body Base**  | `1rem` (16px)   | 400    | 1.85        | `0`            | `font-sans`     |
+| **Body Small** | `0.875rem`(14px)| 400    | 1.7         | `0`            | `font-sans`     |
+| **Caption**    | `0.75rem` (12px)| 500    | 1.5         | `0.01em`       | `font-sans`     |
+| **Label**      | `0.75rem` (12px)| 600    | 1.5         | `0.05em`       | `font-sans`     |
+
+**Important:** Instrument Serif only has weight 400. All heading hierarchy is achieved through size, not weight. This is by design — it creates a calmer, more refined visual rhythm than bold headings. For UI labels and navigation where weight variation is needed, use Instrument Sans (which supports 400–700).
+
+**Usage in code:**
+```html
+<h1 class="font-heading text-4xl tracking-tight">
+  Cari hukum Indonesia<br />
+  <em class="text-muted-foreground">dengan mudah</em>
+</h1>
+<p class="font-sans text-base leading-relaxed">Body text in Instrument Sans</p>
+<code class="font-mono text-sm">claude mcp add pasal-id</code>
+```
+
+---
+
+## 4. Implementation: globals.css
+
+Drop-in replacement for `apps/web/src/app/globals.css`. Full shadcn/ui compatibility.
 
 ```css
 @import "tailwindcss";
@@ -178,8 +179,8 @@ Drop-in replacement for `apps/web/src/app/globals.css`. This preserves full shad
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-heading: var(--font-plus-jakarta);
-  --font-sans: var(--font-inter);
+  --font-heading: var(--font-instrument-serif);
+  --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-jetbrains);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -220,112 +221,112 @@ Drop-in replacement for `apps/web/src/app/globals.css`. This preserves full shad
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  /* Primary (Tanah Api / Volcanic Earth Rosewood) */
-  --primary: oklch(0.544 0.114 26);
-  --primary-foreground: oklch(0.975 0.009 78);
+  /* Primary (Patina / Verdigris) */
+  --primary: oklch(0.450 0.065 170);
+  --primary-foreground: oklch(1 0 0);
 
-  /* Surfaces — warm parchment tones */
-  --background: oklch(0.975 0.009 78);
-  --foreground: oklch(0.216 0.007 67);
+  /* Surfaces — warm stone */
+  --background: oklch(0.970 0.006 65);
+  --foreground: oklch(0.220 0.006 40);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.216 0.007 67);
+  --card-foreground: oklch(0.220 0.006 40);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.216 0.007 67);
+  --popover-foreground: oklch(0.220 0.006 40);
 
-  /* Secondary — warm stone for muted surfaces */
-  --secondary: oklch(0.957 0.012 80);
-  --secondary-foreground: oklch(0.283 0.012 78);
+  /* Secondary — warm graphite for muted surfaces */
+  --secondary: oklch(0.935 0.008 60);
+  --secondary-foreground: oklch(0.280 0.008 42);
 
   /* Muted */
-  --muted: oklch(0.957 0.012 80);
-  --muted-foreground: oklch(0.545 0.026 72);
+  --muted: oklch(0.935 0.008 60);
+  --muted-foreground: oklch(0.500 0.010 50);
 
-  /* Accent (Baja / Warm Steel-Blue) */
-  --accent: oklch(0.473 0.068 252);
-  --accent-foreground: oklch(0.975 0.009 78);
+  /* Accent — same as secondary in this minimal system */
+  --accent: oklch(0.935 0.008 60);
+  --accent-foreground: oklch(0.280 0.008 42);
 
-  /* Destructive — cool vivid red, NOT brand rosewood */
-  --destructive: oklch(0.552 0.205 23);
+  /* Destructive — cool red, zero collision with green */
+  --destructive: oklch(0.520 0.180 22);
 
-  /* Borders & Inputs — warm */
-  --border: oklch(0.908 0.018 73);
-  --input: oklch(0.908 0.018 73);
-  --ring: oklch(0.544 0.114 26);
+  /* Borders & Inputs */
+  --border: oklch(0.880 0.010 60);
+  --input: oklch(0.880 0.010 60);
+  --ring: oklch(0.450 0.065 170);
 
-  /* Charts — rosewood, steel-blue, gold anchored */
-  --chart-1: oklch(0.544 0.114 26);
-  --chart-2: oklch(0.473 0.068 252);
-  --chart-3: oklch(0.667 0.108 88);
-  --chart-4: oklch(0.607 0.137 153);
-  --chart-5: oklch(0.708 0.100 30);
+  /* Charts — verdigris anchored, spread across warm tones */
+  --chart-1: oklch(0.450 0.065 170);
+  --chart-2: oklch(0.550 0.100 85);
+  --chart-3: oklch(0.500 0.060 250);
+  --chart-4: oklch(0.600 0.120 30);
+  --chart-5: oklch(0.650 0.060 168);
 
   /* Sidebar */
-  --sidebar: oklch(0.975 0.009 78);
-  --sidebar-foreground: oklch(0.216 0.007 67);
-  --sidebar-primary: oklch(0.544 0.114 26);
-  --sidebar-primary-foreground: oklch(0.975 0.009 78);
-  --sidebar-accent: oklch(0.957 0.012 80);
-  --sidebar-accent-foreground: oklch(0.283 0.012 78);
-  --sidebar-border: oklch(0.908 0.018 73);
-  --sidebar-ring: oklch(0.544 0.114 26);
+  --sidebar: oklch(0.970 0.006 65);
+  --sidebar-foreground: oklch(0.220 0.006 40);
+  --sidebar-primary: oklch(0.450 0.065 170);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.935 0.008 60);
+  --sidebar-accent-foreground: oklch(0.280 0.008 42);
+  --sidebar-border: oklch(0.880 0.010 60);
+  --sidebar-ring: oklch(0.450 0.065 170);
 
   /* Legal Status */
-  --status-berlaku: oklch(0.607 0.137 153);
-  --status-diubah: oklch(0.734 0.159 66);
-  --status-dicabut: oklch(0.552 0.205 23);
+  --status-berlaku: oklch(0.540 0.120 155);
+  --status-diubah: oklch(0.620 0.140 70);
+  --status-dicabut: oklch(0.520 0.180 22);
 }
 
 .dark {
-  /* Surfaces — warm rosewood-tinted darks */
-  --background: oklch(0.198 0.011 25);
-  --foreground: oklch(0.957 0.012 80);
-  --card: oklch(0.234 0.012 25);
-  --card-foreground: oklch(0.957 0.012 80);
-  --popover: oklch(0.234 0.012 25);
-  --popover-foreground: oklch(0.957 0.012 80);
+  /* Surfaces — warm graphite darks */
+  --background: oklch(0.180 0.005 38);
+  --foreground: oklch(0.935 0.008 60);
+  --card: oklch(0.220 0.006 40);
+  --card-foreground: oklch(0.935 0.008 60);
+  --popover: oklch(0.220 0.006 40);
+  --popover-foreground: oklch(0.935 0.008 60);
 
-  /* Primary — rosewood-200 for contrast on dark bg */
-  --primary: oklch(0.796 0.075 32);
-  --primary-foreground: oklch(0.198 0.011 25);
+  /* Primary — verdigris-300 for contrast on dark bg */
+  --primary: oklch(0.780 0.055 168);
+  --primary-foreground: oklch(0.180 0.005 38);
 
   /* Secondary */
-  --secondary: oklch(0.269 0.016 25);
-  --secondary-foreground: oklch(0.957 0.012 80);
+  --secondary: oklch(0.260 0.008 42);
+  --secondary-foreground: oklch(0.935 0.008 60);
 
   /* Muted */
-  --muted: oklch(0.269 0.016 25);
-  --muted-foreground: oklch(0.650 0.020 72);
+  --muted: oklch(0.260 0.008 42);
+  --muted-foreground: oklch(0.650 0.012 55);
 
-  /* Accent — steel-blue-200 for readability on dark bg */
-  --accent: oklch(0.799 0.050 256);
-  --accent-foreground: oklch(0.198 0.011 25);
+  /* Accent */
+  --accent: oklch(0.260 0.008 42);
+  --accent-foreground: oklch(0.935 0.008 60);
 
   /* Destructive — lighter cool red for dark bg */
-  --destructive: oklch(0.621 0.198 21);
+  --destructive: oklch(0.600 0.170 22);
 
   /* Borders & Inputs */
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.796 0.075 32);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.780 0.055 168);
 
   /* Charts */
-  --chart-1: oklch(0.796 0.075 32);
-  --chart-2: oklch(0.799 0.050 256);
-  --chart-3: oklch(0.785 0.067 67);
-  --chart-4: oklch(0.607 0.137 153);
-  --chart-5: oklch(0.708 0.100 30);
+  --chart-1: oklch(0.780 0.055 168);
+  --chart-2: oklch(0.700 0.090 85);
+  --chart-3: oklch(0.650 0.060 250);
+  --chart-4: oklch(0.700 0.100 30);
+  --chart-5: oklch(0.750 0.055 168);
 
   /* Sidebar */
-  --sidebar: oklch(0.212 0.013 25);
-  --sidebar-foreground: oklch(0.957 0.012 80);
-  --sidebar-primary: oklch(0.796 0.075 32);
-  --sidebar-primary-foreground: oklch(0.957 0.012 80);
-  --sidebar-accent: oklch(0.269 0.016 25);
-  --sidebar-accent-foreground: oklch(0.957 0.012 80);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.796 0.075 32);
+  --sidebar: oklch(0.200 0.006 40);
+  --sidebar-foreground: oklch(0.935 0.008 60);
+  --sidebar-primary: oklch(0.780 0.055 168);
+  --sidebar-primary-foreground: oklch(0.935 0.008 60);
+  --sidebar-accent: oklch(0.260 0.008 42);
+  --sidebar-accent-foreground: oklch(0.935 0.008 60);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.780 0.055 168);
 }
 
 @layer base {
@@ -339,33 +340,33 @@ Drop-in replacement for `apps/web/src/app/globals.css`. This preserves full shad
 ```
 
 **Dark mode notes:**
-- Backgrounds use rosewood-tinted warm darks (hue 25°, low chroma) — NOT cool/neutral blacks
-- Primary flips to rosewood-200 (#E9AB9E) for readable contrast on dark surfaces
-- Accent flips to steel-blue-200 (#A9BFDE) for link readability
-- Gold adapts to champagne-300 (#D7B18B) in charts — warmer, lighter
-- Legal status badges use 15% opacity backgrounds on dark surfaces
-- Destructive shifts to oklch(0.621 0.198 21) — lighter but still vivid
+- Backgrounds use warm graphite darks (hue 38–42°, very low chroma) — NOT cool/neutral blacks
+- Primary flips to verdigris-300 (#96C3B1) for readable contrast on dark surfaces
+- Destructive shifts lighter but stays vivid cool red
+- Borders use 10% white opacity for subtle separation
 
 ---
 
-## 4. Implementation: layout.tsx Font Setup
+## 5. Implementation: layout.tsx Font Setup
 
 Replace the font configuration in `apps/web/src/app/layout.tsx`:
 
 ```tsx
-import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { Instrument_Serif, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -375,39 +376,20 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // In the <body> tag:
-<body className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased font-sans`}>
+<body className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} antialiased font-sans`}>
 ```
 
 **Font assignment rules:**
-- `font-heading` (Plus Jakarta Sans) → Display, H1–H4, hero text, logo wordmark
-- `font-sans` (Inter) → Body text, legal content, captions, labels, UI text
+- `font-heading` (Instrument Serif) → Display, H1–H4, hero text, logo wordmark, card titles
+- `font-sans` (Instrument Sans) → Body text, legal content, captions, labels, UI text, navigation, buttons
 - `font-mono` (JetBrains Mono) → Code blocks, MCP commands, CLI snippets, article numbers
 
----
-
-## 5. Typography Scale
-
-Base: `16px` (`1rem`).
-
-| Level          | Size            | Weight | Line Height | Letter Spacing | Font            |
-|----------------|-----------------|--------|-------------|----------------|-----------------|
-| **Display**    | `3.5rem` (56px) | 800    | 1.1         | `-0.02em`      | `font-heading`  |
-| **H1**         | `2.25rem` (36px)| 700    | 1.2         | `-0.015em`     | `font-heading`  |
-| **H2**         | `1.75rem` (28px)| 700    | 1.3         | `-0.01em`      | `font-heading`  |
-| **H3**         | `1.375rem`(22px)| 600    | 1.4         | `-0.005em`     | `font-heading`  |
-| **H4**         | `1.125rem`(18px)| 600    | 1.5         | `0`            | `font-heading`  |
-| **Body Large** | `1.125rem`(18px)| 400    | 1.7         | `0`            | `font-sans`     |
-| **Body Base**  | `1rem` (16px)   | 400    | 1.7         | `0`            | `font-sans`     |
-| **Body Small** | `0.875rem`(14px)| 400    | 1.6         | `0`            | `font-sans`     |
-| **Caption**    | `0.75rem` (12px)| 500    | 1.5         | `0.01em`       | `font-sans`     |
-| **Label**      | `0.75rem` (12px)| 600    | 1.5         | `0.05em`       | `font-sans`     |
-
-**Usage in code:**
-```html
-<h1 class="font-heading text-4xl font-bold tracking-tight">Pasal.id</h1>
-<p class="font-sans text-base leading-relaxed">Body text in Inter</p>
-<code class="font-mono text-sm">claude mcp add pasal-id</code>
-```
+**The italic rule:** Use Instrument Serif italic for:
+- Secondary hero text ("*dengan mudah*")
+- Legal Latin terms (*ex post facto*, *lex specialis*)
+- Subtle emphasis within headings
+- Pull quotes or editorial callouts
+- Never use italic on Instrument Sans for stylistic purposes — reserve it for conventional emphasis in body text
 
 ---
 
@@ -415,7 +397,7 @@ Base: `16px` (`1rem`).
 
 ### 6.1 Spacing Scale
 
-Base unit: `4px`. Use Tailwind's built-in spacing utilities (`p-1` = 4px, `p-2` = 8px, etc.).
+Base unit: `4px`. Use Tailwind's built-in spacing utilities.
 
 Key spacings:
 - **Icon gaps:** `4px` (space-1)
@@ -428,12 +410,12 @@ Key spacings:
 
 ### 6.2 Border Radius
 
-Default: `--radius: 0.625rem` (10px). shadcn derives all variants from this.
+Default: `--radius: 0.5rem` (8px). Tight, restrained — matches the stone aesthetic.
 
-- `--radius-sm`: 6px — badges, tags
-- `--radius-md`: 8px — inputs, small buttons
-- `--radius-lg`: 10px — **default** (buttons, cards)
-- `--radius-xl`: 14px — large cards, modals
+- `--radius-sm`: 4px — badges, tags
+- `--radius-md`: 6px — inputs, small buttons
+- `--radius-lg`: 8px — **default** (buttons, cards)
+- `--radius-xl`: 12px — large cards, modals
 - `--radius-full`: 9999px — pills, chips, avatars
 
 ### 6.3 Layout
@@ -464,57 +446,55 @@ Default: `--radius: 0.625rem` (10px). shadcn derives all variants from this.
 |---------------|--------------------|---------------------------------|-----------|
 | Primary       | `bg-primary`       | `text-primary-foreground`       | none      |
 | Secondary     | `bg-secondary`     | `text-secondary-foreground`     | `border`  |
-| Ghost         | transparent        | `text-muted-foreground`         | none      |
+| Ghost         | transparent        | `text-primary`                  | none      |
 | Destructive   | `bg-destructive`   | white                           | none      |
-| Accent        | `bg-accent`        | `text-accent-foreground`        | none      |
 
-Sizes: `sm` (32px), `md` (40px), `lg` (48px). Font weight: 500.
+Sizes: `sm` (32px), `md` (40px), `lg` (48px). Font: `font-sans`. Weight: 600.
 
 States:
-- Hover: one step darker. For primary: `500` → `600`. Or use white overlay at 10% for subtle lightening.
-- Active: `scale(0.98)`, two steps darker (`700`)
+- Hover: `700` (#204C3E)
+- Active: `800` (#15382D) + `scale(0.98)`
 - Disabled: `opacity-50`, `cursor-not-allowed`
 - Loading: preserve width, replace content with spinner
 
 ### 7.2 Cards
 
 ```
-Background:  bg-card (pure white — lifts off warm page bg)
-Border:      border (1px, neutral-200 #E8DFD4)
-Shadow:      shadow-sm (0 1px 3px rgba(0,0,0,0.04))
+Background:  bg-card (pure white — lifts off warm stone bg)
+Border:      border (1px, neutral-200 #DDD6D1)
+Shadow:      none (borders provide structure, not shadows)
 Padding:     p-6 (24px)
-Radius:      rounded-xl (--radius-xl, 14px)
-Hover:       border-primary/30, shadow-md
+Radius:      rounded-lg (--radius-lg, 8px)
+Hover:       border-primary/30
 ```
+
+**Note:** Minimal shadow. The Batu Candi aesthetic relies on borders and background contrast for depth, not elevation shadows. Use `shadow-sm` sparingly and only for popovers/dropdowns.
 
 ### 7.3 Links
 
-Two link styles for different contexts:
+One link style — verdigris for everything:
 
 ```
-Inline references (in legal text):
-  Color:       steel-blue-600 (#3F5E81) or steel-blue-500 (#52749C)
-  Hover:       steel-blue-700 (#2F4A66)
-  Underline:   border-bottom 1px solid steel-blue/30
-  Use for:     cross-references, citations, pasal links in body text
-
-Navigation / CTA links:
-  Color:       rosewood-500 (#A8524C)
-  Hover:       rosewood-600 (#8B3F3C)
-  Underline:   border-bottom 1px solid rosewood/30
-  Use for:     "Baca Selengkapnya →", "Lihat Pasal", action-oriented links
+Color:       primary-600 (#2B6150)
+Hover:       primary-700 (#204C3E)
+Underline:   border-bottom 1px solid primary/25
+Font weight: 500
+Use for:     all links — cross-references, CTAs, navigation
 ```
+
+**Why one style:** The near-monochrome palette means links need exactly one clear signal. Verdigris is that signal. No need to differentiate "reference links" from "action links" when there's only one color doing interactive duty.
 
 ### 7.4 Inputs
 
 ```
 Height:      h-10 (40px), h-12 (48px for search)
-Border:      border (neutral-300 #D4C9BB)
+Border:      border (neutral-200 #DDD6D1)
 Radius:      rounded-lg (--radius-lg)
+Background:  bg-background (stone #F8F5F0) or bg-card (white)
 Focus:       ring-2 ring-primary ring-offset-2
-Placeholder: text-muted-foreground italic
-Error:       border-destructive bg-destructive/5 (uses COOL red #CF2233, not brand)
-Labels:      above input, text-xs font-medium
+Placeholder: text-muted-foreground
+Error:       border-destructive (#C53030) — zero confusion with green primary
+Labels:      above input, text-xs font-medium font-sans
 ```
 
 ### 7.5 Badges / Status Tags
@@ -523,32 +503,29 @@ Labels:      above input, text-xs font-medium
 Shape:       rounded-full (pill)
 Background:  status color at 10% opacity
 Text:        status color at full saturation
-Font:        text-xs font-medium
+Font:        text-xs font-sans font-semibold
 Padding:     px-2.5 py-0.5
-
-Premium badge:
-  Background: gold-100 (#F5F0E3)
-  Text:       gold-600 (#8B6914)
 ```
 
 ### 7.6 Navigation
 
 ```
-Header:      bg-card border-b, backdrop-blur on scroll
+Header:      bg-card (white), border-b
 Height:      h-14 (56px)
-Active:      border-b-2 border-primary (rosewood)
-Mobile:      slide-out drawer (not bottom tabs)
-Logo:        left-aligned, font-heading font-bold, text-primary
+Logo:        font-heading (Instrument Serif), text-foreground
+Active tab:  border-b-2 border-primary (verdigris), text-foreground font-semibold
+Inactive:    text-muted-foreground
+Mobile:      slide-out drawer
 ```
 
 ---
 
 ## 8. Iconography
 
-**Library:** Lucide React (already installed). Outlined, 1.5px stroke, rounded caps, 24px viewbox.
+**Library:** Lucide React. Outlined, 1.5px stroke, rounded caps, 24px viewbox.
 
 **Key icons:**
-- `Scale` — law/justice (header, logo concept)
+- `Scale` — law/justice
 - `Search` — search
 - `BookOpen` — reader/browse
 - `Link` — MCP connection
@@ -557,22 +534,24 @@ Logo:        left-aligned, font-heading font-bold, text-primary
 - `Copy` — copy article/JSON
 - `Check` / `AlertTriangle` / `XCircle` — status
 
+**Icon color:** Default `text-muted-foreground` (#958D88). Active/interactive `text-primary` (#2B6150).
+
 ---
 
 ## 9. Motion
 
-**Philosophy:** Subtle and functional. Legal content demands focus.
+**Philosophy:** Barely there. Legal content demands focus. Motion serves function, never decoration.
 
 ```css
 --transition-default: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 --transition-slow:    300ms cubic-bezier(0.4, 0, 0.2, 1);
---transition-spring:  300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 ```
 
 - **Buttons:** 150ms background-color, `scale(0.98)` on active
 - **Cards:** 150ms border-color on hover
 - **Loading:** Always skeletons, never spinners
 - **Page transitions:** Minimal — use `loading.tsx` skeletons
+- **No spring animations.** No bouncy physics. Restrained.
 
 ---
 
@@ -580,19 +559,19 @@ Logo:        left-aligned, font-heading font-bold, text-primary
 
 **Mark:** Section symbol (§) merged with open page/book form. Typographic-first, not illustrative. Works at 16px.
 
-**Wordmark:** Plus Jakarta Sans 700, `Pasal` full weight + `.id` at 60% opacity or weight 400. Letter-spacing: `-0.02em`.
+**Wordmark:** Instrument Serif 400, `Pasal` + `.id` at muted color.
 
 ```html
-<h1 class="font-heading text-5xl font-bold tracking-tight">
-  Pasal<span class="text-primary/60">.id</span>
+<h1 class="font-heading text-xl tracking-tight">
+  Pasal<span class="text-muted-foreground">.id</span>
 </h1>
 ```
 
 **Color rules:**
-- Primary: volcanic earth rosewood `#A8524C` mark on white/cream
+- Default: `text-foreground` (#1D1A18) on light backgrounds
+- On dark surfaces: `#F8F5F0` (stone) or white
 - Must work in monochrome (black/white)
-- Dark bg: use `primary-200` (#E9AB9E) or white
-- The mark should never use gold — gold is decorative-only
+- The mark should never use the accent color — keep the logo neutral
 
 ---
 
@@ -600,43 +579,39 @@ Logo:        left-aligned, font-heading font-bold, text-primary
 
 | Page                          | Key design notes                                        |
 |-------------------------------|--------------------------------------------------------|
-| `/` (Landing)                 | Hero search, centered. Stats. MCP CTA card.            |
+| `/` (Landing)                 | Hero search, centered. Clean white hero. Stats below.  |
 | `/search?q=...`               | Results list with status badges, skeleton loading.     |
 | `/peraturan/[type]/[slug]`    | Three-column: TOC left, content center, context right. |
 | `/connect`                    | Developer-focused. Copyable MCP command. Code blocks.  |
 
 **Landing page hierarchy:**
 1. Search input (primary action)
-2. Tagline ("Cari hukum Indonesia dengan mudah")
-3. MCP CTA card
-4. Stats bar (social proof)
+2. Tagline in Instrument Serif, with italic second line
+3. MCP CTA card (dark graphite-900 background)
+4. Stats bar
 
 ---
 
 ## 12. Do / Don't Quick Reference
 
 ### DO:
-- Use `font-heading` for all headings (H1–H4, display)
-- Use `font-sans` (Inter) for body text and UI
-- Use rosewood (`primary`) for buttons, navigation, headers, brand moments
-- Use steel-blue (`accent`) for inline links in legal text and focus rings
-- Use gold sparingly — only for decorative highlights, premium badges
-- Use champagne gold (#D7B18B) as a bridge tone between rosewood and gold
-- Use warm neutrals — the page background is `#FAF6F0`, not pure white
-- Use `rounded-lg` (10px) as the default radius
-- Use skeletons for all loading states
-- Keep cards on pure white (`bg-card`) to lift off the warm page background
-- Use **cool vivid red** (#CF2233) for error/destructive — clearly distinct from brand
-- Use steel-blue for info states — keeps the system cohesive
+- Use Instrument Serif for all headings — weight 400 only, hierarchy through size
+- Use Instrument Serif italic for editorial emphasis and secondary hero text
+- Use Instrument Sans for body, UI, buttons, navigation
+- Use verdigris (`primary`) as the single accent color — buttons, links, focus rings, everything interactive
+- Keep the palette near-monochrome — warm graphite handles 95% of the interface
+- Use the warm stone background (#F8F5F0), not pure white, as the page surface
+- Use pure white (#FFFFFF) for cards to create lift
+- Let typography and whitespace carry the design
+- Use `rounded-lg` (8px) as the default radius
+- Use borders for depth — avoid shadows except on popovers
 
 ### DON'T:
-- Use violet, purple, or indigo anywhere — this is not an AI-aesthetic brand
-- Use cool gray/slate neutrals — always use the warm stone palette
-- Use gold as a primary or secondary action color — it's decorative only
-- Use rosewood for inline text links in legal content — use steel-blue instead
-- Use the brand rosewood for error/destructive states — they must be visually distinct
-- Use spinners for content loading
-- Use more than 2 font weights on the same element
-- Mix warm and cool neutrals
-- Add black to darken rosewood — increase saturation instead
-- Pair rosewood with medium grays — use ivory/cream for contrast
+- Add a second accent color — the restraint is the brand
+- Use Instrument Serif at any weight other than 400 (it only has 400)
+- Use bold Instrument Sans for headings — that's the serif's job
+- Use cool gray/slate neutrals — always warm graphite
+- Use heavy box-shadows — this is a stone-and-light aesthetic, not material design
+- Add gradients, decorative borders, or ornamental elements
+- Use more than the one accent color for interactive states
+- Make the interface colorful — if you're reaching for a second color, reconsider
