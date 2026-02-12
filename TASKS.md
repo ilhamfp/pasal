@@ -994,15 +994,15 @@ Create `scripts/test_mcp_flow.py` that tests 3 scenarios by calling Supabase dir
 7. Push all changes to `main`.
 
 **DONE WHEN:**
-- [ ] `verify_demo_data.py` passes.
-- [ ] `test_mcp_flow.py` passes.
-- [ ] Frontend builds and deploys to Vercel.
-- [ ] MCP responds correctly to Claude.
-- [ ] REST API returns valid JSON.
-- [ ] All committed and pushed.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
-- [ ] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☐
+- [x] `verify_demo_data.py` passes.
+- [x] `test_mcp_flow.py` passes.
+- [x] Frontend builds and deploys to Vercel.
+- [x] MCP responds correctly to Claude.
+- [x] REST API returns valid JSON.
+- [x] All committed and pushed.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
+- [x] Run `frontend-design` skill, verify against `BRAND_GUIDELINES.md`. ☑
 
 ---
 
