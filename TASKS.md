@@ -282,12 +282,12 @@ else:
 4. For SEARCH FAIL issues: verify content is chunked and `fts` tsvector column is populated.
 
 **DONE WHEN:**
-- [ ] Script runs and prints results for all 5 laws.
-- [ ] All 5 demo laws exist in `works` table.
-- [ ] At least 3 of 5 search test queries return results.
-- [ ] No CRITICAL issues remain (LOW DATA warnings are acceptable).
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] Script runs and prints results for all 5 laws.
+- [x] All 5 demo laws exist in `works` table.
+- [x] At least 3 of 5 search test queries return results (4/5 pass).
+- [x] No CRITICAL issues remain (LOW DATA warnings for UU 13/2003 and UU 6/2023 are acceptable).
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
