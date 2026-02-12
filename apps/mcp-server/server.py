@@ -15,7 +15,6 @@ from supabase import create_client
 
 load_dotenv()
 
-# Initialize
 mcp = FastMCP(
     "Pasal.id — Indonesian Legal Database",
     instructions=(
@@ -308,7 +307,7 @@ def get_law_status(
             "frbr_uri": work["frbr_uri"],
             "status": work["status"],
             "status_explanation": status_explanations.get(work["status"], ""),
-            "date_enacted": str(work.get("date_enacted", "")) if work.get("date_enacted") else None,
+            "date_enacted": str(work["date_enacted"]) if work.get("date_enacted") else None,
             "amendments": amendments,
             "related_laws": related,
         }

@@ -1,7 +1,6 @@
-import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
@@ -76,31 +75,16 @@ export default async function LawDetailPage({ params }: PageProps) {
   const babNodes = allNodes.filter((n) => n.node_type === "bab");
   const pasalNodes = allNodes.filter((n) => n.node_type === "pasal");
 
-  const statusColors: Record<string, string> = {
-    berlaku: "bg-green-100 text-green-800 border-green-200",
-    diubah: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    dicabut: "bg-red-100 text-red-800 border-red-200",
-  };
-
-  const statusLabels: Record<string, string> = {
-    berlaku: "Berlaku",
-    diubah: "Diubah",
-    dicabut: "Dicabut",
-    tidak_berlaku: "Tidak Berlaku",
-  };
-
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <Header />
 
       <div className="container mx-auto px-4 py-6">
-        {/* Law title & metadata */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">{type.toUpperCase()}</Badge>
-            <Badge className={statusColors[work.status] || ""} variant="outline">
-              {statusLabels[work.status] || work.status}
+            <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+              {STATUS_LABELS[work.status] || work.status}
             </Badge>
           </div>
           <h1 className="text-2xl font-bold mb-2">{work.title_id}</h1>
@@ -110,14 +94,10 @@ export default async function LawDetailPage({ params }: PageProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_280px] gap-8">
-          {/* Table of Contents */}
           <aside className="hidden lg:block">
-            <Suspense fallback={null}>
-              <TableOfContents babs={babNodes} pasals={pasalNodes} />
-            </Suspense>
+            <TableOfContents babs={babNodes} pasals={pasalNodes} />
           </aside>
 
-          {/* Main content */}
           <main className="min-w-0">
             {babNodes.length > 0 ? (
               babNodes.map((bab) => {
@@ -143,7 +123,7 @@ export default async function LawDetailPage({ params }: PageProps) {
                     )}
 
                     {allBabPasals.map((pasal) => (
-                      <PasalBlock key={pasal.id} pasal={pasal} workId={work.id} />
+                      <PasalBlock key={pasal.id} pasal={pasal} />
                     ))}
                   </section>
                 );
@@ -151,7 +131,7 @@ export default async function LawDetailPage({ params }: PageProps) {
             ) : (
               // No BAB structure — just show all pasals
               pasalNodes.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} workId={work.id} />
+                <PasalBlock key={pasal.id} pasal={pasal} />
               ))
             )}
 
@@ -162,17 +142,14 @@ export default async function LawDetailPage({ params }: PageProps) {
             )}
           </main>
 
-          {/* Context sidebar */}
           <aside className="hidden lg:block space-y-6">
-            {/* Status */}
             <div className="rounded-lg border p-4">
               <h3 className="font-semibold text-sm mb-2">Status</h3>
-              <Badge className={statusColors[work.status] || ""} variant="outline">
-                {statusLabels[work.status] || work.status}
+              <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                {STATUS_LABELS[work.status] || work.status}
               </Badge>
             </div>
 
-            {/* Relationships */}
             {relationships && relationships.length > 0 && (
               <div className="rounded-lg border p-4">
                 <h3 className="font-semibold text-sm mb-3">Hubungan Hukum</h3>
@@ -203,7 +180,6 @@ export default async function LawDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Source */}
             {work.source_url && (
               <div className="rounded-lg border p-4">
                 <h3 className="font-semibold text-sm mb-2">Sumber</h3>
@@ -224,19 +200,16 @@ export default async function LawDetailPage({ params }: PageProps) {
   );
 }
 
-function PasalBlock({
-  pasal,
-  workId,
-}: {
-  pasal: { id: number; number: string; content_text: string | null; heading: string | null };
-  workId: number;
-}) {
+interface PasalNode {
+  id: number;
+  number: string;
+  content_text: string | null;
+  heading: string | null;
+}
+
+function PasalBlock({ pasal }: { pasal: PasalNode }) {
   const content = pasal.content_text || "";
-  const jsonData = JSON.stringify(
-    { pasal: pasal.number, content: content },
-    null,
-    2
-  );
+  const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
 
   return (
     <article

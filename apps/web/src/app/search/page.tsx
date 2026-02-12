@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface SearchParams {
   q?: string;
   type?: string;
+}
+
+interface ChunkResult {
+  id: number;
+  work_id: number;
+  content: string;
+  metadata: Record<string, string>;
+  score: number;
+}
+
+interface WorkResult {
+  id: number;
+  frbr_uri: string;
+  title_id: string;
+  number: string;
+  year: number;
+  status: string;
+  regulation_types: { code: string }[] | { code: string } | null;
 }
 
 async function SearchResults({ query, type }: { query: string; type?: string }) {
@@ -41,25 +60,13 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
   }
 
   // Fetch work metadata for all results
-  const workIds = [...new Set(chunks.map((c: { work_id: number }) => c.work_id))];
+  const workIds = [...new Set(chunks.map((c: ChunkResult) => c.work_id))];
   const { data: works } = await supabase
     .from("works")
     .select("id, frbr_uri, title_id, number, year, status, regulation_types(code)")
     .in("id", workIds);
 
-  const worksMap = new Map((works || []).map((w: Record<string, unknown>) => [w.id, w]));
-
-  const statusColors: Record<string, string> = {
-    berlaku: "bg-green-100 text-green-800",
-    diubah: "bg-yellow-100 text-yellow-800",
-    dicabut: "bg-red-100 text-red-800",
-  };
-
-  const statusLabels: Record<string, string> = {
-    berlaku: "Berlaku",
-    diubah: "Diubah",
-    dicabut: "Dicabut",
-  };
+  const worksMap = new Map((works || []).map((w: WorkResult) => [w.id, w]));
 
   return (
     <div className="space-y-4">
@@ -67,11 +74,14 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
         {chunks.length} hasil ditemukan untuk &ldquo;{query}&rdquo;
       </p>
 
-      {chunks.map((chunk: { id: number; work_id: number; content: string; metadata: Record<string, string>; score: number }) => {
-        const work = worksMap.get(chunk.work_id) as Record<string, unknown> | undefined;
+      {chunks.map((chunk: ChunkResult) => {
+        const work = worksMap.get(chunk.work_id);
         if (!work) return null;
 
-        const regType = (work.regulation_types as { code: string } | null)?.code || "";
+        const regTypes = work.regulation_types;
+        const regType = Array.isArray(regTypes)
+          ? regTypes[0]?.code || ""
+          : regTypes?.code || "";
         const meta = chunk.metadata || {};
         const slug = `${regType.toLowerCase()}-${work.number}-${work.year}`;
         const snippet = chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
@@ -83,14 +93,14 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary">{regType}</Badge>
                   <CardTitle className="text-base">
-                    {regType} {work.number as string}/{work.year as number}
+                    {regType} {work.number}/{work.year}
                   </CardTitle>
-                  <Badge className={statusColors[(work.status as string)] || ""} variant="outline">
-                    {statusLabels[(work.status as string)] || (work.status as string)}
+                  <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                    {STATUS_LABELS[work.status] || work.status}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">
-                  {work.title_id as string}
+                  {work.title_id}
                 </p>
               </CardHeader>
               <CardContent>
@@ -123,10 +133,8 @@ export default async function SearchPage({
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <Header showSearch searchDefault={query} />
 
-      {/* Results */}
       <main className="container mx-auto max-w-3xl px-4 py-8">
         {query ? (
           <Suspense

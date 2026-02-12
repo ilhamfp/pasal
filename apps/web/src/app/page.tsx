@@ -7,10 +7,8 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Hero */}
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-24">
         <div className="flex flex-col items-center gap-8 text-center">
-          {/* Logo & tagline */}
           <div className="space-y-3">
             <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
               Pasal<span className="text-primary/60">.id</span>
@@ -20,13 +18,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Search bar */}
           <SearchBar autoFocus />
 
-          {/* Quick filter chips */}
           <LawTypeChips />
 
-          {/* Stats */}
           <Suspense
             fallback={
               <div className="text-sm text-muted-foreground">Memuat...</div>
@@ -35,7 +30,6 @@ export default function HomePage() {
             <StatsBar />
           </Suspense>
 
-          {/* MCP install hint */}
           <Link href="/connect" className="mt-8 rounded-lg border bg-card p-4 text-left max-w-xl w-full block hover:border-primary/50 transition-colors">
             <p className="text-sm font-medium mb-2">
               Hubungkan ke Claude untuk akses hukum berbasis AI:
@@ -51,7 +45,6 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
         <div className="flex items-center justify-center gap-4">
           <Link href="https://github.com/ilhamfp/pasal" className="hover:underline">

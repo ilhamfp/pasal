@@ -17,12 +17,10 @@ const EXAMPLE_PROMPTS = [
 export default function ConnectPage() {
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <Header />
 
       <main className="container mx-auto max-w-2xl px-4 py-12">
         <div className="space-y-8">
-          {/* Hero */}
           <div className="text-center space-y-3">
             <h1 className="text-3xl font-bold">Hubungkan Pasal.id ke Claude</h1>
             <p className="text-lg text-muted-foreground">
@@ -31,7 +29,6 @@ export default function ConnectPage() {
             </p>
           </div>
 
-          {/* Install command */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Perintah Instalasi</CardTitle>
@@ -50,7 +47,6 @@ export default function ConnectPage() {
             </CardContent>
           </Card>
 
-          {/* Example prompts */}
           <div>
             <h2 className="text-lg font-semibold mb-4">Coba Sekarang</h2>
             <div className="space-y-3">
@@ -65,7 +61,6 @@ export default function ConnectPage() {
             </div>
           </div>
 
-          {/* What is MCP */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Apa itu MCP?</CardTitle>
@@ -90,7 +85,6 @@ export default function ConnectPage() {
             </CardContent>
           </Card>
 
-          {/* CTA to search */}
           <div className="text-center pt-4">
             <Link
               href="/search"

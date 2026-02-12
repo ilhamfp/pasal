@@ -33,7 +33,7 @@ def run_sql(query: str) -> list[dict]:
     return resp.json()
 
 
-def e(s: str) -> str:
+def escape_sql(s: str) -> str:
     """Escape single quotes for SQL."""
     return s.replace("'", "''")
 
@@ -271,8 +271,8 @@ def main() -> None:
     print("\nSTEP 5: Inserting Pasals and chunks...")
     for pasal in PASALS:
         # Insert document_node
-        content_escaped = e(pasal["content"])
-        heading_escaped = e(pasal["heading"])
+        content_escaped = escape_sql(pasal["content"])
+        heading_escaped = escape_sql(pasal["heading"])
         path = f"bab_IV.pasal_{pasal['number']}"
 
         sql = (
@@ -288,7 +288,7 @@ def main() -> None:
         node_id = node_result[0]["id"]
 
         # Insert legal_chunk
-        chunk_content = e(
+        chunk_content = escape_sql(
             f"Undang-Undang Nomor 6 Tahun 2023 tentang Cipta Kerja\n"
             f"BAB IV Ketenagakerjaan — {pasal['heading']}\n"
             f"Pasal {pasal['number']}\n\n"
