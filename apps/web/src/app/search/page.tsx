@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,12 +79,10 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
         const work = worksMap.get(chunk.work_id);
         if (!work) return null;
 
-        const regTypes = work.regulation_types;
-        const regType = Array.isArray(regTypes)
-          ? regTypes[0]?.code || ""
-          : regTypes?.code || "";
+        const regType = getRegTypeCode(work.regulation_types);
         const meta = chunk.metadata || {};
         const slug = `${regType.toLowerCase()}-${work.number}-${work.year}`;
+        // Skip header lines (type + title) and take a preview
         const snippet = chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
 
         return (
