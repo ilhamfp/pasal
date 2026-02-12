@@ -11,21 +11,20 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 ### Workflow loop
 
 1. Open `TASKS.md` and find your current task (the first unchecked one).
-2. If the task says `📖 See ARCHITECTURE.md § [section]`, read ONLY that section — never read the full file.
-3. Implement the task completely.
-4. Verify the "Done when" condition passes.
-5. `git add -A && git commit -m "task X.Y: description" && git push origin main`
-6. Move to the next task.
+2. Implement the task completely.
+3. Verify the "Done when" condition passes.
+4. `git add -A && git commit -m "task X.Y: description" && git push origin main`
+5. Move to the next task.
 
 **Also commit + push mid-task** whenever you have a meaningful working increment (e.g., a migration that runs, a component that renders). Don't wait until the whole task is done.
 
 ### Rules
 
 - **Do NOT skip tasks or jump ahead.** Tasks are ordered by dependency.
-- **Do NOT read ARCHITECTURE.md top to bottom.** It's a lookup reference. Read only the section your current task points to.
 - **Do NOT add features not in TASKS.md.** No bonus features, no "nice to haves," no refactoring detours.
 - **Do NOT get stuck longer than 20 minutes on any sub-problem.** If scraping doesn't work, use hardcoded seed data. If parsing fails on edge cases, skip those documents. Forward progress > perfection.
 - **Do NOT over-engineer.** This is a hackathon MVP. No abstractions "for later," no premature optimization, no complex error recovery.
+- **Before writing any frontend code, consult `BRAND_GUIDELINES.md`** for colors, fonts, spacing, and component patterns. It is the single source of truth for visual identity.
 - **When in doubt, check TASKS.md Appendix** — it tells you exactly what to cut if behind schedule.
 
 ## Tech Stack
@@ -45,7 +44,7 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 pasal-id/
 ├── CLAUDE.md              ← You are here
 ├── TASKS.md               ← Your task list (work through sequentially)
-├── ARCHITECTURE.md        ← Reference only (read specific §sections)
+├── BRAND_GUIDELINES.md    ← Visual identity reference (colors, fonts, components)
 ├── apps/
 │   ├── web/               ← Next.js frontend
 │   │   ├── src/
@@ -149,11 +148,11 @@ These Indonesian legal terms appear throughout the codebase:
 
 ## Common Pitfalls to Avoid
 
-1. **Don't try to scrape 278,000 regulations.** Start with the 20 priority laws listed in ARCHITECTURE.md § "Priority Laws for MVP". The OTF corpus (5,817 docs) is your fallback data source.
+1. **Don't try to scrape 278,000 regulations.** Start with the 20 priority laws. The OTF corpus (5,817 docs) is your fallback data source.
 
 2. **Don't build a custom PDF parser from scratch.** Use `pdfplumber` for text extraction, fall back to the OTF pre-processed text segments if PDFs are problematic. Skip scanned/image PDFs entirely.
 
-3. **Don't try to add vector/semantic search during MVP.** The MVP uses PostgreSQL full-text search with the `indonesian` stemmer — it's fast, free, and handles legal terminology well. Vector search (pgvector + embeddings) is a post-MVP upgrade documented in ARCHITECTURE.md § "Future Upgrade: Vector Search".
+3. **Don't try to add vector/semantic search during MVP.** The MVP uses PostgreSQL full-text search with the `indonesian` stemmer — it's fast, free, and handles legal terminology well. Vector search (pgvector + embeddings) is a post-MVP upgrade.
 
 4. **Don't build the chat interface (Task 4.5) unless all other tasks are done.** It's explicitly marked as BONUS. The demo should primarily use Claude Desktop / Claude Code + MCP.
 

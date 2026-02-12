@@ -186,6 +186,7 @@ def search_laws(
     regulation_type: str | None = None,
     year_from: int | None = None,
     year_to: int | None = None,
+    language: str = "id",
     limit: int = 10,
 ) -> list[dict]:
     """Search Indonesian laws and regulations by keyword.
@@ -199,6 +200,7 @@ def search_laws(
         regulation_type: Filter by type — UU (Law), PP (Govt Regulation), PERPRES (Presidential Reg), etc.
         year_from: Only return laws enacted after this year
         year_to: Only return laws enacted before this year
+        language: Language filter — "id" (Indonesian, default) or "en" (English translations)
         limit: Maximum number of results (default 10)
     """
     rate_err = _check_rate_limit("search_laws")
@@ -220,6 +222,8 @@ def search_laws(
     metadata_filter: dict = {}
     if regulation_type:
         metadata_filter["type"] = regulation_type.upper()
+    if language != "id":
+        metadata_filter["language"] = language
 
     try:
         # Call the search function
