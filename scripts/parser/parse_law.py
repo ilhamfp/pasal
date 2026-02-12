@@ -19,13 +19,38 @@ META_DIR = DATA_DIR / "raw" / "peraturan-go-id"
 BAB_RE = re.compile(r'^BAB\s+([IVXLCDM]+)\s*$', re.MULTILINE)
 BAB_HEADING_RE = re.compile(r'^BAB\s+[IVXLCDM]+\s*\n\s*(.+)', re.MULTILINE)
 BAGIAN_RE = re.compile(
-    r'^Bagian\s+(Kesatu|Kedua|Ketiga|Keempat|Kelima|Keenam|Ketujuh|Kedelapan|Kesembilan|Kesepuluh|Kesebelas|Kedua\s*Belas|Ketiga\s*Belas)',
+    r'^Bagian\s+(Kesatu|Kedua|Ketiga|Keempat|Kelima|Keenam|Ketujuh|Kedelapan|Kesembilan|Kesepuluh'
+    r'|Kesebelas|Kedua\s*Belas|Ketiga\s*Belas|Keempat\s*Belas|Kelima\s*Belas|Keenam\s*Belas'
+    r'|Ketujuh\s*Belas|Kedelapan\s*Belas|Kesembilan\s*Belas|Kedua\s*Puluh'
+    r'|Ke-\d+)',
     re.MULTILINE | re.IGNORECASE
 )
 PARAGRAF_RE = re.compile(r'^Paragraf\s+(\d+)\s*\n\s*(.+)', re.MULTILINE)
 PASAL_RE = re.compile(r'^Pasal\s+(\d+[A-Z]?)\s*$', re.MULTILINE)
 AYAT_RE = re.compile(r'^\((\d+)\)\s+', re.MULTILINE)
 PENJELASAN_RE = re.compile(r'^PENJELASAN\s*$', re.MULTILINE)
+
+# Auto-metadata extraction patterns
+FILENAME_RE = re.compile(r'^(uu|pp|perpres|perppu|permen|perda)-no-(\d+)-tahun-(\d{4})$', re.IGNORECASE)
+TITLE_TEXT_RE = re.compile(
+    r'(?:UNDANG-UNDANG|PERATURAN\s+PEMERINTAH|PERATURAN\s+PRESIDEN)'
+    r'.*?(?:REPUBLIK\s+INDONESIA\s+)?NOMOR\s+(\d+)\s+TAHUN\s+(\d{4})\s+TENTANG\s+(.+?)(?:\n\n|DENGAN)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+_TYPE_NAME_MAP = {
+    "UU": "Undang-Undang",
+    "PP": "Peraturan Pemerintah",
+    "PERPRES": "Peraturan Presiden",
+    "PERPPU": "Peraturan Pemerintah Pengganti Undang-Undang",
+    "PERMEN": "Peraturan Menteri",
+    "PERDA": "Peraturan Daerah",
+}
+
+_TYPE_ACT_MAP = {
+    "UU": "uu", "PP": "pp", "PERPRES": "perpres",
+    "PERPPU": "perppu", "PERMEN": "permen", "PERDA": "perda",
+}
 
 # Law metadata from file names
 LAW_METADATA = {
@@ -52,6 +77,59 @@ LAW_METADATA = {
 }
 
 
+def extract_metadata_from_filename(filename: str) -> dict | None:
+    """Extract law metadata from PDF filename pattern like 'uu-no-13-tahun-2003'."""
+    stem = Path(filename).stem
+    m = FILENAME_RE.match(stem)
+    if not m:
+        return None
+    raw_type = m.group(1).upper()
+    number = m.group(2)
+    year = int(m.group(3))
+    act_code = _TYPE_ACT_MAP.get(raw_type, raw_type.lower())
+    type_name = _TYPE_NAME_MAP.get(raw_type, raw_type)
+    return {
+        "type": raw_type,
+        "number": number,
+        "year": year,
+        "frbr_uri": f"/akn/id/act/{act_code}/{year}/{number}",
+        "title_id": f"{type_name} Nomor {number} Tahun {year}",
+        "status": "berlaku",
+    }
+
+
+def extract_metadata_from_text(text: str) -> dict | None:
+    """Extract law metadata from the first ~2000 chars of the document text."""
+    header = text[:2000]
+    m = TITLE_TEXT_RE.search(header)
+    if not m:
+        return None
+    # Determine type from what matched
+    header_upper = header[:m.end()].upper()
+    if "UNDANG-UNDANG" in header_upper and "PERATURAN" not in header_upper:
+        raw_type = "UU"
+    elif "PERATURAN PEMERINTAH" in header_upper and "PRESIDEN" not in header_upper:
+        raw_type = "PP"
+    elif "PERATURAN PRESIDEN" in header_upper:
+        raw_type = "PERPRES"
+    else:
+        raw_type = "UU"  # default fallback
+
+    number = m.group(1)
+    year = int(m.group(2))
+    tentang = " ".join(m.group(3).split())  # normalize whitespace
+    act_code = _TYPE_ACT_MAP.get(raw_type, raw_type.lower())
+    type_name = _TYPE_NAME_MAP.get(raw_type, raw_type)
+    return {
+        "type": raw_type,
+        "number": number,
+        "year": year,
+        "frbr_uri": f"/akn/id/act/{act_code}/{year}/{number}",
+        "title_id": f"{type_name} Nomor {number} Tahun {year} tentang {tentang}",
+        "status": "berlaku",
+    }
+
+
 def extract_text_from_pdf(pdf_path: Path) -> str:
     """Extract all text from a PDF using pdfplumber."""
     try:
@@ -67,6 +145,58 @@ def extract_text_from_pdf(pdf_path: Path) -> str:
         return ""
 
 
+def parse_penjelasan(text: str) -> list[dict]:
+    """Parse a PENJELASAN section into nodes.
+
+    Returns nodes of type 'penjelasan_umum' and 'penjelasan_pasal'.
+    """
+    nodes = []
+    sort_base = 90000  # high sort_order to place after body content
+
+    # Split at "I. UMUM" and "II. PASAL DEMI PASAL"
+    umum_match = re.search(r'I\.\s*UMUM', text)
+    pasal_demi_match = re.search(r'II\.\s*PASAL\s+DEMI\s+PASAL', text)
+
+    if umum_match:
+        umum_end = pasal_demi_match.start() if pasal_demi_match else len(text)
+        umum_text = text[umum_match.end():umum_end].strip()
+        if umum_text and len(umum_text) > 20:
+            nodes.append({
+                "type": "penjelasan_umum",
+                "number": "",
+                "heading": "Penjelasan Umum",
+                "content": umum_text,
+                "children": [],
+                "sort_order": sort_base,
+            })
+
+    if pasal_demi_match:
+        pasal_text = text[pasal_demi_match.end():]
+        # Split by "Pasal N" patterns
+        pasal_splits = re.split(r'(Pasal\s+\d+[A-Z]?)\s*\n', pasal_text)
+        # pasal_splits alternates: [pre, "Pasal N", content, "Pasal M", content, ...]
+        i = 1
+        while i < len(pasal_splits) - 1:
+            pasal_header = pasal_splits[i].strip()
+            pasal_content = pasal_splits[i + 1].strip()
+            pasal_num_match = re.match(r'Pasal\s+(\d+[A-Z]?)', pasal_header)
+            if pasal_num_match:
+                pasal_num = pasal_num_match.group(1)
+                is_cukup_jelas = pasal_content.strip().lower().startswith("cukup jelas")
+                nodes.append({
+                    "type": "penjelasan_pasal",
+                    "number": pasal_num,
+                    "heading": f"Penjelasan Pasal {pasal_num}",
+                    "content": pasal_content,
+                    "children": [],
+                    "sort_order": sort_base + int(pasal_num.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ") or "0"),
+                    "metadata": {"cukup_jelas": is_cukup_jelas},
+                })
+            i += 2
+
+    return nodes
+
+
 def parse_into_nodes(text: str) -> list[dict]:
     """Parse law text into a hierarchical node structure."""
     # Split off penjelasan
@@ -75,6 +205,12 @@ def parse_into_nodes(text: str) -> list[dict]:
         body_text = text[:penjelasan_match.start()]
     else:
         body_text = text
+
+    # Parse penjelasan if present
+    penjelasan_nodes = []
+    if penjelasan_match:
+        penjelasan_text = text[penjelasan_match.start():]
+        penjelasan_nodes = parse_penjelasan(penjelasan_text)
 
     nodes = []
     current_bab = None
@@ -120,10 +256,7 @@ def parse_into_nodes(text: str) -> list[dict]:
             continue
 
         # Detect Bagian
-        bagian_match = re.match(
-            r'^Bagian\s+(Kesatu|Kedua|Ketiga|Keempat|Kelima|Keenam|Ketujuh|Kedelapan|Kesembilan|Kesepuluh)',
-            line, re.IGNORECASE
-        )
+        bagian_match = BAGIAN_RE.match(line)
         if bagian_match:
             bagian_name = bagian_match.group(1)
             heading = ""
@@ -149,6 +282,30 @@ def parse_into_nodes(text: str) -> list[dict]:
             i += 1
             continue
 
+        # Detect Paragraf
+        paragraf_match = PARAGRAF_RE.match(line + ("\n" + lines[i + 1] if i + 1 < len(lines) else ""))
+        if paragraf_match:
+            para_num = paragraf_match.group(1)
+            para_heading = paragraf_match.group(2).strip() if paragraf_match.group(2) else ""
+            paragraf_node = {
+                "type": "paragraf",
+                "number": para_num,
+                "heading": para_heading,
+                "children": [],
+                "sort_order": sort_order,
+            }
+            if current_bagian:
+                current_bagian["children"].append(paragraf_node)
+            elif current_bab:
+                current_bab["children"].append(paragraf_node)
+            else:
+                nodes.append(paragraf_node)
+            # Use current_bagian slot to nest subsequent pasals under paragraf
+            current_bagian = paragraf_node
+            sort_order += 1
+            i += 2  # skip heading line
+            continue
+
         # Detect Pasal
         pasal_match = re.match(r'^Pasal\s+(\d+[A-Z]?)\s*$', line)
         if pasal_match:
@@ -158,7 +315,7 @@ def parse_into_nodes(text: str) -> list[dict]:
             j = i + 1
             while j < len(lines):
                 next_line = lines[j].strip()
-                if re.match(r'^(BAB\s+[IVXLCDM]+|Pasal\s+\d+[A-Z]?|Bagian\s+Ke|Paragraf\s+\d+|PENJELASAN)\s*$', next_line):
+                if re.match(r'^(BAB\s+[IVXLCDM]+|Pasal\s+\d+[A-Z]?|Bagian\s+(Ke|Ke-\d+)|Paragraf\s+\d+|PENJELASAN)\s*$', next_line, re.IGNORECASE):
                     break
                 content_lines.append(lines[j])
                 j += 1
@@ -202,6 +359,9 @@ def parse_into_nodes(text: str) -> list[dict]:
 
         i += 1
 
+    if penjelasan_nodes:
+        nodes.extend(penjelasan_nodes)
+
     return nodes
 
 
@@ -216,17 +376,30 @@ def count_pasals(nodes: list[dict]) -> int:
 
 
 def parse_single_law(pdf_path: Path) -> dict | None:
-    """Parse a single law PDF into structured JSON."""
+    """Parse a single law PDF into structured JSON.
+
+    Metadata resolution order: LAW_METADATA (hardcoded) → filename → text header.
+    """
     slug = pdf_path.stem
-    meta = LAW_METADATA.get(slug)
-    if not meta:
-        print(f"  No metadata for {slug}, skipping")
-        return None
 
     print(f"  Extracting text from {slug}...")
     text = extract_text_from_pdf(pdf_path)
     if not text or len(text) < 100:
         print(f"  WARNING: Very short text ({len(text)} chars)")
+        return None
+
+    # Resolve metadata: hardcoded → filename → text extraction
+    meta = LAW_METADATA.get(slug)
+    if not meta:
+        meta = extract_metadata_from_filename(slug)
+        if meta:
+            print(f"  Auto-extracted metadata from filename: {meta['type']} {meta['number']}/{meta['year']}")
+    if not meta:
+        meta = extract_metadata_from_text(text)
+        if meta:
+            print(f"  Auto-extracted metadata from text: {meta['title_id']}")
+    if not meta:
+        print(f"  No metadata for {slug}, skipping")
         return None
 
     print(f"  Text: {len(text)} chars, parsing structure...")
@@ -240,7 +413,7 @@ def parse_single_law(pdf_path: Path) -> dict | None:
         "number": meta["number"],
         "year": meta["year"],
         "title_id": meta["title_id"],
-        "status": meta["status"],
+        "status": meta.get("status", "berlaku"),
         "source_url": f"https://peraturan.go.id/id/{slug}",
         "source_pdf_url": f"https://peraturan.go.id/files/{slug.replace('-', '')}.pdf",
         "full_text": text,

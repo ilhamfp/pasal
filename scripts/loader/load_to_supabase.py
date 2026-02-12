@@ -4,7 +4,13 @@ Reads JSON files from data/parsed/ and inserts into:
 - works (law metadata)
 - document_nodes (hierarchical structure)
 - legal_chunks (search-optimized text chunks)
+
+Usage:
+    python load_to_supabase.py [options]
+    --force-reload  Delete ALL existing data before loading (old behavior)
+    --dry-run       Count what would be inserted without writing
 """
+import argparse
 import json
 import os
 import sys
@@ -16,13 +22,32 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from supabase import create_client
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data" / "parsed"
+PROGRESS_FILE = DATA_DIR / ".load_progress.json"
 
-# Regulation type code -> id mapping (from seed data)
+# Regulation type code -> id mapping (from seed data) — fallback only
 REG_TYPE_MAP = {
     "UUD": 1, "TAP_MPR": 2, "UU": 3, "PERPPU": 4, "PP": 5,
     "PERPRES": 6, "PERDA_PROV": 7, "PERDA_KAB": 8, "PERMEN": 9,
     "PERMA": 10, "PBI": 11,
 }
+
+# Runtime cache — populated from DB when available
+_runtime_reg_type_map: dict[str, int] | None = None
+
+
+def _load_reg_type_map(sb) -> dict[str, int]:
+    """Load regulation type mapping from database at runtime, cache it."""
+    global _runtime_reg_type_map
+    if _runtime_reg_type_map is not None:
+        return _runtime_reg_type_map
+    try:
+        result = sb.table("regulation_types").select("id, code").execute()
+        _runtime_reg_type_map = {r["code"]: r["id"] for r in result.data}
+        return _runtime_reg_type_map
+    except Exception:
+        # Fall back to hardcoded map
+        _runtime_reg_type_map = REG_TYPE_MAP
+        return _runtime_reg_type_map
 
 
 def init_supabase():
@@ -33,7 +58,8 @@ def init_supabase():
 
 def load_work(sb, law: dict) -> int | None:
     """Insert a work (law) into the works table. Returns the work ID."""
-    reg_type_id = REG_TYPE_MAP.get(law["type"])
+    reg_map = _load_reg_type_map(sb)
+    reg_type_id = reg_map.get(law["type"])
     if not reg_type_id:
         print(f"  Unknown regulation type: {law['type']}")
         return None
@@ -100,13 +126,14 @@ def load_nodes_recursive(
             if result.data:
                 inserted_id = result.data[0]["id"]
 
-                if node_type == "pasal":
+                if node_type in ("pasal", "penjelasan_umum", "penjelasan_pasal"):
                     pasal_nodes.append({
                         "node_id": inserted_id,
                         "number": number,
                         "content": content,
                         "heading": heading,
                         "parent_heading": path_prefix,
+                        "node_type": node_type,
                     })
 
                 # Recurse into children
@@ -126,13 +153,22 @@ def load_nodes_recursive(
     return pasal_nodes
 
 
+def cleanup_work_data(sb, work_id: int) -> None:
+    """Delete existing document_nodes and legal_chunks for a specific work."""
+    try:
+        sb.table("legal_chunks").delete().eq("work_id", work_id).execute()
+        sb.table("document_nodes").delete().eq("work_id", work_id).execute()
+    except Exception as e:
+        print(f"  Warning: cleanup for work {work_id}: {e}")
+
+
 def create_chunks(
     sb,
     work_id: int,
     law: dict,
     pasal_nodes: list[dict],
 ):
-    """Create search chunks from pasal nodes."""
+    """Create search chunks from pasal nodes and penjelasan nodes."""
     chunks = []
     law_title = law["title_id"]
     law_type = law["type"]
@@ -144,15 +180,29 @@ def create_chunks(
         if not content or len(content.strip()) < 10:
             continue
 
-        # Prepend context for better keyword search
-        chunk_text = f"{law_title}\nPasal {pasal['number']}\n\n{content}"
+        node_type = pasal.get("node_type", "pasal")
 
-        metadata = {
-            "type": law_type,
-            "number": law_number,
-            "year": law_year,
-            "pasal": pasal["number"],
-        }
+        # Handle penjelasan nodes
+        if node_type in ("penjelasan_umum", "penjelasan_pasal"):
+            # Skip "Cukup jelas" penjelasan
+            if content.strip().lower().startswith("cukup jelas"):
+                continue
+            chunk_text = f"{law_title}\nPenjelasan Pasal {pasal['number']}\n\n{content}" if pasal.get("number") else f"{law_title}\nPenjelasan Umum\n\n{content}"
+            metadata = {
+                "type": law_type,
+                "number": law_number,
+                "year": law_year,
+                "penjelasan": pasal.get("number", "umum"),
+            }
+        else:
+            # Prepend context for better keyword search
+            chunk_text = f"{law_title}\nPasal {pasal['number']}\n\n{content}"
+            metadata = {
+                "type": law_type,
+                "number": law_number,
+                "year": law_year,
+                "pasal": pasal["number"],
+            }
 
         chunks.append({
             "work_id": work_id,
@@ -201,18 +251,46 @@ def create_chunks(
     return len(chunks)
 
 
+def _load_progress() -> set[str]:
+    """Load set of already-loaded FRBR URIs from progress file."""
+    if PROGRESS_FILE.exists():
+        try:
+            return set(json.loads(PROGRESS_FILE.read_text()))
+        except Exception:
+            pass
+    return set()
+
+
+def _save_progress(loaded: set[str]) -> None:
+    """Save progress file."""
+    PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PROGRESS_FILE.write_text(json.dumps(sorted(loaded), indent=2))
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Load parsed legal docs to Supabase")
+    parser.add_argument("--force-reload", action="store_true",
+                        help="Delete ALL existing data before loading")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Count what would be inserted without writing")
+    args = parser.parse_args()
+
     sb = init_supabase()
 
-    # Clear existing data (for re-runs)
-    print("Clearing existing data...")
-    try:
-        sb.table("legal_chunks").delete().neq("id", 0).execute()
-        sb.table("document_nodes").delete().neq("id", 0).execute()
-        sb.table("work_relationships").delete().neq("id", 0).execute()
-        sb.table("works").delete().neq("id", 0).execute()
-    except Exception as e:
-        print(f"  Warning clearing data: {e}")
+    if args.force_reload:
+        print("Force reload: clearing ALL existing data...")
+        try:
+            sb.table("legal_chunks").delete().neq("id", 0).execute()
+            sb.table("document_nodes").delete().neq("id", 0).execute()
+            sb.table("work_relationships").delete().neq("id", 0).execute()
+            sb.table("works").delete().neq("id", 0).execute()
+        except Exception as e:
+            print(f"  Warning clearing data: {e}")
+        loaded_uris: set[str] = set()
+    else:
+        loaded_uris = _load_progress()
+        if loaded_uris:
+            print(f"Resuming: {len(loaded_uris)} works already loaded")
 
     json_files = sorted(DATA_DIR.glob("*.json"))
     print(f"\nFound {len(json_files)} parsed law files")
@@ -220,37 +298,76 @@ def main():
     total_works = 0
     total_pasals = 0
     total_chunks = 0
+    skipped = 0
+    failed = []
 
     for jf in json_files:
-        print(f"\nLoading {jf.name}...")
-        with open(jf) as f:
-            law = json.load(f)
+        try:
+            with open(jf) as f:
+                law = json.load(f)
 
-        # 1. Insert work
-        work_id = load_work(sb, law)
-        if not work_id:
-            print("  SKIP: Failed to insert work")
+            frbr_uri = law.get("frbr_uri", "")
+
+            # Skip already loaded (unless force-reload)
+            if frbr_uri in loaded_uris and not args.force_reload:
+                skipped += 1
+                continue
+
+            print(f"\nLoading {jf.name}...")
+
+            if args.dry_run:
+                nodes = law.get("nodes", [])
+                from scripts.parser.parse_law import count_pasals
+                pc = count_pasals(nodes) if nodes else 0
+                print(f"  [DRY RUN] Would insert: 1 work, ~{pc} pasal nodes")
+                total_works += 1
+                continue
+
+            # 1. Upsert work
+            work_id = load_work(sb, law)
+            if not work_id:
+                print("  SKIP: Failed to insert work")
+                failed.append(jf.name)
+                continue
+
+            # 2. Per-work cleanup (idempotent reload)
+            cleanup_work_data(sb, work_id)
+
+            total_works += 1
+            print(f"  Work ID: {work_id}")
+
+            # 3. Insert document nodes
+            nodes = law.get("nodes", [])
+            pasal_nodes = load_nodes_recursive(sb, work_id, nodes)
+            total_pasals += len(pasal_nodes)
+            print(f"  Inserted {len(pasal_nodes)} pasal nodes")
+
+            # 4. Create and insert search chunks
+            chunk_count = create_chunks(sb, work_id, law, pasal_nodes)
+            total_chunks += chunk_count
+            print(f"  Created {chunk_count} search chunks")
+
+            # Track progress
+            loaded_uris.add(frbr_uri)
+            _save_progress(loaded_uris)
+
+        except Exception as e:
+            print(f"\n  ERROR loading {jf.name}: {e}")
+            failed.append(jf.name)
             continue
-        total_works += 1
-        print(f"  Work ID: {work_id}")
 
-        # 2. Insert document nodes
-        nodes = law.get("nodes", [])
-        pasal_nodes = load_nodes_recursive(sb, work_id, nodes)
-        total_pasals += len(pasal_nodes)
-        print(f"  Inserted {len(pasal_nodes)} pasal nodes")
+    # 5. Insert work relationships for demo laws
+    if not args.dry_run:
+        print("\nInserting work relationships...")
+        insert_relationships(sb)
 
-        # 3. Create and insert search chunks
-        chunk_count = create_chunks(sb, work_id, law, pasal_nodes)
-        total_chunks += chunk_count
-        print(f"  Created {chunk_count} search chunks")
-
-    # 4. Insert work relationships for demo laws
-    print("\nInserting work relationships...")
-    insert_relationships(sb)
-
-    print(f"\n=== DONE ===")
-    print(f"Works: {total_works}")
+    print(f"\n=== SUMMARY ===")
+    print(f"Loaded: {total_works}")
+    print(f"Skipped (already loaded): {skipped}")
+    print(f"Failed: {len(failed)}")
+    if failed:
+        for fn in failed:
+            print(f"  - {fn}")
     print(f"Pasal nodes: {total_pasals}")
     print(f"Search chunks: {total_chunks}")
 
