@@ -1,4 +1,4 @@
-"""Pasal.id MCP Server — Indonesian Legal Database.
+"""Pasal.id MCP Server — Indonesian Legal Database (v0.2).
 
 Provides Claude with grounded access to Indonesian legislation through 4 tools:
 - search_laws: Full-text search across Indonesian legal provisions
