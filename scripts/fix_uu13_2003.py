@@ -5,8 +5,9 @@ correct seed data for the key demo articles.
 """
 import json
 import os
-import httpx
 import sys
+
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
@@ -33,8 +34,7 @@ def run_sql(query: str) -> list[dict]:
     if resp.status_code != 201:
         print(f"ERROR ({resp.status_code}): {resp.text}")
         sys.exit(1)
-    data = resp.json()
-    return data
+    return resp.json()
 
 
 def escape_sql(s: str) -> str:
@@ -43,16 +43,12 @@ def escape_sql(s: str) -> str:
 
 
 def main():
-    # =========================================================================
-    # STEP 1: Get the existing work ID for UU 13/2003
-    # =========================================================================
+    # Step 1: Get the existing work ID for UU 13/2003
     print("STEP 1: Getting work ID for UU 13/2003...")
     result = run_sql("SELECT id FROM works WHERE number = '13' AND year = 2003;")
     print(f"  Result: {result}")
 
-    # =========================================================================
-    # STEP 2: Delete existing wrong data
-    # =========================================================================
+    # Step 2: Delete existing wrong data
     print("\nSTEP 2: Deleting existing wrong data...")
     result = run_sql(
         "DELETE FROM legal_chunks WHERE work_id = "
@@ -66,10 +62,8 @@ def main():
     )
     print(f"  Deleted document_nodes: {result}")
 
-    # =========================================================================
-    # STEP 5 (before inserts): Update the works table
-    # =========================================================================
-    print("\nSTEP 5: Updating works table...")
+    # Step 3: Update the works table
+    print("\nSTEP 3: Updating works table...")
     result = run_sql(
         "UPDATE works SET "
         "title_id = 'Undang-Undang Nomor 13 Tahun 2003 tentang Ketenagakerjaan', "
@@ -85,10 +79,8 @@ def main():
     work_id = work_id_result[0]["id"]
     print(f"  Using work_id = {work_id}")
 
-    # =========================================================================
-    # STEP 3: Insert BAB (chapter) nodes and Pasal (article) nodes
-    # =========================================================================
-    print("\nSTEP 3: Inserting BAB and Pasal nodes...")
+    # Step 4: Insert BAB (chapter) nodes and Pasal (article) nodes
+    print("\nSTEP 4: Inserting BAB and Pasal nodes...")
 
     # Define BABs
     babs = [
@@ -348,10 +340,8 @@ def main():
         pasal_ids[pasal["number"]] = pasal_id
         print(f"  Inserted Pasal {pasal['number']} -> id={pasal_id}")
 
-    # =========================================================================
-    # STEP 4: Create legal_chunks for each pasal
-    # =========================================================================
-    print("\nSTEP 4: Creating legal_chunks for search...")
+    # Step 5: Create legal_chunks for each pasal
+    print("\nSTEP 5: Creating legal_chunks for search...")
 
     chunk_count = 0
     for pasal in pasals:
@@ -379,9 +369,7 @@ def main():
         chunk_count += 1
         print(f"  Created chunk for Pasal {pasal['number']} -> id={chunk_id}")
 
-    # =========================================================================
-    # VERIFICATION
-    # =========================================================================
+    # Verification
     print("\n=== VERIFICATION ===")
 
     result = run_sql(
