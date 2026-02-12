@@ -503,11 +503,11 @@ CREATE INDEX IF NOT EXISTS idx_chunks_trgm ON legal_chunks USING gin(content gin
 2. Run on Supabase. The trigram index automatically accelerates the ILIKE fallback in the search function.
 
 **DONE WHEN:**
-- [ ] `SELECT extname FROM pg_extension WHERE extname = 'pg_trgm';` returns a row.
-- [ ] `idx_chunks_trgm` index exists.
-- [ ] Search still works: `SELECT * FROM search_legal_chunks('upah minimum', 3, '{}'::jsonb);` returns results.
-- [ ] Run `code-simplifier` plugin. ☐
-- [ ] Run `code-review` plugin. ☐
+- [x] `SELECT extname FROM pg_extension WHERE extname = 'pg_trgm';` returns a row.
+- [x] `idx_chunks_trgm` index exists.
+- [x] Search still works: `SELECT * FROM search_legal_chunks('upah minimum', 3, '{}'::jsonb);` returns results.
+- [x] Run `code-simplifier` plugin. ☑
+- [x] Run `code-review` plugin. ☑
 
 ---
 
