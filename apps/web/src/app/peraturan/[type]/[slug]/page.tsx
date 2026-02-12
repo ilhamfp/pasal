@@ -109,8 +109,49 @@ export default async function LawDetailPage({ params }: PageProps) {
           untuk kepastian hukum.
         </div>
 
+        {/* Mobile: context info (status + relationships) shown above content */}
+        <div className="lg:hidden space-y-3 mb-6">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm font-medium">Status:</span>
+            <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+              {STATUS_LABELS[work.status] || work.status}
+            </Badge>
+          </div>
+          {relationships && relationships.length > 0 && (
+            <details className="rounded-lg border p-3">
+              <summary className="font-semibold text-sm cursor-pointer">
+                Hubungan Hukum ({relationships.length})
+              </summary>
+              <div className="mt-2 space-y-2">
+                {relationships.map((rel) => {
+                  const relType = rel.relationship_types as { code: string; name_id: string; name_en: string };
+                  const otherId = rel.source_work_id === work.id ? rel.target_work_id : rel.source_work_id;
+                  const otherWork = relatedWorks[otherId];
+                  if (!otherWork) return null;
+                  return (
+                    <div key={rel.id} className="text-sm">
+                      <span className="text-muted-foreground">{relType.name_id}: </span>
+                      <span className="font-medium">{type.toUpperCase()} {otherWork.number}/{otherWork.year}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+          {work.source_url && (
+            <a
+              href={work.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Sumber: peraturan.go.id
+            </a>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_280px] gap-8">
-          <aside className="hidden lg:block">
+          <aside>
             <TableOfContents babs={babNodes} pasals={pasalNodes} />
           </aside>
 
