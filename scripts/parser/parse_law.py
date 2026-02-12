@@ -77,25 +77,30 @@ LAW_METADATA = {
 }
 
 
+def _build_metadata(raw_type: str, number: str, year: int, tentang: str = "") -> dict:
+    """Build a standard metadata dict for a parsed law."""
+    act_code = _TYPE_ACT_MAP.get(raw_type, raw_type.lower())
+    type_name = _TYPE_NAME_MAP.get(raw_type, raw_type)
+    title = f"{type_name} Nomor {number} Tahun {year}"
+    if tentang:
+        title += f" tentang {tentang}"
+    return {
+        "type": raw_type,
+        "number": number,
+        "year": year,
+        "frbr_uri": f"/akn/id/act/{act_code}/{year}/{number}",
+        "title_id": title,
+        "status": "berlaku",
+    }
+
+
 def extract_metadata_from_filename(filename: str) -> dict | None:
     """Extract law metadata from PDF filename pattern like 'uu-no-13-tahun-2003'."""
     stem = Path(filename).stem
     m = FILENAME_RE.match(stem)
     if not m:
         return None
-    raw_type = m.group(1).upper()
-    number = m.group(2)
-    year = int(m.group(3))
-    act_code = _TYPE_ACT_MAP.get(raw_type, raw_type.lower())
-    type_name = _TYPE_NAME_MAP.get(raw_type, raw_type)
-    return {
-        "type": raw_type,
-        "number": number,
-        "year": year,
-        "frbr_uri": f"/akn/id/act/{act_code}/{year}/{number}",
-        "title_id": f"{type_name} Nomor {number} Tahun {year}",
-        "status": "berlaku",
-    }
+    return _build_metadata(m.group(1).upper(), m.group(2), int(m.group(3)))
 
 
 def extract_metadata_from_text(text: str) -> dict | None:
@@ -115,19 +120,8 @@ def extract_metadata_from_text(text: str) -> dict | None:
     else:
         raw_type = "UU"  # default fallback
 
-    number = m.group(1)
-    year = int(m.group(2))
     tentang = " ".join(m.group(3).split())  # normalize whitespace
-    act_code = _TYPE_ACT_MAP.get(raw_type, raw_type.lower())
-    type_name = _TYPE_NAME_MAP.get(raw_type, raw_type)
-    return {
-        "type": raw_type,
-        "number": number,
-        "year": year,
-        "frbr_uri": f"/akn/id/act/{act_code}/{year}/{number}",
-        "title_id": f"{type_name} Nomor {number} Tahun {year} tentang {tentang}",
-        "status": "berlaku",
-    }
+    return _build_metadata(raw_type, m.group(1), int(m.group(2)), tentang)
 
 
 def extract_text_from_pdf(pdf_path: Path) -> str:
@@ -215,7 +209,6 @@ def parse_into_nodes(text: str) -> list[dict]:
     nodes = []
     current_bab = None
     current_bagian = None
-    current_pasal = None
     sort_order = 0
 
     # Split text into lines for processing
@@ -352,7 +345,6 @@ def parse_into_nodes(text: str) -> list[dict]:
             else:
                 nodes.append(pasal_node)
 
-            current_pasal = pasal_node
             sort_order += 1
             i = j
             continue

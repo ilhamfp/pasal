@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import Header from "@/components/Header";
+import DisclaimerBanner from "@/components/DisclaimerBanner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -28,6 +29,13 @@ interface WorkResult {
   year: number;
   status: string;
   regulation_types: { code: string }[] | { code: string } | null;
+}
+
+function formatRelevance(score: number, maxScore: number): string {
+  const pct = Math.round((score / maxScore) * 100);
+  if (pct >= 70) return `${pct}% — Sangat relevan`;
+  if (pct >= 40) return `${pct}% — Relevan`;
+  return `${pct}% — Mungkin relevan`;
 }
 
 async function SearchResults({ query, type }: { query: string; type?: string }) {
@@ -73,13 +81,7 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-200">
-        Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
-        <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer" className="underline">
-          peraturan.go.id
-        </a>{" "}
-        untuk kepastian hukum.
-      </div>
+      <DisclaimerBanner />
 
       <p className="text-sm text-muted-foreground">
         {chunks.length} hasil ditemukan untuk &ldquo;{query}&rdquo;
@@ -120,11 +122,7 @@ async function SearchResults({ query, type }: { query: string; type?: string }) 
                   {snippet}...
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Relevansi: {(() => {
-                    const pct = Math.round((chunk.score / maxScore) * 100);
-                    const label = pct >= 70 ? "Sangat relevan" : pct >= 40 ? "Relevan" : "Mungkin relevan";
-                    return `${pct}% — ${label}`;
-                  })()}
+                  Relevansi: {formatRelevance(chunk.score, maxScore)}
                 </p>
               </CardContent>
             </Card>

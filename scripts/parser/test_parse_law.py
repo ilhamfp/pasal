@@ -1,6 +1,5 @@
 """Unit tests for parse_law.py — regex patterns and parse_into_nodes."""
 
-import re
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch

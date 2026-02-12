@@ -187,7 +187,10 @@ def create_chunks(
             # Skip "Cukup jelas" penjelasan
             if content.strip().lower().startswith("cukup jelas"):
                 continue
-            chunk_text = f"{law_title}\nPenjelasan Pasal {pasal['number']}\n\n{content}" if pasal.get("number") else f"{law_title}\nPenjelasan Umum\n\n{content}"
+            if pasal.get("number"):
+                chunk_text = f"{law_title}\nPenjelasan Pasal {pasal['number']}\n\n{content}"
+            else:
+                chunk_text = f"{law_title}\nPenjelasan Umum\n\n{content}"
             metadata = {
                 "type": law_type,
                 "number": law_number,

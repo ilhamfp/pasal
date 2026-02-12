@@ -9,7 +9,6 @@ Provides Claude with grounded access to Indonesian legislation through 4 tools:
 import logging
 import os
 import time
-from typing import Optional
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
@@ -83,10 +82,10 @@ def _with_disclaimer(result: dict | list) -> dict | list:
     """Append legal disclaimer to every tool response."""
     if isinstance(result, dict):
         result["disclaimer"] = DISCLAIMER
-    elif isinstance(result, list):
-        for item in result:
-            if isinstance(item, dict):
-                item["disclaimer"] = DISCLAIMER
+        return result
+    for item in result:
+        if isinstance(item, dict):
+            item["disclaimer"] = DISCLAIMER
     return result
 
 
@@ -184,9 +183,9 @@ def _check_rate_limit(tool_name: str) -> dict | None:
 @mcp.tool
 def search_laws(
     query: str,
-    regulation_type: Optional[str] = None,
-    year_from: Optional[int] = None,
-    year_to: Optional[int] = None,
+    regulation_type: str | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
     limit: int = 10,
 ) -> list[dict]:
     """Search Indonesian laws and regulations by keyword.
@@ -510,10 +509,10 @@ def get_law_status(
 
 @mcp.tool
 def list_laws(
-    regulation_type: Optional[str] = None,
-    year: Optional[int] = None,
-    status: Optional[str] = None,
-    search: Optional[str] = None,
+    regulation_type: str | None = None,
+    year: int | None = None,
+    status: str | None = None,
+    search: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> dict:

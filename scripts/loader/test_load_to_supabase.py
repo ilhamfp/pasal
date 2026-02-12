@@ -3,9 +3,7 @@
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
-
-import pytest
+from unittest.mock import MagicMock
 
 # Env vars required by loader at import time
 os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
