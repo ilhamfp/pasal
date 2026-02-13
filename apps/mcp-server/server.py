@@ -44,12 +44,16 @@ mcp = FastMCP(
     instructions=(
         "Search, read, and analyze Indonesian laws and regulations. "
         "Provides grounded legal information with exact article citations "
-        "to prevent hallucination. Covers 19+ major Indonesian laws "
-        "including labor, marriage, criminal code, anti-corruption, "
-        "corporate, consumer protection, and data privacy laws.\n\n"
+        "to prevent hallucination. Covers Indonesian laws including labor, "
+        "marriage, criminal code, anti-corruption, corporate, consumer "
+        "protection, data privacy, and more.\n\n"
         "LEGAL HIERARCHY (highest to lowest authority):\n"
-        "UUD (Constitution) → UU (Law) → PP (Govt Regulation) → "
-        "PERPRES (Presidential Reg) → PERMEN (Ministerial Reg) → PERDA (Regional Reg)\n\n"
+        "UUD/UUDS (Constitution) → TAP_MPR (MPR Resolution) → "
+        "UU/PERPPU/UUDRT (Laws) → PP (Govt Regulation) → "
+        "PERPRES/KEPPRES/INPRES/PENPRES (Presidential) → "
+        "PERMEN/PERMENKUMHAM/PERMENKUM (Ministerial) → "
+        "PERBAN (Agency) → PERDA/PERDA_PROV/PERDA_KAB (Regional) → "
+        "KEPMEN (Ministerial Decision) → SE (Circular Letter)\n\n"
         "WORKFLOW — Follow this order for best results:\n"
         "1. search_laws → Find relevant provisions by topic keyword\n"
         "2. get_pasal → Get exact article text for citation\n"
@@ -311,7 +315,7 @@ def search_laws(
 
     Args:
         query: Search query in Indonesian (e.g., "upah minimum pekerja", "korupsi", "perkawinan")
-        regulation_type: Filter by type — UU (Law), PP (Govt Regulation), PERPRES (Presidential Reg), etc.
+        regulation_type: Filter by type code — UU, PP, PERPRES, PERMEN, PERPPU, KEPPRES, INPRES, PENPRES, PERBAN, PERMENKUMHAM, PERMENKUM, PERDA, PERDA_PROV, PERDA_KAB, KEPMEN, SE, TAP_MPR, PERMA, PBI, UUDRT, UUDS
         year_from: Only return laws enacted after this year
         year_to: Only return laws enacted before this year
         language: Language filter — "id" (Indonesian, default) or "en" (English translations)
@@ -612,7 +616,7 @@ def list_laws(
     PREFER search_laws for specific legal questions — this tool is for discovery/browsing.
 
     Args:
-        regulation_type: Filter by type — UU, PP, PERPRES, PERMEN, etc.
+        regulation_type: Filter by type — UU, PP, PERPRES, PERMEN, PERPPU, KEPPRES, INPRES, PENPRES, PERBAN, PERMENKUMHAM, PERMENKUM, PERDA, KEPMEN, SE, TAP_MPR, PERMA, PBI, UUDRT, UUDS, etc.
         year: Filter by year enacted
         status: Filter by status — "berlaku" (in force), "dicabut" (revoked), "diubah" (amended)
         search: Keyword filter on law title
