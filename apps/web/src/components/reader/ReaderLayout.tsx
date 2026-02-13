@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, X } from "lucide-react";
 import PdfViewer from "./PdfViewer";
@@ -8,7 +8,6 @@ import PdfViewer from "./PdfViewer";
 interface ReaderLayoutProps {
   toc: React.ReactNode;
   content: React.ReactNode;
-  contextWidgets: React.ReactNode;
   /** Right sidebar content (status, timeline, source) — shown when PDF is off */
   sidebar: React.ReactNode;
   sourcePdfUrl: string | null;
@@ -19,7 +18,6 @@ interface ReaderLayoutProps {
 export default function ReaderLayout({
   toc,
   content,
-  contextWidgets,
   sidebar,
   sourcePdfUrl,
   slug,
@@ -63,13 +61,9 @@ export default function ReaderLayout({
 
   return (
     <div>
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
-          {contextWidgets}
-        </div>
-
-        {/* PDF toggle — desktop only */}
+      {/* PDF toggle toolbar */}
+      <div className="flex items-center justify-end gap-3 mb-6">
+        {/* Desktop toggle */}
         <button
           onClick={() => setShowPdf(!showPdf)}
           className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
@@ -104,10 +98,8 @@ export default function ReaderLayout({
             : "lg:grid-cols-[220px_1fr_280px]"
         }`}
       >
-        {/* TOC sidebar */}
         <aside>{toc}</aside>
 
-        {/* Main content */}
         <main className="min-w-0">{content}</main>
 
         {/* Right column: context sidebar OR PDF */}
