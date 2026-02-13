@@ -2,9 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Bookmark as BookmarkIcon, Clock, Trash2 } from "lucide-react";
 import Header from "@/components/Header";
 import { getBookmarks, getHistory, removeBookmark, type Bookmark, type HistoryItem } from "@/lib/bookmarks";
-import { Bookmark as BookmarkIcon, Clock, Trash2 } from "lucide-react";
+
+/** Convert FRBR URI to a peraturan page path: /akn/id/act/uu/2003/13 -> /peraturan/uu/uu-13-2003 */
+function frbrToPath(frbr_uri: string): string {
+  const parts = frbr_uri.split("/");
+  const type = parts[4] || "uu";
+  const year = parts[5];
+  const number = parts[6];
+  return `/peraturan/${type}/${type}-${number}-${year}`;
+}
+
+function tabClass(isActive: boolean): string {
+  const base = "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors";
+  if (isActive) {
+    return `${base} border-primary text-foreground`;
+  }
+  return `${base} border-transparent text-muted-foreground hover:text-foreground`;
+}
 
 export default function BookmarkPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -16,18 +33,9 @@ export default function BookmarkPage() {
     setHistory(getHistory());
   }, []);
 
-  function handleRemoveBookmark(frbr_uri: string, pasal?: string) {
+  function handleRemoveBookmark(frbr_uri: string, pasal?: string): void {
     removeBookmark(frbr_uri, pasal);
     setBookmarks(getBookmarks());
-  }
-
-  function frbrToPath(frbr_uri: string): string {
-    // /akn/id/act/uu/2003/13 → /peraturan/uu/uu-13-2003
-    const parts = frbr_uri.split("/");
-    const type = parts[4] || "uu";
-    const year = parts[5];
-    const number = parts[6];
-    return `/peraturan/${type}/${type}-${number}-${year}`;
   }
 
   return (
@@ -38,25 +46,11 @@ export default function BookmarkPage() {
         <h1 className="font-heading text-3xl mb-6">Tersimpan</h1>
 
         <div className="flex gap-1 mb-8 border-b">
-          <button
-            onClick={() => setTab("bookmarks")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === "bookmarks"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          <button onClick={() => setTab("bookmarks")} className={tabClass(tab === "bookmarks")}>
             <BookmarkIcon className="h-4 w-4" />
             Bookmark ({bookmarks.length})
           </button>
-          <button
-            onClick={() => setTab("history")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === "history"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          <button onClick={() => setTab("history")} className={tabClass(tab === "history")}>
             <Clock className="h-4 w-4" />
             Riwayat ({history.length})
           </button>

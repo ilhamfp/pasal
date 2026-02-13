@@ -67,11 +67,12 @@ search_pass = 0
 for query, expected in tests:
     result = sb.rpc("search_legal_chunks", {"query_text": query, "match_count": 3, "metadata_filter": {}}).execute()
     count = len(result.data) if result.data else 0
-    status = "PASS" if count > 0 else "FAIL"
-    if count > 0:
-        search_pass += 1
+    passed = count > 0
+    status = "PASS" if passed else "FAIL"
     print(f"  {status} '{query}': {count} results ({expected})")
-    if count == 0:
+    if passed:
+        search_pass += 1
+    else:
         issues.append(f"SEARCH FAIL: '{query}' returned 0 results")
 
 print(f"\n=== SUMMARY ===")

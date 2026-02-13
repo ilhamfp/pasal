@@ -1,27 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { CORS_HEADERS } from "@/lib/api/cors";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-export async function OPTIONS() {
+export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
 }
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ frbr: string[] }> },
-) {
+): Promise<NextResponse> {
   const { frbr } = await params;
-  // Reconstruct FRBR URI: /akn/id/act/uu/2003/13
   const frbrUri = "/" + frbr.join("/");
 
   const supabase = await createClient();
 
-  // Get the work
   const { data: work, error: workError } = await supabase
     .from("works")
     .select("*, regulation_types(code, name_id)")
@@ -35,7 +28,6 @@ export async function GET(
     );
   }
 
-  // Get articles (pasals)
   const { data: articles } = await supabase
     .from("document_nodes")
     .select("id, node_type, number, heading, content_text, parent_id, sort_order")
@@ -43,7 +35,6 @@ export async function GET(
     .in("node_type", ["bab", "pasal"])
     .order("sort_order");
 
-  // Get relationships
   const { data: relationships } = await supabase
     .from("work_relationships")
     .select("*, relationship_types(code, name_id, name_en)")
@@ -84,6 +75,7 @@ export async function GET(
         year: number;
         status: string;
       } | undefined;
+
       return {
         type: rel.relationship_types?.name_id || rel.relationship_types?.code,
         type_en: rel.relationship_types?.name_en,

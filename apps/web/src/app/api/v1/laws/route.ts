@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getRegTypeCode } from "@/lib/get-reg-type-code";
+import { CORS_HEADERS } from "@/lib/api/cors";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-export async function OPTIONS() {
+export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
   const type = searchParams.get("type");
   const year = searchParams.get("year");
@@ -33,14 +29,15 @@ export async function GET(request: NextRequest) {
       .select("id")
       .eq("code", type.toUpperCase())
       .single();
-    if (regType) {
-      query = query.eq("regulation_type_id", regType.id);
-    } else {
+
+    if (!regType) {
       return NextResponse.json(
         { error: `Unknown regulation type: ${type}` },
         { status: 400, headers: CORS_HEADERS },
       );
     }
+
+    query = query.eq("regulation_type_id", regType.id);
   }
 
   if (year) query = query.eq("year", parseInt(year));
@@ -74,9 +71,7 @@ export async function GET(request: NextRequest) {
     year: w.year,
     status: w.status,
     content_verified: w.content_verified,
-    type: Array.isArray(w.regulation_types)
-      ? w.regulation_types[0]?.code
-      : w.regulation_types?.code || "",
+    type: getRegTypeCode(w.regulation_types),
   }));
 
   return NextResponse.json(

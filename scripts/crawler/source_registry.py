@@ -143,10 +143,7 @@ def get_sources_by_priority() -> list[dict]:
 
 def get_source(source_id: str) -> dict | None:
     """Get a specific source by its ID."""
-    for s in SOURCES:
-        if s["id"] == source_id:
-            return s
-    return None
+    return next((s for s in SOURCES if s["id"] == source_id), None)
 
 
 def get_simple_http_sources() -> list[dict]:

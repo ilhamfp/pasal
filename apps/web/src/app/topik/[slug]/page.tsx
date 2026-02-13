@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight, Search } from "lucide-react";
 import Header from "@/components/Header";
-import { getTopicBySlug, TOPICS } from "@/data/topics";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowRight } from "lucide-react";
+import { getTopicBySlug, TOPICS } from "@/data/topics";
 
 export function generateStaticParams() {
   return TOPICS.map((t) => ({ slug: t.slug }));
@@ -41,11 +41,11 @@ export default async function TopicDetailPage({ params }: PageProps) {
           <h2 className="font-heading text-xl mb-4">Peraturan Terkait</h2>
           <div className="flex flex-wrap gap-2">
             {topic.relatedLaws.map((law) => {
-              const slug = `${law.type.toLowerCase()}-${law.number}-${law.year}`;
+              const lawSlug = `${law.type.toLowerCase()}-${law.number}-${law.year}`;
               return (
                 <Link
-                  key={slug}
-                  href={`/peraturan/${law.type.toLowerCase()}/${slug}`}
+                  key={lawSlug}
+                  href={`/peraturan/${law.type.toLowerCase()}/${lawSlug}`}
                 >
                   <Badge variant="secondary" className="hover:bg-primary/10 transition-colors cursor-pointer">
                     {law.type} {law.number}/{law.year} — {law.title}

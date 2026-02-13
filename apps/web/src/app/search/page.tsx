@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
-import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getRegTypeCode } from "@/lib/get-reg-type-code";
+import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { createClient } from "@/lib/supabase/server";
 
 interface SearchParams {
   q?: string;
@@ -39,7 +39,12 @@ function formatRelevance(score: number, maxScore: number): string {
   return `${pct}% — Mungkin relevan`;
 }
 
-async function SearchResults({ query, type }: { query: string; type?: string }) {
+interface SearchResultsProps {
+  query: string;
+  type?: string;
+}
+
+async function SearchResults({ query, type }: SearchResultsProps) {
   const supabase = await createClient();
 
   const metadataFilter = type ? { type: type.toUpperCase() } : {};

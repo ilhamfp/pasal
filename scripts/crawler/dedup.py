@@ -1,19 +1,5 @@
 """Deduplication and visit-tracking for cross-source crawling."""
-import os
-
-from dotenv import load_dotenv
-from supabase import create_client
-
-load_dotenv()
-
-_sb = None
-
-
-def _get_sb():
-    global _sb
-    if _sb is None:
-        _sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
-    return _sb
+from .db import get_sb
 
 
 def build_frbr_uri(reg_type: str, number: str, year: int) -> str:
@@ -23,7 +9,7 @@ def build_frbr_uri(reg_type: str, number: str, year: int) -> str:
 
 def is_work_duplicate(frbr_uri: str) -> int | None:
     """Check if a work with this FRBR URI already exists. Returns work_id or None."""
-    sb = _get_sb()
+    sb = get_sb()
     result = sb.table("works").select("id").eq("frbr_uri", frbr_uri).limit(1).execute()
     if result.data:
         return result.data[0]["id"]
@@ -32,7 +18,7 @@ def is_work_duplicate(frbr_uri: str) -> int | None:
 
 def mark_job_duplicate(job_id: int, existing_work_id: int) -> None:
     """Mark a crawl job as duplicate, linking to existing work."""
-    sb = _get_sb()
+    sb = get_sb()
     sb.table("crawl_jobs").update({
         "status": "loaded",
         "work_id": existing_work_id,
@@ -42,7 +28,7 @@ def mark_job_duplicate(job_id: int, existing_work_id: int) -> None:
 
 def get_crawl_stats() -> dict:
     """Get crawling statistics."""
-    sb = _get_sb()
+    sb = get_sb()
     total = sb.table("crawl_jobs").select("id", count="exact").execute()
     by_status = {}
     for status in ("pending", "crawling", "downloaded", "parsed", "loaded", "failed"):

@@ -69,6 +69,13 @@ def get_pasal(law_type: str, law_number: str, year: int, pasal: str) -> dict | N
     }
 
 
+def related_work_id(relationship: dict, work_id: str) -> str:
+    """Given a relationship row and the current work's ID, return the other work's ID."""
+    if relationship["source_work_id"] == work_id:
+        return relationship["target_work_id"]
+    return relationship["source_work_id"]
+
+
 def get_law_status(law_type: str, law_number: str, year: int) -> dict | None:
     """Replicate MCP get_law_status."""
     reg = sb.table("regulation_types").select("id").eq("code", law_type).single().execute()
@@ -92,10 +99,7 @@ def get_law_status(law_type: str, law_number: str, year: int) -> dict | None:
         .or_(f"source_work_id.eq.{work.data['id']},target_work_id.eq.{work.data['id']}")
         .execute()
     )
-    related_ids = []
-    for r in rels.data or []:
-        other = r["target_work_id"] if r["source_work_id"] == work.data["id"] else r["source_work_id"]
-        related_ids.append(other)
+    related_ids = [related_work_id(r, work.data["id"]) for r in (rels.data or [])]
 
     related_works = {}
     if related_ids:
@@ -154,10 +158,7 @@ if status:
         f"actual: {status['work']['status']}",
     )
     has_amendment = any(
-        status["related_works"].get(
-            r["target_work_id"] if r["source_work_id"] == status["work"]["id"] else r["source_work_id"],
-            {},
-        ).get("year") == 2019
+        status["related_works"].get(related_work_id(r, status["work"]["id"]), {}).get("year") == 2019
         for r in status["relationships"]
     )
     check("UU 16/2019 appears as amendment", has_amendment)
@@ -202,14 +203,8 @@ if status13:
         f"{len(status13['relationships'])} relationships",
     )
     has_uu6 = any(
-        status13["related_works"].get(
-            r["target_work_id"] if r["source_work_id"] == status13["work"]["id"] else r["source_work_id"],
-            {},
-        ).get("number") == "6"
-        and status13["related_works"].get(
-            r["target_work_id"] if r["source_work_id"] == status13["work"]["id"] else r["source_work_id"],
-            {},
-        ).get("year") == 2023
+        status13["related_works"].get(related_work_id(r, status13["work"]["id"]), {}).get("number") == "6"
+        and status13["related_works"].get(related_work_id(r, status13["work"]["id"]), {}).get("year") == 2023
         for r in status13["relationships"]
     )
     check("UU 6/2023 appears as amending law", has_uu6)

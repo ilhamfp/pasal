@@ -22,7 +22,7 @@ RELATIONSHIPS = [
 inserted = 0
 for src_uri, rel_code, tgt_uri in RELATIONSHIPS:
     src_id, tgt_id, rel_id = works.get(src_uri), works.get(tgt_uri), rels.get(rel_code)
-    if not all([src_id, tgt_id, rel_id]):
+    if not all((src_id, tgt_id, rel_id)):
         print(f"SKIP: {src_uri} -> {rel_code} -> {tgt_uri} (missing)")
         continue
     try:

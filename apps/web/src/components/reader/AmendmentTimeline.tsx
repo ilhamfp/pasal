@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { STATUS_LABELS } from "@/lib/legal-status";
 
 interface TimelineNode {
   year: number;
@@ -33,12 +34,18 @@ interface AmendmentTimelineProps {
   regTypeCode: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  berlaku: "Berlaku",
+const TIMELINE_STATUS_LABELS: Record<string, string> = {
+  ...STATUS_LABELS,
   diubah: "Berlaku (dengan perubahan)",
-  dicabut: "Dicabut",
-  tidak_berlaku: "Tidak Berlaku",
 };
+
+function frbrToPath(frbrUri: string): string {
+  const parts = frbrUri.split("/");
+  const type = parts[4] || "uu";
+  const year = parts[5];
+  const number = parts[6];
+  return `/peraturan/${type}/${type}-${number}-${year}`;
+}
 
 export default function AmendmentTimeline({
   currentWork,
@@ -47,7 +54,6 @@ export default function AmendmentTimeline({
 }: AmendmentTimelineProps) {
   if (relationships.length === 0) return null;
 
-  // Build timeline nodes
   const nodes: TimelineNode[] = [
     {
       year: currentWork.year,
@@ -72,16 +78,7 @@ export default function AmendmentTimeline({
     });
   }
 
-  // Sort by year
   nodes.sort((a, b) => a.year - b.year);
-
-  function frbrToPath(frbr_uri: string): string {
-    const parts = frbr_uri.split("/");
-    const type = parts[4] || "uu";
-    const year = parts[5];
-    const number = parts[6];
-    return `/peraturan/${type}/${type}-${number}-${year}`;
-  }
 
   return (
     <div className="rounded-lg border p-4">
@@ -126,7 +123,7 @@ export default function AmendmentTimeline({
         <div className="relative pb-0">
           <div className="absolute -left-6 top-1 h-[18px] w-[18px] rounded-full border-2 border-primary bg-primary/20" />
           <p className="text-xs font-medium text-primary">
-            Status: {STATUS_LABELS[currentWork.status] || currentWork.status}
+            Status: {TIMELINE_STATUS_LABELS[currentWork.status] || currentWork.status}
           </p>
         </div>
       </div>
