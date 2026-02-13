@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
 interface PdfViewerProps {
@@ -8,22 +8,32 @@ interface PdfViewerProps {
   supabaseUrl: string;
   sourcePdfUrl?: string | null;
   totalPages?: number;
-  initialPage?: number;
+  /** Controlled page — parent can drive this via scroll sync */
+  page?: number;
   onPageChange?: (page: number) => void;
 }
 
-export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages, initialPage, onPageChange }: PdfViewerProps) {
-  const [currentPage, setCurrentPage] = useState(initialPage || 1);
+export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages, page, onPageChange }: PdfViewerProps) {
+  const [internalPage, setInternalPage] = useState(page || 1);
   const [hasError, setHasError] = useState(false);
   const [useIframe, setUseIframe] = useState(false);
 
+  // Sync with controlled page prop
+  useEffect(() => {
+    if (page != null && page !== internalPage) {
+      setInternalPage(page);
+      setHasError(false);
+    }
+  }, [page]);
+
+  const currentPage = internalPage;
   const maxPages = totalPages || 500;
   const imageUrl = `${supabaseUrl}/storage/v1/object/public/regulation-pdfs/${slug}/page-${currentPage}.png`;
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
+  const goToPage = (p: number) => {
+    setInternalPage(p);
     setHasError(false);
-    onPageChange?.(page);
+    onPageChange?.(p);
   };
 
   if (useIframe && sourcePdfUrl) {
