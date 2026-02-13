@@ -94,7 +94,7 @@ def verify_suggestion(
 Bandingkan dan berikan keputusan verifikasi dalam format JSON."""
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3-flash-preview",
             contents=prompt,
             config=genai.types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
@@ -117,7 +117,7 @@ Bandingkan dan berikan keputusan verifikasi dalam format JSON."""
             "corrected_content": result.get("corrected_content"),
             "additional_issues": result.get("additional_issues", []),
             "parser_feedback": result.get("parser_feedback", ""),
-            "model": "gemini-2.0-flash",
+            "model": "gemini-3-flash-preview",
             "raw_response": response.text,
         }
 
@@ -129,6 +129,6 @@ Bandingkan dan berikan keputusan verifikasi dalam format JSON."""
             "corrected_content": None,
             "additional_issues": [],
             "parser_feedback": "",
-            "model": "gemini-2.0-flash",
+            "model": "gemini-3-flash-preview",
             "error": str(e),
         }

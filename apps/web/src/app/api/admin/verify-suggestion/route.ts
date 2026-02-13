@@ -137,7 +137,7 @@ PENTING: Selalu isi "additional_issues" jika Anda menemukan masalah lain di teks
 PENTING: Selalu isi "parser_feedback" dengan catatan tentang kemungkinan kesalahan parser.`;
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@ PENTING: Selalu isi "parser_feedback" dengan catatan tentang kemungkinan kesalah
     await sb
       .from("suggestions")
       .update({
-        agent_model: "gemini-2.0-flash",
+        agent_model: "gemini-3-flash-preview",
         agent_response: {
           raw: responseText,
           parsed: result,
