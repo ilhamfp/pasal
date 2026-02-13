@@ -266,13 +266,6 @@ export default async function LawDetailPage({ params }: PageProps) {
           Konten pasal belum tersedia untuk peraturan ini.
         </div>
       )}
-
-      {/* Amendment timeline — shown below content */}
-      <AmendmentTimeline
-        currentWork={work}
-        relationships={resolvedRels}
-        regTypeCode={type.toUpperCase()}
-      />
     </>
   );
 
@@ -292,6 +285,12 @@ export default async function LawDetailPage({ params }: PageProps) {
             {type.toUpperCase()} Nomor {work.number} Tahun {work.year}
           </p>
         </div>
+
+        <AmendmentTimeline
+          currentWork={work}
+          relationships={resolvedRels}
+          regTypeCode={type.toUpperCase()}
+        />
 
         <DisclaimerBanner className="mb-6" />
 

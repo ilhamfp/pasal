@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FileText, X } from "lucide-react";
 import PdfViewer from "./PdfViewer";
 
@@ -22,17 +23,53 @@ export default function ReaderLayout({
   supabaseUrl,
 }: ReaderLayoutProps) {
   const [showPdf, setShowPdf] = useState(false);
+  const [activePdfPage, setActivePdfPage] = useState(1);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Scroll sync: observe which pasal is in view and update PDF page
+  useEffect(() => {
+    if (!showPdf) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the topmost visible pasal with a page mapping
+        let bestEntry: IntersectionObserverEntry | null = null;
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            if (
+              !bestEntry ||
+              entry.boundingClientRect.top < bestEntry.boundingClientRect.top
+            ) {
+              bestEntry = entry;
+            }
+          }
+        }
+        if (bestEntry) {
+          const page = bestEntry.target.getAttribute("data-pdf-page");
+          if (page) {
+            setActivePdfPage(parseInt(page, 10));
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 },
+    );
+
+    // Observe all pasal articles with data-pdf-page
+    const articles = document.querySelectorAll("article[data-pdf-page]");
+    articles.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [showPdf]);
 
   return (
     <div>
-      {/* Toolbar with PDF toggle + context widgets (compact bar) */}
+      {/* Toolbar */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        {/* Context widgets as compact inline items */}
         <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
           {contextWidgets}
         </div>
 
-        {/* PDF toggle button — desktop only */}
+        {/* PDF toggle — desktop only */}
         <button
           onClick={() => setShowPdf(!showPdf)}
           className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
@@ -59,9 +96,9 @@ export default function ReaderLayout({
         )}
       </div>
 
-      {/* Main grid */}
+      {/* Main grid — animate between 2-col and 3-col */}
       <div
-        className={`grid grid-cols-1 gap-8 ${
+        className={`grid grid-cols-1 gap-8 transition-[grid-template-columns] duration-300 ease-in-out ${
           showPdf
             ? "lg:grid-cols-[220px_1fr_1fr]"
             : "lg:grid-cols-[220px_1fr]"
@@ -71,27 +108,40 @@ export default function ReaderLayout({
         <aside>{toc}</aside>
 
         {/* Main content */}
-        <main className="min-w-0">{content}</main>
+        <main ref={mainRef} className="min-w-0">
+          {content}
+        </main>
 
-        {/* PDF panel — only when toggled on */}
-        {showPdf && (
-          <aside className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-heading">PDF Sumber</span>
-              <button
-                onClick={() => setShowPdf(false)}
-                className="rounded-lg border p-1 hover:border-primary/30 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <PdfViewer
-              slug={slug}
-              supabaseUrl={supabaseUrl}
-              sourcePdfUrl={sourcePdfUrl}
-            />
-          </aside>
-        )}
+        {/* PDF panel with framer-motion enter/exit */}
+        <AnimatePresence mode="popLayout">
+          {showPdf && (
+            <motion.aside
+              key="pdf-panel"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-heading">PDF Sumber</span>
+                <button
+                  onClick={() => setShowPdf(false)}
+                  className="rounded-lg border p-1 hover:border-primary/30 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <PdfViewer
+                slug={slug}
+                supabaseUrl={supabaseUrl}
+                sourcePdfUrl={sourcePdfUrl}
+                page={activePdfPage}
+                onPageChange={setActivePdfPage}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
