@@ -124,6 +124,67 @@ def extract_metadata_from_text(text: str) -> dict | None:
     return _build_metadata(raw_type, m.group(1), int(m.group(2)), tentang)
 
 
+_PAGE_HEADER_RE = re.compile(
+    r'^(?:SALINAN\s*\n)?'
+    r'PRESIDEN\s*\n'
+    r'\s*REPU\w+\s+INDONESIA\s*\n'
+    r'(?:\s*-\s*\d+\s*-?\s*\n)?',
+    re.MULTILINE | re.IGNORECASE,
+)
+_PAGE_FOOTER_RE = re.compile(
+    r'(?:^Halaman\s+\d+\s+dari\s+\d+\s*$'
+    r'|^SK\s+No\s+\d+[A-Z]?\s*$'
+    r'|^;?\*?[a-zA-Z]*(?:trE|EtrN)\s*$'
+    r'|^(?:iIi|REFUBLIK|REPUEUK)\s+INDONESIA\s*$)',
+    re.MULTILINE | re.IGNORECASE,
+)
+_OCR_NUMBER_RE = re.compile(r'(?<=Pasal\s)[lI](\d+)', re.MULTILINE)
+_OCR_NUMBER_O_RE = re.compile(r'(\d+)O(?=\s|$)')
+
+
+def _clean_pdf_text(text: str) -> str:
+    """Remove page headers, footers, and fix common OCR artifacts."""
+    # Strip page headers (PRESIDEN / REPUBLIK INDONESIA / -N-)
+    text = _PAGE_HEADER_RE.sub('', text)
+    # Strip page footers and scanner artifacts
+    text = _PAGE_FOOTER_RE.sub('', text)
+    # Fix OCR: lowercase L or uppercase I used as digit 1 in Pasal numbers
+    # e.g. "Pasal l3" -> "Pasal 13", "Pasal I3" -> "Pasal 13" (but not "Pasal III")
+    text = _OCR_NUMBER_RE.sub(lambda m: '1' + m.group(1), text)
+    # Fix OCR: letter O used as digit 0 at end of numbers (e.g. "9O" -> "90")
+    text = _OCR_NUMBER_O_RE.sub(lambda m: m.group(1) + '0', text)
+    # Collapse runs of blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text
+
+
+def _dedup_page_breaks(pages: list[str]) -> str:
+    """Join pages while removing duplicated text at page boundaries.
+
+    Legal PDFs often repeat the last line(s) of page N at the top of page N+1
+    (e.g. "... masih hidup" at bottom, then "masih hidup atau..." at top).
+    We detect overlaps and merge them.
+    """
+    if not pages:
+        return ""
+    result = pages[0]
+    for page in pages[1:]:
+        # Try to find overlap: last N chars of result match first N chars of page
+        overlap = 0
+        # Check up to 200 chars of overlap (typical page-break repeats)
+        max_check = min(200, len(result), len(page))
+        for length in range(max_check, 10, -1):
+            suffix = result[-length:]
+            if page.startswith(suffix):
+                overlap = length
+                break
+        if overlap > 0:
+            result += page[overlap:]
+        else:
+            result += '\n' + page
+    return result
+
+
 def extract_text_from_pdf(pdf_path: Path) -> str:
     """Extract all text from a PDF using pdfplumber."""
     try:
@@ -133,7 +194,8 @@ def extract_text_from_pdf(pdf_path: Path) -> str:
                 text = page.extract_text()
                 if text:
                     text_parts.append(text)
-        return '\n'.join(text_parts)
+        raw = _dedup_page_breaks(text_parts)
+        return _clean_pdf_text(raw)
     except Exception as e:
         print(f"  ERROR reading PDF: {e}")
         return ""
@@ -315,17 +377,21 @@ def parse_into_nodes(text: str) -> list[dict]:
 
             content = '\n'.join(content_lines).strip()
 
-            # Parse ayat from content
+            # Parse ayat from content, deduplicating page-break repeats
             ayat_children = []
+            seen_ayat: set[str] = set()
             ayat_matches = list(re.finditer(r'^\((\d+)\)\s*', content, re.MULTILINE))
             if ayat_matches:
                 for idx, am in enumerate(ayat_matches):
-                    ayat_start = am.start()
+                    ayat_num = am.group(1)
+                    if ayat_num in seen_ayat:
+                        continue  # skip duplicate from page break
+                    seen_ayat.add(ayat_num)
                     ayat_end = ayat_matches[idx + 1].start() if idx + 1 < len(ayat_matches) else len(content)
                     ayat_text = content[am.end():ayat_end].strip()
                     ayat_children.append({
                         "type": "ayat",
-                        "number": am.group(1),
+                        "number": ayat_num,
                         "content": ayat_text,
                     })
 
@@ -393,6 +459,14 @@ def parse_single_law(pdf_path: Path) -> dict | None:
     if not meta:
         print(f"  No metadata for {slug}, skipping")
         return None
+
+    # Validate metadata against document content
+    text_meta = extract_metadata_from_text(text)
+    if text_meta and meta:
+        if text_meta.get("number") != meta.get("number") or text_meta.get("year") != meta.get("year"):
+            print(f"  WARNING: metadata mismatch! File says {meta['type']} {meta['number']}/{meta['year']}, "
+                  f"but document text says {text_meta.get('type', '?')} {text_meta.get('number', '?')}/{text_meta.get('year', '?')}")
+            print(f"  Document title from text: {text_meta.get('title_id', 'unknown')}")
 
     print(f"  Text: {len(text)} chars, parsing structure...")
     nodes = parse_into_nodes(text)

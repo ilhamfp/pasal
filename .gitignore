@@ -6,6 +6,7 @@
 # Data (local only)
 data/raw/
 data/parsed/
+data/eval/
 
 # Node
 node_modules/
