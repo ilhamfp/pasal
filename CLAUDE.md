@@ -38,6 +38,22 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 | Search | PostgreSQL FTS | `tsvector` + `websearch_to_tsquery('indonesian', ...)`. Vector search is a post-MVP upgrade. |
 | Auth | Supabase Auth (via `@supabase/ssr`) | Public read, no auth required for legal data |
 
+## Visual Identity
+
+**`BRAND_GUIDELINES.md` is the single source of truth for all visual decisions.** Read it before writing any frontend code.
+
+**Quick reference:**
+- **Primary color:** #2B6150 verdigris (aged copper patina) — the ONE accent color
+- **Surface:** #F8F5F0 warm stone — page background, NOT pure white
+- **Cards:** #FFFFFF pure white — lifts off warm stone background
+- **Heading font:** Instrument Serif (`font-heading`) — weight 400 only, hierarchy through size
+- **Body/UI font:** Instrument Sans (`font-sans`) — weights 400–700
+- **Code font:** JetBrains Mono (`font-mono`)
+- **Default radius:** `rounded-lg` (8px)
+- **Neutrals:** Warm graphite ("Batu Candi") — never cool gray/slate
+
+**ALL frontend work must follow BRAND_GUIDELINES.md — no exceptions.**
+
 ## Project Structure
 
 ```
@@ -79,6 +95,16 @@ pasal-id/
 - Prefer `async function` Server Components over client-side `useEffect` data fetching.
 - Use Tailwind utility classes. No CSS modules, no styled-components.
 - All UI text that users see should be in **Indonesian** with English as secondary. Legal content is always in Indonesian.
+- Use `font-heading` (Instrument Serif) for all headings (H1–H4, display text, card titles). Weight 400 only — hierarchy through size, not boldness.
+- Use `font-sans` (Instrument Sans) for body text, UI elements, buttons, navigation, labels.
+- Use `font-mono` (JetBrains Mono) for code blocks, MCP commands, article numbers.
+- Use Instrument Serif italic for editorial emphasis — hero secondary text, legal Latin terms, pull quotes.
+- Page background is `bg-background` (#F8F5F0 warm stone), NOT pure white. Cards use `bg-card` (pure white) to create lift.
+- Use `bg-primary` (#2B6150 verdigris) for ALL interactive elements — buttons, links, focus rings. There is only ONE accent color.
+- Use `bg-destructive` (#C53030 cool red) for error/destructive states. Never use the brand green for errors.
+- Default border radius is `rounded-lg` (8px). Use borders for depth, avoid shadows except on popovers.
+- Never use cool gray/slate. Always warm graphite neutrals.
+- Never add a second accent color. The restraint is the brand.
 
 ### Python (MCP Server + Scripts)
 
@@ -153,7 +179,7 @@ These Indonesian legal terms appear throughout the codebase:
 Before creating or modifying any frontend component, page, or visual element:
 1. Read `BRAND_GUIDELINES.md` for the color system, typography, spacing, and component patterns.
 2. Use the defined color variables (CSS custom properties) — never hardcode hex colors.
-3. Follow the "modern public library, not dim government office" design philosophy.
+3. Follow the "Batu Candi" design philosophy — stone-walled museum gallery with excellent lighting. Restraint is the brand.
 4. The primary color is Verdigris (#2B6150). Neutrals are warm graphite ("Batu Candi").
 5. Typography: Instrument Serif for headings, Instrument Sans for body/UI.
 6. All user-facing text should be in **Bahasa Indonesia** as primary, English as secondary.
@@ -182,6 +208,18 @@ When in doubt, reference `BRAND_GUIDELINES.md` — it is the single source of tr
 9. **Don't ignore BRAND_GUIDELINES.md.** Every frontend component must use the defined color system and typography. No arbitrary colors, no generic shadcn defaults without brand customization.
 
 10. **Always update TASKS.md checkboxes** when completing a task. Check off the "DONE WHEN" items and the plugin checkboxes as you go.
+
+11. **Don't use violet/purple/indigo/blue as accent colors.** We use verdigris (#2B6150) only. One accent color, no exceptions.
+
+12. **Don't use Plus Jakarta Sans or Inter.** We use Instrument Serif (headings) and Instrument Sans (body/UI). They are from the same type family by Rodrigo Fuenzalida.
+
+13. **Don't use cool grays (slate, zinc, gray).** Use warm graphite neutrals from BRAND_GUIDELINES.md. The neutrals have a subtle yellow-brown warmth (hue 38–60°).
+
+14. **Don't use heavy box-shadows.** This is a stone-and-light aesthetic. Use borders for depth. Only `shadow-sm` on popovers/dropdowns.
+
+15. **Don't use bold weight on Instrument Serif.** It only has weight 400. Heading hierarchy is through size, not boldness.
+
+16. **Don't make the interface colorful.** If reaching for a second color, reconsider. The near-monochrome warm graphite palette with one verdigris accent IS the brand.
 
 ## Environment Variables
 
