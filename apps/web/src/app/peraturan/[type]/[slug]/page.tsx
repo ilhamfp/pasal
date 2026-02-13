@@ -187,41 +187,6 @@ export default async function LawDetailPage({ params }: PageProps) {
     url: pageUrl,
   };
 
-  // Context widgets rendered as compact inline items
-  const contextWidgets = (
-    <>
-      <div className="flex items-center gap-2">
-        <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-          {STATUS_LABELS[work.status] || work.status}
-        </Badge>
-        {work.content_verified ? (
-          <Badge className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20" variant="outline">
-            ✓ Terverifikasi
-          </Badge>
-        ) : (
-          <Badge className="bg-status-diubah-bg text-status-diubah border-status-diubah/20" variant="outline">
-            ⚠ Belum Diverifikasi
-          </Badge>
-        )}
-      </div>
-      {resolvedRels.length > 0 && (
-        <span className="text-xs text-muted-foreground">
-          {resolvedRels.length} hubungan hukum
-        </span>
-      )}
-      {work.source_url && (
-        <a
-          href={work.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-primary hover:text-primary/80"
-        >
-          Sumber: peraturan.go.id
-        </a>
-      )}
-    </>
-  );
-
   // Main content area
   const mainContent = (
     <>
@@ -291,7 +256,6 @@ export default async function LawDetailPage({ params }: PageProps) {
         <ReaderLayout
           toc={<TableOfContents babs={babNodes} pasals={pasalNodes} />}
           content={mainContent}
-          contextWidgets={contextWidgets}
           sidebar={
             <div className="space-y-4">
               <div className="rounded-lg border p-4">
