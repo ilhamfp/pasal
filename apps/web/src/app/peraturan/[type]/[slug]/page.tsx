@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
 import TableOfContents from "@/components/TableOfContents";
 import AmendmentTimeline from "@/components/reader/AmendmentTimeline";
+import PdfToggle from "@/components/reader/PdfToggle";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -303,7 +304,11 @@ export default async function LawDetailPage({ params }: PageProps) {
             )}
           </main>
 
-          <aside className="hidden lg:block space-y-6">
+          <PdfToggle
+            slug={slug}
+            supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
+            sourcePdfUrl={work.source_pdf_url}
+          >
             <div className="rounded-lg border p-4">
               <h3 className="font-heading text-sm mb-2">Status</h3>
               <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
@@ -330,7 +335,7 @@ export default async function LawDetailPage({ params }: PageProps) {
                 </a>
               </div>
             )}
-          </aside>
+          </PdfToggle>
         </div>
       </div>
     </div>
