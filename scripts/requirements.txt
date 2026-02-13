@@ -1,6 +1,7 @@
 httpx
 beautifulsoup4
 pdfplumber
+pymupdf
 supabase
 tqdm
 python-dotenv
