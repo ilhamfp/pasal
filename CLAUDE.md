@@ -32,7 +32,7 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 
 ### Workflow loop
 
-1. Open `TASKS.md` and find your current task (the first unchecked one).
+1. Open `TASKS-UPGRADE.md` and find your current task (the first unchecked one).
 2. Implement the task completely.
 3. Verify the "Done when" condition passes.
 4. `git add -A && git commit -m "task X.Y: description" && git push origin main`
@@ -43,11 +43,10 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 ### Rules
 
 - **Do NOT skip tasks or jump ahead.** Tasks are ordered by dependency.
-- **Do NOT add features not in TASKS.md.** No bonus features, no "nice to haves," no refactoring detours.
 - **Do NOT get stuck longer than 20 minutes on any sub-problem.** If scraping doesn't work, use hardcoded seed data. If parsing fails on edge cases, skip those documents. Forward progress > perfection.
 - **Do NOT over-engineer.** This is a hackathon MVP. No abstractions "for later," no premature optimization, no complex error recovery.
 - **Before writing any frontend code, consult `BRAND_GUIDELINES.md`** for colors, fonts, spacing, and component patterns. It is the single source of truth for visual identity.
-- **When in doubt, check TASKS.md Appendix** — it tells you exactly what to cut if behind schedule.
+- **When in doubt, check TASKS-.md Appendix** — it tells you exactly what to cut if behind schedule.
 
 ## Tech Stack
 
@@ -82,7 +81,7 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 ```
 pasal-id/
 ├── CLAUDE.md              ← You are here
-├── TASKS.md               ← Your task list (work through sequentially)
+├── TASKS-UPGRADE.md               ← Your task list (work through sequentially)
 ├── BRAND_GUIDELINES.md    ← Visual identity reference (colors, fonts, components)
 ├── apps/
 │   ├── web/               ← Next.js frontend
@@ -155,7 +154,7 @@ pasal-id/
 - Scripts go in `scripts/`, server code in `apps/mcp-server/`.
 - No classes unless genuinely needed. Prefer functions.
 - Use `pymupdf` (PyMuPDF) for new PDF text extraction and page image rendering — ~100x faster than pdfplumber. The existing pdfplumber-based parser (`scripts/parser/parse_law.py`) remains for reference but new parsing uses PyMuPDF in new files alongside it.
-- Use `google-generativeai` (Gemini Flash 2.0) for the verification agent in `scripts/agent/`. The agent is advisory only — admin must click Approve.
+- Use `from google import genai` (Gemini Flash 3.0. Model key: `emini-3-flash-preview`) for the verification agent in `scripts/agent/`. The agent is advisory only — admin must click Approve.
 
 ### SQL (Supabase Migrations)
 
@@ -303,7 +302,7 @@ When in doubt, reference `BRAND_GUIDELINES.md` — it is the single source of tr
 
 9. **Don't ignore BRAND_GUIDELINES.md.** Every frontend component must use the defined color system and typography. No arbitrary colors, no generic shadcn defaults without brand customization.
 
-10. **Always update TASKS.md checkboxes** when completing a task. Check off the "DONE WHEN" items and the plugin checkboxes as you go.
+10. **Always update TASKS-UPGRADE.md checkboxes** when completing a task. Check off the "DONE WHEN" items and the plugin checkboxes as you go.
 
 11. **Don't use violet/purple/indigo/blue as accent colors.** We use verdigris (#2B6150) only. One accent color, no exceptions.
 

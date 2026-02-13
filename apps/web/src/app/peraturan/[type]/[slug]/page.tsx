@@ -292,7 +292,7 @@ export default async function LawDetailPage({ params }: PageProps) {
             ) : (
               // No BAB structure — just show all pasals
               pasalNodes.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} />
+                <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} workId={work.id} />
               ))
             )}
 
