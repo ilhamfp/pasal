@@ -13,15 +13,28 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const TYPE_LABELS: Record<string, string> = {
+  UUD: "Undang-Undang Dasar",
+  TAP_MPR: "Ketetapan MPR",
   UU: "Undang-Undang",
+  PERPPU: "Peraturan Pemerintah Pengganti Undang-Undang",
   PP: "Peraturan Pemerintah",
   PERPRES: "Peraturan Presiden",
-  PERPPU: "Peraturan Pemerintah Pengganti Undang-Undang",
+  KEPPRES: "Keputusan Presiden",
+  INPRES: "Instruksi Presiden",
+  PENPRES: "Penetapan Presiden",
   PERMEN: "Peraturan Menteri",
+  PERMENKUMHAM: "Peraturan Menteri Hukum dan HAM",
+  PERMENKUM: "Peraturan Menteri Hukum",
+  PERBAN: "Peraturan Badan/Lembaga",
+  PERDA: "Peraturan Daerah",
   PERDA_PROV: "Peraturan Daerah Provinsi",
   PERDA_KAB: "Peraturan Daerah Kabupaten/Kota",
+  KEPMEN: "Keputusan Menteri",
+  SE: "Surat Edaran",
   PERMA: "Peraturan Mahkamah Agung",
   PBI: "Peraturan Bank Indonesia",
+  UUDRT: "Undang-Undang Darurat",
+  UUDS: "Undang-Undang Dasar Sementara",
 };
 
 export const LEGAL_FORCE_MAP: Record<string, string> = {

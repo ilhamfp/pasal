@@ -9,7 +9,7 @@ interface HeaderProps {
 
 const NAV_LINKS = [
   { href: "/search", label: "Cari" },
-  { href: "/topik", label: "Topik" },
+  { href: "/jelajahi", label: "Jelajahi" },
   { href: "/connect", label: "Hubungkan" },
 ] as const;
 
