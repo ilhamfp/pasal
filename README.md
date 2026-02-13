@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="logo/lockup-primary.svg" alt="Pasal.id" height="64" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo/lockup-dark-bg.svg" />
+    <img src="logo/lockup-primary.svg" alt="Pasal.id" height="64" />
+  </picture>
 </p>
 
 <h3 align="center">Democratizing Indonesian Law — The First Open, AI-Native Legal Platform</h3>
