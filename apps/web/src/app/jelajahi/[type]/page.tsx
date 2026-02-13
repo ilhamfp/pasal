@@ -110,12 +110,12 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        {/* Filters — native form GET submission for Server Component */}
+        <form className="flex flex-wrap gap-3 mb-6" method="get">
           <select
+            name="year"
             defaultValue={year || ""}
             className="rounded-lg border bg-card px-3 py-2 text-sm"
-            onChange={() => {}}
           >
             <option value="">Semua Tahun</option>
             {uniqueYears.map((y) => (
@@ -124,16 +124,23 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           </select>
 
           <select
+            name="status"
             defaultValue={status || ""}
             className="rounded-lg border bg-card px-3 py-2 text-sm"
-            onChange={() => {}}
           >
             <option value="">Semua Status</option>
             <option value="berlaku">Berlaku</option>
             <option value="diubah">Diubah</option>
             <option value="dicabut">Dicabut</option>
           </select>
-        </div>
+
+          <button
+            type="submit"
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+          >
+            Filter
+          </button>
+        </form>
 
         {/* Results */}
         <div className="space-y-3">

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
-  // Verify admin auth
+  // Verify admin auth — must be authenticated AND in admin list
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

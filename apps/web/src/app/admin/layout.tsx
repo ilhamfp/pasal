@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/admin-auth";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin-auth";
 import PasalLogo from "@/components/PasalLogo";
 
 export const metadata: Metadata = {
@@ -8,7 +9,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const admin = await requireAdmin();
+  // Soft auth check — don't redirect here so /admin/login is accessible.
+  // Each protected page calls requireAdmin() itself, or is behind the admin chrome.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const admin = user?.email && isAdminEmail(user.email) ? { email: user.email } : null;
+
+  // If not admin, render children without admin chrome (login page renders here)
+  if (!admin) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen">

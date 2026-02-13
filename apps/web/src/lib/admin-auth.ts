@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-// Hardcoded admin emails — hackathon MVP, no roles table needed
-const ADMIN_EMAILS = [
-  "ilhamfp31@gmail.com",
-  "admin@pasal.id",
-];
+// Admin emails from env var (comma-separated) — safe for open source
+// Set ADMIN_EMAILS in .env.local: ADMIN_EMAILS=user@example.com,admin@pasal.id
+function getAdminEmails(): string[] {
+  const envEmails = process.env.ADMIN_EMAILS;
+  if (envEmails) {
+    return envEmails.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  }
+  return [];
+}
+
+export const ADMIN_EMAILS = getAdminEmails();
 
 export async function requireAdmin(): Promise<{ email: string; userId: string }> {
   const supabase = await createClient();
@@ -20,4 +26,8 @@ export async function requireAdmin(): Promise<{ email: string; userId: string }>
   }
 
   return { email: user.email, userId: user.id };
+}
+
+export function isAdminEmail(email: string | undefined | null): boolean {
+  return !!email && ADMIN_EMAILS.includes(email.toLowerCase());
 }

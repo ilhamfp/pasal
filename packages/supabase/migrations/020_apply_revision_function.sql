@@ -58,6 +58,7 @@ BEGIN
         UPDATE suggestions
         SET status = 'approved',
             revision_id = v_revision_id,
+            reviewed_by = p_created_by,
             reviewed_at = NOW()
         WHERE id = p_suggestion_id;
     END IF;

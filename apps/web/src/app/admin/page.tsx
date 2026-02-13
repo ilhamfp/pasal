@@ -1,10 +1,12 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { FileText, MessageSquare, History, Database } from "lucide-react";
+import { requireAdmin } from "@/lib/admin-auth";
+import { FileText, MessageSquare, History } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
+  await requireAdmin();
   const sb = createServiceClient();
 
   // Fetch stats
