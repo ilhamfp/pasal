@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, FileText } from "lucide-react";
 
 interface PdfViewerProps {
   slug: string;
@@ -16,7 +16,6 @@ interface PdfViewerProps {
 export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages, page, onPageChange }: PdfViewerProps) {
   const [internalPage, setInternalPage] = useState(page || 1);
   const [hasError, setHasError] = useState(false);
-  const [useIframe, setUseIframe] = useState(false);
 
   // Sync with controlled page prop
   useEffect(() => {
@@ -35,27 +34,6 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages,
     setHasError(false);
     onPageChange?.(p);
   };
-
-  if (useIframe && sourcePdfUrl) {
-    return (
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <div className="flex items-center justify-between p-3 border-b">
-          <span className="text-sm font-medium">PDF Asli</span>
-          <button
-            onClick={() => setUseIframe(false)}
-            className="text-xs text-primary hover:text-primary/80"
-          >
-            Tampilkan Halaman
-          </button>
-        </div>
-        <iframe
-          src={sourcePdfUrl}
-          className="w-full h-[600px]"
-          title="PDF Viewer"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -79,12 +57,15 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages,
             <ChevronRight className="h-4 w-4" />
           </button>
           {sourcePdfUrl && (
-            <button
-              onClick={() => setUseIframe(true)}
-              className="text-xs text-primary hover:text-primary/80 ml-2"
+            <a
+              href={sourcePdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:text-primary/80 ml-2 inline-flex items-center gap-1"
             >
+              <ExternalLink className="h-3 w-3" />
               PDF Asli
-            </button>
+            </a>
           )}
         </div>
       </div>
@@ -110,6 +91,7 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages,
             src={imageUrl}
             alt={`Halaman ${currentPage}`}
             className="w-full h-auto"
+            loading="lazy"
             onError={() => setHasError(true)}
             onLoad={() => setHasError(false)}
           />

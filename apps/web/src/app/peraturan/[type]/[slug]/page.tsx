@@ -128,18 +128,18 @@ export default async function LawDetailPage({ params }: PageProps) {
 
   if (!work) notFound();
 
-  // Get all document nodes
-  const { data: nodes } = await supabase
-    .from("document_nodes")
-    .select("*")
-    .eq("work_id", work.id)
-    .order("sort_order");
-
-  // Get relationships
-  const { data: relationships } = await supabase
-    .from("work_relationships")
-    .select("*, relationship_types(code, name_id, name_en)")
-    .or(`source_work_id.eq.${work.id},target_work_id.eq.${work.id}`);
+  // Fetch nodes and relationships in parallel
+  const [{ data: nodes }, { data: relationships }] = await Promise.all([
+    supabase
+      .from("document_nodes")
+      .select("*")
+      .eq("work_id", work.id)
+      .order("sort_order"),
+    supabase
+      .from("work_relationships")
+      .select("*, relationship_types(code, name_id, name_en)")
+      .or(`source_work_id.eq.${work.id},target_work_id.eq.${work.id}`),
+  ]);
 
   // Get related work info
   const relatedWorkIds = (relationships || [])
