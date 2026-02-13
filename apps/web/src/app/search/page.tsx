@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -12,6 +13,20 @@ import { createClient } from "@/lib/supabase/server";
 interface SearchParams {
   q?: string;
   type?: string;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const query = params.q;
+
+  return {
+    title: query ? `Hasil pencarian: ${query}` : "Cari Peraturan",
+    robots: { index: false, follow: true },
+  };
 }
 
 interface ChunkResult {
@@ -31,6 +46,10 @@ interface WorkResult {
   year: number;
   status: string;
   regulation_types: { code: string }[] | { code: string } | null;
+}
+
+function sanitizeSnippet(html: string): string {
+  return html.replace(/<(?!\/?mark\b)[^>]*>/gi, "");
 }
 
 function formatRelevance(score: number, maxScore: number): string {
@@ -102,7 +121,8 @@ async function SearchResults({ query, type }: SearchResultsProps) {
         const regType = getRegTypeCode(work.regulation_types);
         const meta = chunk.metadata || {};
         const slug = `${regType.toLowerCase()}-${work.number}-${work.year}`;
-        const snippetHtml = chunk.snippet || chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+        const rawSnippet = chunk.snippet || chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+        const snippetHtml = sanitizeSnippet(rawSnippet);
 
         return (
           <Link key={chunk.id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>

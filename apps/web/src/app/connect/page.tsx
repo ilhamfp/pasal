@@ -1,8 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, ShieldCheck } from "lucide-react";
 import Header from "@/components/Header";
 import CopyButton from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Hubungkan ke Claude via MCP",
+  description:
+    "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP). Tanpa halusinasi, dengan sitasi nyata.",
+  openGraph: {
+    title: "Hubungkan ke Claude via MCP — Pasal.id",
+    description:
+      "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP).",
+  },
+};
 
 const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp/";
 const INSTALL_CMD = `claude mcp add pasal-id --transport http --url ${MCP_URL}`;

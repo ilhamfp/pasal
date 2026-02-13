@@ -186,7 +186,7 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
       </div>
 
       {/* Indicator dots with progress fill */}
-      <div className="mt-8 flex justify-center gap-2" role="tablist" aria-label="Carousel navigation">
+      <div className="mt-8 flex justify-center" role="tablist" aria-label="Carousel navigation">
         {laws.map((law, i) => (
           <button
             key={i}
@@ -194,21 +194,25 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
             aria-selected={i === realActive}
             aria-label={`Slide ${i + 1}: ${law.titleId}`}
             onClick={() => setExtIndex(i + CLONES)}
-            className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
-              i === realActive
-                ? "w-6 bg-primary/20"
-                : "w-1.5 bg-muted-foreground/25"
-            }`}
+            className="flex items-center justify-center p-3"
           >
-            {i === realActive && (
-              <span
-                key={extIndex}
-                className="absolute inset-0 origin-left rounded-full bg-primary animate-[progress-fill_5s_linear]"
-                style={{
-                  animationPlayState: isPaused ? "paused" : "running",
-                }}
-              />
-            )}
+            <span
+              className={`relative block overflow-hidden rounded-full transition-all duration-300 ${
+                i === realActive
+                  ? "h-1.5 w-6 bg-primary/20"
+                  : "h-1.5 w-1.5 bg-muted-foreground/25"
+              }`}
+            >
+              {i === realActive && (
+                <span
+                  key={extIndex}
+                  className="absolute inset-0 origin-left rounded-full bg-primary animate-[progress-fill_5s_linear]"
+                  style={{
+                    animationPlayState: isPaused ? "paused" : "running",
+                  }}
+                />
+              )}
+            </span>
           </button>
         ))}
       </div>

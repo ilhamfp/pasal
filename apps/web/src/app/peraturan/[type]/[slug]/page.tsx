@@ -1,13 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import PasalLogo from "@/components/PasalLogo";
+import JsonLd from "@/components/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import CopyButton from "@/components/CopyButton";
-import BookmarkButton from "@/components/BookmarkButton";
 import TableOfContents from "@/components/TableOfContents";
 import AmendmentTimeline from "@/components/reader/AmendmentTimeline";
 
@@ -15,6 +16,47 @@ export const revalidate = 86400; // ISR: 24 hours
 
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { type, slug } = await params;
+  const parsed = parseSlug(slug);
+  if (!parsed) return {};
+
+  const supabase = await createClient();
+  const { data: regType } = await supabase
+    .from("regulation_types")
+    .select("id, code")
+    .eq("code", type.toUpperCase())
+    .single();
+  if (!regType) return {};
+
+  const { data: work } = await supabase
+    .from("works")
+    .select("title_id, number, year, status, subject_tags")
+    .eq("regulation_type_id", regType.id)
+    .eq("number", parsed.lawNumber)
+    .eq("year", parsed.lawYear)
+    .single();
+  if (!work) return {};
+
+  const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
+  const title = `${work.title_id} — ${typeLabel} No. ${work.number} Tahun ${work.year}`;
+  const description = `Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year} tentang ${work.title_id}. Status: ${STATUS_LABELS[work.status] || work.status}.`;
+  const url = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
+
+  return {
+    title,
+    description,
+    keywords: work.subject_tags || undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+    },
+  };
 }
 
 interface RelatedWork {
@@ -49,7 +91,7 @@ function resolveRelationships(
     if (!otherWork) continue;
     resolved.push({
       id: rel.id,
-      nameId: (rel.relationship_types as { name_id: string }).name_id,
+      nameId: rel.relationship_types.name_id,
       otherWork,
     });
   }
@@ -119,9 +161,36 @@ export default async function LawDetailPage({ params }: PageProps) {
   const babNodes = allNodes.filter((n) => n.node_type === "bab");
   const pasalNodes = allNodes.filter((n) => n.node_type === "pasal");
 
+  const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
+  const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+      { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
+      { "@type": "ListItem", position: 3, name: `${type.toUpperCase()} ${work.number}/${work.year}` },
+    ],
+  };
+
+  const legislationLd = {
+    "@context": "https://schema.org",
+    "@type": "Legislation",
+    name: work.title_id,
+    legislationIdentifier: work.frbr_uri,
+    legislationType: typeLabel,
+    legislationDate: `${work.year}`,
+    legislationLegalForce: LEGAL_FORCE_MAP[work.status] || "InForce",
+    inLanguage: "id",
+    url: pageUrl,
+  };
+
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={breadcrumbLd} />
+      <JsonLd data={legislationLd} />
 
       <div className="container mx-auto px-4 py-6">
         <div className="mb-8">
@@ -131,11 +200,11 @@ export default async function LawDetailPage({ params }: PageProps) {
               {STATUS_LABELS[work.status] || work.status}
             </Badge>
             {work.content_verified ? (
-              <Badge className="bg-[#E8F5EC] text-[#2E7D52] border-[#2E7D52]/20" variant="outline">
+              <Badge className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20" variant="outline">
                 ✓ Terverifikasi
               </Badge>
             ) : (
-              <Badge className="bg-[#FFF6E5] text-[#C47F17] border-[#C47F17]/20" variant="outline">
+              <Badge className="bg-status-diubah-bg text-status-diubah border-status-diubah/20" variant="outline">
                 ⚠ Belum Diverifikasi
               </Badge>
             )}
@@ -290,7 +359,6 @@ function PasalBlock({ pasal, frbrUri, lawTitle }: { pasal: PasalNode; frbrUri: s
           Pasal {pasal.number}
         </h3>
         <div className="flex items-center gap-1">
-          <BookmarkButton frbrUri={frbrUri} title={lawTitle} pasal={pasal.number} />
           <CopyButton text={jsonData} label="JSON" />
         </div>
       </div>

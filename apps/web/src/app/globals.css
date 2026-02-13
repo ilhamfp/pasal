@@ -45,6 +45,12 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-status-berlaku: var(--status-berlaku);
+  --color-status-berlaku-bg: var(--status-berlaku-bg);
+  --color-status-diubah: var(--status-diubah);
+  --color-status-diubah-bg: var(--status-diubah-bg);
+  --color-status-dicabut: var(--status-dicabut);
+  --color-status-dicabut-bg: var(--status-dicabut-bg);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -106,10 +112,13 @@
   --sidebar-border: oklch(0.880 0.010 60);
   --sidebar-ring: oklch(0.450 0.065 170);
 
-  /* Legal Status */
-  --status-berlaku: oklch(0.540 0.120 155);
-  --status-diubah: oklch(0.620 0.140 70);
-  --status-dicabut: oklch(0.520 0.180 22);
+  /* Legal Status — text colors darkened for WCAG AA on tinted backgrounds */
+  --status-berlaku: oklch(0.440 0.100 155);
+  --status-berlaku-bg: oklch(0.955 0.025 155);
+  --status-diubah: oklch(0.500 0.120 70);
+  --status-diubah-bg: oklch(0.970 0.030 85);
+  --status-dicabut: oklch(0.420 0.150 25);
+  --status-dicabut-bg: oklch(0.960 0.015 22);
 }
 
 .dark {

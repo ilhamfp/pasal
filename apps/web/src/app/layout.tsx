@@ -83,7 +83,6 @@ const FOOTER_LINKS = [
   { href: "/", label: "Beranda" },
   { href: "/search", label: "Cari" },
   { href: "/topik", label: "Topik" },
-  { href: "/bookmark", label: "Simpan" },
   { href: "/connect", label: "Hubungkan" },
   { href: "/api", label: "API" },
 ] as const;
