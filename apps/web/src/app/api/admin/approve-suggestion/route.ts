@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { suggestion_id } = body;
+  const { suggestion_id, use_ai_content } = body;
 
   if (!suggestion_id) {
     return NextResponse.json({ error: "suggestion_id required" }, { status: 400 });
@@ -32,13 +32,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Suggestion not found or already processed" }, { status: 404 });
   }
 
+  // Determine which content to apply: user's suggestion or AI-corrected version
+  const contentToApply = use_ai_content && suggestion.agent_modified_content
+    ? suggestion.agent_modified_content
+    : suggestion.suggested_content;
+
   // Call apply_revision RPC if it exists, otherwise do it manually
   try {
     // Try the SQL function first
     const { data: revisionId, error: rpcError } = await sb.rpc("apply_revision", {
       p_node_id: suggestion.node_id,
       p_work_id: suggestion.work_id,
-      p_new_content: suggestion.suggested_content,
+      p_new_content: contentToApply,
       p_revision_type: "suggestion_approved",
       p_reason: suggestion.user_reason || "Suggestion approved by admin",
       p_suggestion_id: suggestion.id,
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
       node_type: suggestion.node_type,
       node_number: suggestion.node_number,
       old_content: node?.content_text || null,
-      new_content: suggestion.suggested_content,
+      new_content: contentToApply,
       revision_type: "suggestion_approved",
       reason: suggestion.user_reason || "Suggestion approved by admin",
       suggestion_id: suggestion.id,
@@ -88,7 +93,7 @@ export async function POST(request: NextRequest) {
   await sb
     .from("document_nodes")
     .update({
-      content_text: suggestion.suggested_content,
+      content_text: contentToApply,
       revision_id: revision.id,
     })
     .eq("id", suggestion.node_id);
@@ -96,7 +101,7 @@ export async function POST(request: NextRequest) {
   // 4. Update legal_chunks
   await sb
     .from("legal_chunks")
-    .update({ content: suggestion.suggested_content })
+    .update({ content: contentToApply })
     .eq("node_id", suggestion.node_id);
 
   // 5. Update suggestion status

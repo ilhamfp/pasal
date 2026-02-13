@@ -17,6 +17,15 @@ interface Suggestion {
   status: string;
   agent_decision: string | null;
   agent_confidence: number | null;
+  agent_modified_content: string | null;
+  agent_response: {
+    parsed?: {
+      reasoning?: string;
+      additional_issues?: Array<{ type: string; description: string; location: string }>;
+      parser_feedback?: string;
+      corrected_content?: string;
+    };
+  } | null;
   created_at: string;
 }
 
@@ -57,13 +66,13 @@ export default function SuggestionReviewPage() {
     }
   }
 
-  async function handleApprove(id: number) {
+  async function handleApprove(id: number, useAiContent?: boolean) {
     setActionLoading(id);
     try {
       const res = await fetch("/api/admin/approve-suggestion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ suggestion_id: id }),
+        body: JSON.stringify({ suggestion_id: id, use_ai_content: useAiContent }),
       });
       if (res.ok) {
         await fetchSuggestions();
@@ -148,13 +157,55 @@ export default function SuggestionReviewPage() {
             )}
 
             {s.agent_decision && (
-              <div className="px-4 py-2 border-t text-sm bg-secondary/20">
-                <span className="text-muted-foreground">AI: </span>
-                <span className={s.agent_decision === "accept" ? "text-green-700" : "text-red-700"}>
-                  {s.agent_decision}
-                </span>
-                {s.agent_confidence && (
-                  <span className="text-muted-foreground"> ({(s.agent_confidence * 100).toFixed(0)}%)</span>
+              <div className="border-t">
+                <div className="px-4 py-2 text-sm bg-secondary/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-muted-foreground">AI:</span>
+                    <span className={
+                      s.agent_decision === "accept" || s.agent_decision === "accept_with_corrections"
+                        ? "text-green-700 font-medium" : s.agent_decision === "reject"
+                        ? "text-red-700 font-medium" : "text-amber-700 font-medium"
+                    }>
+                      {s.agent_decision === "accept_with_corrections" ? "Terima dengan koreksi" :
+                       s.agent_decision === "accept" ? "Terima" :
+                       s.agent_decision === "reject" ? "Tolak" : s.agent_decision}
+                    </span>
+                    {s.agent_confidence != null && (
+                      <span className="text-muted-foreground">({(s.agent_confidence * 100).toFixed(0)}%)</span>
+                    )}
+                  </div>
+                  {s.agent_response?.parsed?.reasoning && (
+                    <p className="text-muted-foreground text-xs mb-1">{s.agent_response.parsed.reasoning}</p>
+                  )}
+                </div>
+
+                {/* Show AI-corrected content if different from suggestion */}
+                {s.agent_modified_content && s.agent_modified_content !== s.suggested_content && (
+                  <div className="px-4 py-2 bg-primary/5">
+                    <p className="text-xs font-medium text-primary mb-1">Teks yang dikoreksi AI:</p>
+                    <div className="text-sm font-mono whitespace-pre-wrap bg-card rounded-lg p-2 max-h-32 overflow-y-auto border">
+                      {s.agent_modified_content}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show additional issues found */}
+                {s.agent_response?.parsed?.additional_issues && s.agent_response.parsed.additional_issues.length > 0 && (
+                  <div className="px-4 py-2 bg-amber-50/50">
+                    <p className="text-xs font-medium text-amber-700 mb-1">Masalah tambahan ditemukan:</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {s.agent_response.parsed.additional_issues.map((issue, i) => (
+                        <li key={i}>[{issue.type}] {issue.description}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Parser feedback for future improvements */}
+                {s.agent_response?.parsed?.parser_feedback && (
+                  <div className="px-4 py-2 bg-secondary/10 text-xs text-muted-foreground">
+                    <span className="font-medium">Parser feedback:</span> {s.agent_response.parsed.parser_feedback}
+                  </div>
                 )}
               </div>
             )}
@@ -177,6 +228,16 @@ export default function SuggestionReviewPage() {
                   <Check className="h-3.5 w-3.5" />
                   Setujui & Terapkan
                 </button>
+                {s.agent_modified_content && s.agent_modified_content !== s.suggested_content && (
+                  <button
+                    onClick={() => handleApprove(s.id, true)}
+                    disabled={actionLoading === s.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary px-3 py-1.5 text-sm text-primary hover:bg-primary/5 disabled:opacity-50"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Terapkan Versi AI
+                  </button>
+                )}
                 <div className="flex-1" />
                 <input
                   type="text"
