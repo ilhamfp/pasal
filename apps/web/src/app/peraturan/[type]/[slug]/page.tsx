@@ -8,10 +8,10 @@ import DisclaimerBanner from "@/components/DisclaimerBanner";
 import PasalLogo from "@/components/PasalLogo";
 import JsonLd from "@/components/JsonLd";
 import { Badge } from "@/components/ui/badge";
-import CopyButton from "@/components/CopyButton";
 import TableOfContents from "@/components/TableOfContents";
 import AmendmentTimeline from "@/components/reader/AmendmentTimeline";
 import PdfToggle from "@/components/reader/PdfToggle";
+import PasalBlock from "@/components/reader/PasalBlock";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -284,7 +284,7 @@ export default async function LawDetailPage({ params }: PageProps) {
                     )}
 
                     {allBabPasals.map((pasal) => (
-                      <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} />
+                      <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} workId={work.id} />
                     ))}
                   </section>
                 );
@@ -342,34 +342,3 @@ export default async function LawDetailPage({ params }: PageProps) {
   );
 }
 
-interface PasalNode {
-  id: number;
-  number: string;
-  content_text: string | null;
-  heading: string | null;
-}
-
-function PasalBlock({ pasal, frbrUri, lawTitle }: { pasal: PasalNode; frbrUri: string; lawTitle: string }) {
-  const content = pasal.content_text || "";
-  const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
-
-  return (
-    <article
-      id={`pasal-${pasal.number}`}
-      className="mb-8 scroll-mt-20"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="flex items-center gap-1.5 font-heading text-base">
-          <PasalLogo size={18} className="text-primary/60" />
-          Pasal {pasal.number}
-        </h3>
-        <div className="flex items-center gap-1">
-          <CopyButton text={jsonData} label="JSON" />
-        </div>
-      </div>
-      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-        {content}
-      </div>
-    </article>
-  );
-}
