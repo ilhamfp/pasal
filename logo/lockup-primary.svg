@@ -8,6 +8,7 @@
     <path d="M100,96 C88,92 74,98 74,108 C74,118 88,126 100,120" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round" fill="none"/>
   </g>
   <!-- Wordmark: Instrument Serif 400 -->
-  <text x="88" y="50" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="34" letter-spacing="-0.34" fill="#1D1A18">Pasal</text>
-  <text x="216" y="50" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="34" letter-spacing="-0.34" fill="#958D88">.id</text>
+  <text x="88" y="50" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="34" letter-spacing="-0.34">
+    <tspan fill="#1D1A18">Pasal</tspan><tspan fill="#958D88">.id</tspan>
+  </text>
 </svg>
