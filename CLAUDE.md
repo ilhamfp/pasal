@@ -6,6 +6,28 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 
 **This is a hackathon project. Deadline: Monday Feb 16, 3:00 PM EST. Ship fast, cut scope aggressively, never gold-plate.**
 
+### Current Status (What's Deployed)
+
+| Layer | Key Files | Status |
+|-------|-----------|--------|
+| Database | `works`, `document_nodes`, `legal_chunks`, `work_relationships`, `regulation_types`, `relationship_types` | 11 migrations (001–011) |
+| Search | `search_legal_chunks()` — 3-tier fallback (websearch → plainto → ILIKE), `ts_headline` snippets, hierarchy + recency boosting, trigram index | Working |
+| MCP Server | `apps/mcp-server/server.py` — `search_laws`, `get_pasal`, `get_law_status`, `list_laws`, `ping` + rate limiter + cross-reference extraction | Deployed on Railway |
+| Frontend | `apps/web/` — landing page, `/search`, `/peraturan/[type]/[slug]` reader (3-column: TOC / content / context), `/connect`, `/topik`, `/api/v1/` REST API | Deployed on Vercel |
+| Scripts | `scripts/scraper/scrape_laws.py`, `scripts/parser/parse_law.py`, `scripts/loader/load_to_supabase.py` | Working pipeline (~20 laws) |
+| Brand | `BRAND_GUIDELINES.md` — Instrument Serif + Instrument Sans, verdigris (#2B6150), warm stone (#F8F5F0) | **Must follow** |
+
+### What We're Adding (Upgrade Tasks)
+
+1. **Mass scraper** — go from 20 → 62,000 regulations via peraturan.go.id
+2. **Improved PDF parser** — PyMuPDF replacing pdfplumber, with quality classification and OCR correction
+3. **Crowd-sourced corrections** — users suggest fixes, admins review, Gemini Flash verifies
+4. **Append-only revision tracking** — every content mutation audited via `revisions` table
+5. **PDF side-by-side viewer** — pre-rendered page images from Supabase Storage
+6. **Admin panel** — `/admin` with dashboard, suggestion review queue, AI verification
+
+**Existing codebase MUST NOT break.** All new code goes alongside existing files. Same tables, updated content.
+
 ## How to Work
 
 ### Workflow loop
@@ -34,7 +56,8 @@ Pasal.id — The first open, AI-native Indonesian legal platform. An MCP server 
 | Frontend | Next.js 16+ (App Router) | TypeScript, Tailwind CSS, shadcn/ui, deployed on Vercel |
 | Database | Supabase (PostgreSQL) | Full-text search with `indonesian` stemmer, RLS enabled |
 | MCP Server | Python + FastMCP | Streamable HTTP transport, deployed on Railway/Fly.io |
-| Scraper/Pipeline | Python | httpx, BeautifulSoup, pdfplumber |
+| Scraper/Pipeline | Python | httpx, BeautifulSoup, pdfplumber (legacy), PyMuPDF (new parsing) |
+| Verification Agent | Python + Gemini Flash 2.0 | `google-generativeai`, advisory only — admin must approve |
 | Search | PostgreSQL FTS | `tsvector` + `websearch_to_tsquery('indonesian', ...)`. Vector search is a post-MVP upgrade. |
 | Auth | Supabase Auth (via `@supabase/ssr`) | Public read, no auth required for legal data |
 
@@ -77,8 +100,25 @@ pasal-id/
 │   └── supabase/
 │       └── migrations/    ← SQL migration files
 ├── scripts/
-│   ├── scraper/           ← Data acquisition scripts
-│   └── parser/            ← PDF → structured JSON
+│   ├── scraper/           ← Data acquisition
+│   │   ├── scrape_laws.py          ← EXISTING — 20 priority laws
+│   │   ├── crawl_listings.py       ← NEW — mass listing crawler (peraturan.go.id)
+│   │   ├── crawl_metadata.py       ← NEW — metadata extractor per slug
+│   │   └── download_pdfs.py        ← NEW — PDF download + page image generation
+│   ├── parser/            ← PDF → structured JSON
+│   │   ├── parse_law.py            ← EXISTING — pdfplumber-based (keep for reference)
+│   │   ├── extract_pymupdf.py      ← NEW — PyMuPDF text extraction (~100x faster)
+│   │   ├── classify_pdf.py         ← NEW — quality classifier (born_digital/scanned/image)
+│   │   ├── ocr_correct.py          ← NEW — deterministic OCR error fixes
+│   │   ├── parse_structure.py      ← NEW — regex state machine (BAB→Pasal→Ayat)
+│   │   ├── validate.py             ← NEW — sequential numbering + coverage checks
+│   │   └── pipeline.py             ← NEW — orchestrator: extract→classify→parse→validate→insert
+│   ├── loader/            ← DB import
+│   │   ├── load_to_supabase.py     ← EXISTING — loads ~20 parsed laws
+│   │   └── mass_load.py            ← NEW — batch upsert metadata into works
+│   └── agent/             ← Gemini verification agent
+│       ├── verify_suggestion.py    ← NEW — sends PDF images + text to Gemini Flash 2.0
+│       └── apply_revision.py       ← NEW — THE critical function (see SQL conventions)
 └── data/                  ← gitignored, local only
     ├── raw/
     └── parsed/
@@ -114,13 +154,37 @@ pasal-id/
 - Use `supabase-py` client for database access.
 - Scripts go in `scripts/`, server code in `apps/mcp-server/`.
 - No classes unless genuinely needed. Prefer functions.
+- Use `pymupdf` (PyMuPDF) for new PDF text extraction and page image rendering — ~100x faster than pdfplumber. The existing pdfplumber-based parser (`scripts/parser/parse_law.py`) remains for reference but new parsing uses PyMuPDF in new files alongside it.
+- Use `google-generativeai` (Gemini Flash 2.0) for the verification agent in `scripts/agent/`. The agent is advisory only — admin must click Approve.
 
 ### SQL (Supabase Migrations)
 
 - Save each migration as `packages/supabase/migrations/001_description.sql`, `002_description.sql`, etc.
+- Existing migrations are **001–011**. New migrations start at **012**.
 - Always include indexes for columns used in WHERE/JOIN/ORDER BY.
 - Always enable RLS on new tables. Legal data tables get public read policy.
 - Use `GENERATED ALWAYS AS` for computed columns (like `fts` tsvector).
+- **Append-only revision rule:** Every mutation to `document_nodes.content_text` MUST go through `apply_revision()` which creates a `revisions` row FIRST. Never UPDATE `content_text` directly. The `revisions` table is append-only — never UPDATE or DELETE rows in it.
+
+#### `apply_revision()` — The Critical Function
+
+This is the ONLY way to mutate `document_nodes.content_text`. Located in `scripts/agent/apply_revision.py`. Steps in order:
+
+1. **INSERT** into `revisions` — `old_content` (current text), `new_content`, `revision_type`, `reason`, `suggestion_id` (if from suggestion)
+2. **UPDATE** `document_nodes.content_text` — set to `new_content`, set `revision_id` to the new revision's ID
+3. **UPDATE** `legal_chunks.content` — regenerate the search-indexed chunk for this node
+4. **UPDATE** `suggestions.status` — if triggered by a suggestion, set to `'approved'` and link `revision_id`
+
+If any step fails, the entire operation must roll back. Never skip step 1.
+
+#### `search_legal_chunks()` — Existing Search Function
+
+3-tier fallback search already in the database (DO NOT modify):
+1. `websearch_to_tsquery('indonesian', query)` — handles quoted phrases and operators
+2. Falls back to `plainto_tsquery('indonesian', query)` — if websearch fails
+3. Falls back to `ILIKE '%' || query || '%'` — last resort for very short or unusual queries
+
+Returns: matching chunks with `ts_headline` snippets, boosted by hierarchy level and recency. Trigram index supports fuzzy matching.
 
 ### Git — Commit Early, Commit Often, Push Always
 
@@ -172,6 +236,38 @@ These Indonesian legal terms appear throughout the codebase:
 | Lembaran Negara (LN) | State Gazette | Official publication for laws |
 | FRBR URI | — | Unique identifier: `/akn/id/act/uu/2003/13` |
 
+## Database Tables
+
+### Existing tables (migrations 001–011, UNCHANGED)
+- `regulation_types` — 11 types (UU, PP, Perpres, etc.)
+- `relationship_types` — relationship categories between regulations
+- `works` — individual regulations (laws, PP, Perpres, etc.)
+- `document_nodes` — hierarchical document structure (BAB → Bagian → Pasal → Ayat)
+- `legal_chunks` — search-indexed text chunks with `fts TSVECTOR` column
+- `work_relationships` — cross-references between works
+
+### New columns on existing tables (migrations 014–015)
+- `works` gains: `slug`, `pemrakarsa`, `tempat_penetapan`, `tanggal_penetapan`, `pejabat_penetap`, `tanggal_pengundangan`, `pejabat_pengundangan`, `nomor_pengundangan`, `nomor_tambahan`, `pdf_quality`, `parse_method`, `parse_confidence`, `parse_errors`, `parsed_at`
+- `document_nodes` gains: `revision_id` (FK to `revisions`)
+
+### New tables (migrations 012–013)
+- `revisions` — **append-only** change log for `document_nodes.content_text`. Every content mutation creates a revision row FIRST via `apply_revision()`. Never UPDATE or DELETE rows in this table. Key columns: `work_id`, `node_id`, `old_content`, `new_content`, `revision_type` (`initial_parse` | `suggestion_approved` | `admin_edit`), `reason`, `suggestion_id` (FK to suggestions), `actor_type` (`system` | `admin` | `agent`).
+- `suggestions` — crowd-sourced corrections. Anyone can submit (rate limited 10/IP/hour via `suggestions` table query on `submitter_ip`). Only admins can approve. The Gemini verification agent is advisory only — admin must click Approve. Key columns: `work_id`, `node_id`, `current_content`, `suggested_content`, `status` (`pending` | `approved` | `rejected`), `agent_*` fields for Gemini results, `revision_id` (FK to revisions, set on approval).
+
+### PDF Storage & Quality Pipeline
+- Original PDFs stored in Supabase Storage as `regulation-pdfs/{slug}.pdf`.
+- PDF page images pre-rendered with PyMuPDF (dpi=150, .webp format) and stored as `regulation-pdfs/{slug}/page-{N}.webp`.
+- **Quality classification** routes each PDF through the right parser:
+  - `born_digital` → direct text extraction + regex structural parser
+  - `scanned_clean` → OCR correction + regex structural parser
+  - `image_only` → Tesseract OCR first, then regex parser
+- Quality is recorded in `works.pdf_quality`. Parse method in `works.parse_method`.
+
+### Admin Panel
+- `/admin` routes are protected by Supabase Auth with admin role check, using the existing `@supabase/ssr` pattern from `src/lib/supabase/server.ts`.
+- Admin dashboard: counts, activity feed, parsing stats.
+- Suggestion review queue: diff view, "Verifikasi AI" (triggers Gemini agent), "Setujui & Terapkan" (calls `apply_revision()`), "Tolak" with reason.
+
 ## Brand & Visual Design
 
 **All frontend work MUST follow the brand guidelines defined in `BRAND_GUIDELINES.md` in the project root.**
@@ -221,12 +317,16 @@ When in doubt, reference `BRAND_GUIDELINES.md` — it is the single source of tr
 
 16. **Don't make the interface colorful.** If reaching for a second color, reconsider. The near-monochrome warm graphite palette with one verdigris accent IS the brand.
 
+17. **Don't UPDATE `document_nodes.content_text` directly.** Always go through `apply_revision()` to maintain the audit trail in the `revisions` table. The revision row must be created FIRST, then the content is updated. The `revisions` table is append-only — never UPDATE or DELETE rows in it.
+
+18. **Don't confuse existing and new parser files.** The existing `scripts/parser/parse_law.py` (pdfplumber-based) stays as-is for reference. New parsing uses PyMuPDF in separate files (`extract_pymupdf.py`, `parse_structure.py`, `pipeline.py`, etc.) in the same `scripts/parser/` directory.
+
 ## Environment Variables
 
 **All keys are stored in the root `.env` file.** Your first task when setting up each sub-project is to create local env files by copying the relevant vars from the root `.env`.
 
 ### Root `.env` (already exists, DO NOT commit)
-Contains: `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`
+Contains: `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
 
 ### Create `apps/web/.env.local` (Next.js requires this in its own directory)
 ```bash
@@ -234,6 +334,7 @@ Contains: `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON
 NEXT_PUBLIC_SUPABASE_URL=     # from root .env → NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY= # from root .env → NEXT_PUBLIC_SUPABASE_ANON_KEY
 ANTHROPIC_API_KEY=             # from root .env → ANTHROPIC_API_KEY (optional, for chat)
+GEMINI_API_KEY=                # from root .env → GEMINI_API_KEY (optional, for admin verification)
 NEXT_PUBLIC_SITE_URL=https://pasal.id
 ```
 
@@ -249,6 +350,7 @@ HOST=0.0.0.0
 ```bash
 SUPABASE_URL=                  # from root .env → SUPABASE_URL
 SUPABASE_KEY=                  # from root .env → SUPABASE_SERVICE_ROLE_KEY
+GEMINI_API_KEY=                # from root .env → GEMINI_API_KEY (for verification agent)
 ```
 
 **Important:** The MCP server and scripts use `SUPABASE_KEY` which maps to the root `.env`'s `SUPABASE_SERVICE_ROLE_KEY`. This key bypasses RLS — never expose it to the browser.
@@ -261,3 +363,26 @@ After completing a phase, verify:
 - **After Phase 2 (Data):** `SELECT COUNT(*) FROM works;` returns ≥20. `SELECT COUNT(*) FROM legal_chunks;` returns ≥500.
 - **After Phase 3 (MCP):** `python server.py` starts. `search_laws("ketenagakerjaan")` returns results. `get_pasal("UU", "13", 2003, "1")` returns article text.
 - **After Phase 4 (Frontend):** `npm run build` succeeds. Homepage loads. Search returns results. Law detail page renders with TOC.
+- **After Upgrade Task 1 (New Tables):** `revisions` and `suggestions` tables exist. `works` has `slug` column. Existing data intact (`SELECT COUNT(*) FROM works` still ≥20). Existing MCP and search still work.
+- **After Upgrade Task 3 (Parser):** 50+ regulations parsed. `document_nodes` has new entries. `revisions` has `initial_parse` entries. `search_legal_chunks` returns results for new content.
+- **After Upgrade Task 5 (Suggestions):** Suggest button appears on Pasal blocks. Submission rate limited at 10/IP/hour. Existing reader functionality unchanged.
+- **After Upgrade Task 6 (Admin):** `/admin` requires auth. "Setujui & Terapkan" creates revision + updates content. Updated text visible in reader.
+
+## Quick Reference
+
+| Question | Answer |
+|----------|--------|
+| Where is the current text? | `document_nodes.content_text` |
+| Where is the search index? | `legal_chunks.fts` (auto-regenerated TSVECTOR) |
+| What search function to use? | `search_legal_chunks()` — 3-tier fallback, already has snippets + boost + trigram |
+| Where is the change history? | `revisions` table (append-only, never UPDATE/DELETE) |
+| How to change content? | `apply_revision()` ONLY — never UPDATE `content_text` directly |
+| Where are PDF files? | Supabase Storage: `regulation-pdfs/{slug}.pdf` |
+| Where are PDF page images? | Supabase Storage: `regulation-pdfs/{slug}/page-{N}.webp` |
+| How do suggestions work? | `suggestions` table, anyone can submit (10/IP/hour rate limit) |
+| Who approves suggestions? | Admin only, via service_role key. Gemini agent is advisory only. |
+| Does the agent auto-apply? | **NO.** Admin must click "Setujui & Terapkan" (Approve & Apply). |
+| Can content be deleted? | **NO.** Old content preserved in `revisions.old_content`. |
+| Will upgrades break MCP? | **NO.** Same tables, same search function, updated content. |
+| What's the brand reference? | `BRAND_GUIDELINES.md` — Instrument Serif/Sans, verdigris, warm stone |
+| Existing migrations? | 001–011. New ones start at 012. |
