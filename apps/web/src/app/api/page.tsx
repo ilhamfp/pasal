@@ -47,7 +47,7 @@ export default function ApiDocsPage() {
         </p>
 
         <div className="rounded-lg border bg-card p-4 mb-8">
-          <h2 className="font-semibold text-sm mb-2">Base URL</h2>
+          <h2 className="font-heading text-sm mb-2">Base URL</h2>
           <code className="text-sm bg-muted px-2 py-1 rounded">
             https://pasal.id/api/v1
           </code>
@@ -68,7 +68,7 @@ export default function ApiDocsPage() {
 
               {ep.params.length > 0 && (
                 <div className="border-b p-4">
-                  <h3 className="text-sm font-semibold mb-2">Parameter</h3>
+                  <h3 className="text-sm font-heading mb-2">Parameter</h3>
                   <div className="space-y-2">
                     {ep.params.map((p) => (
                       <div key={p.name} className="flex items-start gap-2 text-sm">
@@ -100,7 +100,7 @@ export default function ApiDocsPage() {
         </div>
 
         <div className="mt-12 rounded-lg border p-6">
-          <h2 className="font-semibold mb-3">Contoh Penggunaan</h2>
+          <h2 className="font-heading mb-3">Contoh Penggunaan</h2>
           <pre className="bg-muted rounded-lg p-4 text-sm overflow-x-auto">
 {`# Cari peraturan tentang ketenagakerjaan
 curl "https://pasal.id/api/v1/search?q=ketenagakerjaan"

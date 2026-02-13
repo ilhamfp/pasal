@@ -1,0 +1,6 @@
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pasal.id — § mark standalone (no ring) -->
+  <line x1="100" y1="28" x2="100" y2="172" stroke="#1D1A18" stroke-width="5" stroke-linecap="round"/>
+  <path d="M100,56 C116,48 136,58 136,74 C136,90 116,100 100,96" stroke="#1D1A18" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M100,96 C84,92 64,100 64,116 C64,132 84,144 100,138" stroke="#1D1A18" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>

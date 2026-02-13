@@ -1,8 +1,8 @@
 export const STATUS_COLORS: Record<string, string> = {
-  berlaku: "bg-green-100 text-green-800 border-green-200",
-  diubah: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  dicabut: "bg-red-100 text-red-800 border-red-200",
-  tidak_berlaku: "bg-gray-100 text-gray-800 border-gray-200",
+  berlaku: "bg-[#E8F5EC] text-[#2E7D52] border-[#2E7D52]/20",
+  diubah: "bg-[#FFF6E5] text-[#C47F17] border-[#C47F17]/20",
+  dicabut: "bg-[#FDF2F2] text-[#C53030] border-[#C53030]/20",
+  tidak_berlaku: "bg-muted text-muted-foreground border-border",
 };
 
 export const STATUS_LABELS: Record<string, string> = {

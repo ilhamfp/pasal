@@ -1,0 +1,13 @@
+<svg viewBox="0 0 380 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pasal.id — Lockup Primary (light bg) -->
+  <!-- Icon at left, scaled to 64px -->
+  <g transform="translate(8,8) scale(0.32)">
+    <circle cx="100" cy="100" r="72" stroke="#1D1A18" stroke-width="8"/>
+    <line x1="100" y1="56" x2="100" y2="144" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M100,72 C112,66 126,74 126,84 C126,94 112,100 100,96" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M100,96 C88,92 74,98 74,108 C74,118 88,126 100,120" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  </g>
+  <!-- Wordmark: Instrument Serif 400 -->
+  <text x="88" y="50" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="34" letter-spacing="-0.34" fill="#1D1A18">Pasal</text>
+  <text x="216" y="50" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="34" letter-spacing="-0.34" fill="#958D88">.id</text>
+</svg>

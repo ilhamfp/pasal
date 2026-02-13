@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import PasalLogo from "@/components/PasalLogo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
@@ -66,6 +67,7 @@ async function SearchResults({ query, type }: SearchResultsProps) {
   if (!chunks || chunks.length === 0) {
     return (
       <div className="rounded-lg border p-8 text-center">
+        <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
         <p className="text-lg font-medium">Tidak ditemukan hasil untuk &ldquo;{query}&rdquo;</p>
         <p className="mt-2 text-muted-foreground">
           Coba gunakan kata kunci yang lebih sederhana atau hapus filter.
@@ -167,6 +169,7 @@ export default async function SearchPage({
           </Suspense>
         ) : (
           <div className="text-center py-16">
+            <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
             <p className="text-lg text-muted-foreground">
               Masukkan kata kunci untuk mencari hukum Indonesia
             </p>

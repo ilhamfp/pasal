@@ -1,0 +1,14 @@
+<svg viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pasal.id — OG Image (1200x630 for social sharing) -->
+  <rect width="1200" height="630" fill="#F8F5F0"/>
+  <!-- Centered logo mark -->
+  <g transform="translate(500,175) scale(1.4)">
+    <circle cx="100" cy="100" r="72" stroke="#1D1A18" stroke-width="8"/>
+    <line x1="100" y1="56" x2="100" y2="144" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M100,72 C112,66 126,74 126,84 C126,94 112,100 100,96" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M100,96 C88,92 74,98 74,108 C74,118 88,126 100,120" stroke="#1D1A18" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  </g>
+  <!-- Wordmark below -->
+  <text x="600" y="520" text-anchor="middle" font-family="'Instrument Serif', Georgia, serif" font-weight="400" font-size="56" letter-spacing="-0.56" fill="#1D1A18">Pasal<tspan fill="#958D88">.id</tspan></text>
+  <text x="600" y="570" text-anchor="middle" font-family="'Instrument Sans', system-ui, sans-serif" font-weight="400" font-size="22" fill="#958D88">Cari hukum Indonesia dengan mudah</text>
+</svg>

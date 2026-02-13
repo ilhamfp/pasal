@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PasalLogo from "./PasalLogo";
 
 interface TocNode {
   id: number;
@@ -78,16 +79,17 @@ export default function TableOfContents({
     <>
       {/* Desktop: sticky sidebar */}
       <nav className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-        <h2 className="text-sm font-semibold mb-3">Daftar Isi</h2>
+        <h2 className="text-sm font-heading mb-3">Daftar Isi</h2>
         <TocContent babs={babs} pasals={pasals} />
       </nav>
 
       {/* Mobile: floating button + slide-out overlay */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-6 left-6 z-40 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+        className="lg:hidden fixed bottom-6 left-6 z-40 flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-sm text-sm font-medium hover:bg-primary/90 transition-colors"
         aria-label="Buka daftar isi"
       >
+        <PasalLogo size={18} />
         Daftar Isi
       </button>
 
@@ -101,7 +103,10 @@ export default function TableOfContents({
           {/* Panel */}
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r overflow-y-auto p-4 animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold">Daftar Isi</h2>
+              <h2 className="flex items-center gap-1.5 text-sm font-heading">
+                <PasalLogo size={18} className="text-primary" />
+                Daftar Isi
+              </h2>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="text-muted-foreground hover:text-foreground p-1"

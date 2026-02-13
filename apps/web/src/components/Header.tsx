@@ -1,32 +1,36 @@
 import Link from "next/link";
 import SearchBar from "./SearchBar";
+import PasalLogo from "./PasalLogo";
 
 interface HeaderProps {
   showSearch?: boolean;
   searchDefault?: string;
 }
 
+const NAV_LINKS = [
+  { href: "/search", label: "Cari" },
+  { href: "/topik", label: "Topik" },
+  { href: "/bookmark", label: "Simpan" },
+  { href: "/connect", label: "Hubungkan" },
+] as const;
+
+const navLinkClass = "text-muted-foreground hover:text-foreground transition-colors";
+
 export default function Header({ showSearch = false, searchDefault }: HeaderProps) {
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto flex items-center gap-4 py-3 px-4">
-        <Link href="/" className="text-xl font-bold shrink-0">
-          Pasal<span className="text-primary/60">.id</span>
+    <header className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 py-4 px-6">
+        <Link href="/" className="flex items-center gap-2 text-2xl font-heading shrink-0">
+          <PasalLogo size={32} />
+          Pasal<span className="text-muted-foreground">.id</span>
         </Link>
         {showSearch && <SearchBar defaultValue={searchDefault} />}
-        <nav className="flex items-center gap-3 text-sm shrink-0">
-          <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
-            Cari
-          </Link>
-          <Link href="/topik" className="text-muted-foreground hover:text-foreground transition-colors">
-            Topik
-          </Link>
-          <Link href="/bookmark" className="text-muted-foreground hover:text-foreground transition-colors">
-            Simpan
-          </Link>
-          <Link href="/connect" className="text-muted-foreground hover:text-foreground transition-colors">
-            Hubungkan
-          </Link>
+        <nav className="flex items-center gap-6 text-base shrink-0">
+          {NAV_LINKS.map(({ href, label }) => (
+            <Link key={href} href={href} className={navLinkClass}>
+              {label}
+            </Link>
+          ))}
         </nav>
       </div>
     </header>

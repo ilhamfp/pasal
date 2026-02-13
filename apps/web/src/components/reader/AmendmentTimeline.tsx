@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { frbrToPath } from "@/lib/frbr";
 import { STATUS_LABELS } from "@/lib/legal-status";
 
 interface TimelineNode {
@@ -39,14 +40,6 @@ const TIMELINE_STATUS_LABELS: Record<string, string> = {
   diubah: "Berlaku (dengan perubahan)",
 };
 
-function frbrToPath(frbrUri: string): string {
-  const parts = frbrUri.split("/");
-  const type = parts[4] || "uu";
-  const year = parts[5];
-  const number = parts[6];
-  return `/peraturan/${type}/${type}-${number}-${year}`;
-}
-
 export default function AmendmentTimeline({
   currentWork,
   relationships,
@@ -54,35 +47,31 @@ export default function AmendmentTimeline({
 }: AmendmentTimelineProps) {
   if (relationships.length === 0) return null;
 
-  const nodes: TimelineNode[] = [
-    {
-      year: currentWork.year,
-      type: regTypeCode,
-      number: currentWork.number,
-      title: currentWork.title_id,
-      relationship: "Undang-Undang ini",
-      frbrUri: currentWork.frbr_uri,
-      isCurrent: true,
-    },
-  ];
+  const currentNode: TimelineNode = {
+    year: currentWork.year,
+    type: regTypeCode,
+    number: currentWork.number,
+    title: currentWork.title_id,
+    relationship: "Undang-Undang ini",
+    frbrUri: currentWork.frbr_uri,
+    isCurrent: true,
+  };
 
-  for (const rel of relationships) {
-    nodes.push({
-      year: rel.otherWork.year,
-      type: regTypeCode,
-      number: rel.otherWork.number,
-      title: rel.otherWork.title_id,
-      relationship: rel.nameId,
-      frbrUri: rel.otherWork.frbr_uri,
-      isCurrent: false,
-    });
-  }
+  const relatedNodes: TimelineNode[] = relationships.map((rel) => ({
+    year: rel.otherWork.year,
+    type: regTypeCode,
+    number: rel.otherWork.number,
+    title: rel.otherWork.title_id,
+    relationship: rel.nameId,
+    frbrUri: rel.otherWork.frbr_uri,
+    isCurrent: false,
+  }));
 
-  nodes.sort((a, b) => a.year - b.year);
+  const nodes = [currentNode, ...relatedNodes].sort((a, b) => a.year - b.year);
 
   return (
     <div className="rounded-lg border p-4">
-      <h3 className="font-semibold text-sm mb-4">Riwayat Perubahan</h3>
+      <h3 className="font-heading text-sm mb-4">Riwayat Perubahan</h3>
       <div className="relative pl-6">
         {/* Vertical line */}
         <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />

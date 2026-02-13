@@ -4,16 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Bookmark as BookmarkIcon, Clock, Trash2 } from "lucide-react";
 import Header from "@/components/Header";
+import PasalLogo from "@/components/PasalLogo";
 import { getBookmarks, getHistory, removeBookmark, type Bookmark, type HistoryItem } from "@/lib/bookmarks";
-
-/** Convert FRBR URI to a peraturan page path: /akn/id/act/uu/2003/13 -> /peraturan/uu/uu-13-2003 */
-function frbrToPath(frbr_uri: string): string {
-  const parts = frbr_uri.split("/");
-  const type = parts[4] || "uu";
-  const year = parts[5];
-  const number = parts[6];
-  return `/peraturan/${type}/${type}-${number}-${year}`;
-}
+import { frbrToPath } from "@/lib/frbr";
 
 function tabClass(isActive: boolean): string {
   const base = "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors";
@@ -60,7 +53,7 @@ export default function BookmarkPage() {
           <div>
             {bookmarks.length === 0 ? (
               <div className="rounded-lg border p-8 text-center text-muted-foreground">
-                <BookmarkIcon className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <PasalLogo size={48} className="mx-auto mb-3 opacity-20" />
                 <p>Belum ada bookmark.</p>
                 <p className="text-sm mt-1">
                   Klik ikon bookmark pada pasal untuk menyimpannya.
@@ -96,7 +89,7 @@ export default function BookmarkPage() {
           <div>
             {history.length === 0 ? (
               <div className="rounded-lg border p-8 text-center text-muted-foreground">
-                <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <PasalLogo size={48} className="mx-auto mb-3 opacity-20" />
                 <p>Belum ada riwayat.</p>
               </div>
             ) : (

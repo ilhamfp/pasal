@@ -1,0 +1,21 @@
+{
+  "name": "Pasal.id",
+  "short_name": "Pasal",
+  "description": "Platform hukum Indonesia terbuka pertama berbasis AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F5F0",
+  "theme_color": "#1D1A18",
+  "icons": [
+    {
+      "src": "/android-chrome-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
