@@ -1,0 +1,209 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Check, X, Bot, Loader2 } from "lucide-react";
+
+interface Suggestion {
+  id: number;
+  work_id: number;
+  node_id: number;
+  node_type: string;
+  node_number: string | null;
+  current_content: string;
+  suggested_content: string;
+  user_reason: string | null;
+  submitter_email: string | null;
+  status: string;
+  agent_decision: string | null;
+  agent_confidence: number | null;
+  created_at: string;
+}
+
+export default function SuggestionReviewPage() {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [rejectNote, setRejectNote] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, []);
+
+  async function fetchSuggestions() {
+    const sb = createClient();
+    const { data } = await sb
+      .from("suggestions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setSuggestions(data || []);
+    setLoading(false);
+  }
+
+  async function handleVerify(id: number) {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/verify-suggestion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ suggestion_id: id }),
+      });
+      if (res.ok) {
+        await fetchSuggestions();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleApprove(id: number) {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/approve-suggestion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ suggestion_id: id }),
+      });
+      if (res.ok) {
+        await fetchSuggestions();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleReject(id: number) {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/reject-suggestion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ suggestion_id: id, review_note: rejectNote[id] || "" }),
+      });
+      if (res.ok) {
+        await fetchSuggestions();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 className="font-heading text-3xl tracking-tight mb-2">Saran Koreksi</h1>
+      <p className="text-muted-foreground mb-8">
+        {suggestions.filter((s) => s.status === "pending").length} saran menunggu review
+      </p>
+
+      <div className="space-y-4">
+        {suggestions.map((s) => (
+          <div key={s.id} className="rounded-lg border bg-card overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <span className="font-heading text-sm">Pasal {s.node_number || "?"}</span>
+                <span className="mx-2 text-muted-foreground">&middot;</span>
+                <span className="text-xs text-muted-foreground">
+                  {s.submitter_email || "Anonim"} &middot;{" "}
+                  {new Date(s.created_at).toLocaleDateString("id-ID")}
+                </span>
+              </div>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                s.status === "pending" ? "bg-amber-50 text-amber-700" :
+                s.status === "approved" ? "bg-green-50 text-green-700" :
+                "bg-red-50 text-red-700"
+              }`}>
+                {s.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-px bg-border">
+              <div className="bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Teks Saat Ini</p>
+                <div className="text-sm font-mono whitespace-pre-wrap bg-secondary/30 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {s.current_content}
+                </div>
+              </div>
+              <div className="bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Koreksi Disarankan</p>
+                <div className="text-sm font-mono whitespace-pre-wrap bg-primary/5 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {s.suggested_content}
+                </div>
+              </div>
+            </div>
+
+            {s.user_reason && (
+              <div className="px-4 py-2 border-t text-sm">
+                <span className="text-muted-foreground">Alasan: </span>
+                {s.user_reason}
+              </div>
+            )}
+
+            {s.agent_decision && (
+              <div className="px-4 py-2 border-t text-sm bg-secondary/20">
+                <span className="text-muted-foreground">AI: </span>
+                <span className={s.agent_decision === "accept" ? "text-green-700" : "text-red-700"}>
+                  {s.agent_decision}
+                </span>
+                {s.agent_confidence && (
+                  <span className="text-muted-foreground"> ({(s.agent_confidence * 100).toFixed(0)}%)</span>
+                )}
+              </div>
+            )}
+
+            {s.status === "pending" && (
+              <div className="flex items-center gap-2 p-4 border-t">
+                <button
+                  onClick={() => handleVerify(s.id)}
+                  disabled={actionLoading === s.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm hover:border-primary/30 disabled:opacity-50"
+                >
+                  <Bot className="h-3.5 w-3.5" />
+                  Verifikasi AI
+                </button>
+                <button
+                  onClick={() => handleApprove(s.id)}
+                  disabled={actionLoading === s.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Setujui & Terapkan
+                </button>
+                <div className="flex-1" />
+                <input
+                  type="text"
+                  placeholder="Alasan penolakan..."
+                  value={rejectNote[s.id] || ""}
+                  onChange={(e) => setRejectNote({ ...rejectNote, [s.id]: e.target.value })}
+                  className="rounded-lg border px-2 py-1.5 text-sm w-48"
+                />
+                <button
+                  onClick={() => handleReject(s.id)}
+                  disabled={actionLoading === s.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Tolak
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {suggestions.length === 0 && (
+          <div className="rounded-lg border p-12 text-center text-muted-foreground">
+            Belum ada saran koreksi.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
