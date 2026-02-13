@@ -8,15 +8,23 @@ interface PdfViewerProps {
   supabaseUrl: string;
   sourcePdfUrl?: string | null;
   totalPages?: number;
+  initialPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages }: PdfViewerProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages, initialPage, onPageChange }: PdfViewerProps) {
+  const [currentPage, setCurrentPage] = useState(initialPage || 1);
   const [hasError, setHasError] = useState(false);
   const [useIframe, setUseIframe] = useState(false);
 
-  const maxPages = totalPages || 100;
-  const imageUrl = `${supabaseUrl}/storage/v1/object/public/regulation-pdfs/${slug}/page-${currentPage}.webp`;
+  const maxPages = totalPages || 500;
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/regulation-pdfs/${slug}/page-${currentPage}.png`;
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    setHasError(false);
+    onPageChange?.(page);
+  };
 
   if (useIframe && sourcePdfUrl) {
     return (
@@ -42,19 +50,19 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="flex items-center justify-between p-3 border-b">
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium tabular-nums">
           Halaman {currentPage}
         </span>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            onClick={() => goToPage(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1}
             className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
-            onClick={() => setCurrentPage(Math.min(maxPages, currentPage + 1))}
+            onClick={() => goToPage(Math.min(maxPages, currentPage + 1))}
             disabled={currentPage >= maxPages}
             className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
           >
@@ -92,14 +100,7 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages 
             src={imageUrl}
             alt={`Halaman ${currentPage}`}
             className="w-full h-auto"
-            onError={() => {
-              if (currentPage > 1) {
-                // Likely reached the end
-                setHasError(true);
-              } else {
-                setHasError(true);
-              }
-            }}
+            onError={() => setHasError(true)}
             onLoad={() => setHasError(false)}
           />
         )}

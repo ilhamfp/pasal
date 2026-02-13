@@ -51,7 +51,7 @@ def generate_page_images(pdf_path: Path, output_dir: Path, dpi: int = 150) -> in
         doc = pymupdf.open(str(pdf_path))
         count = 0
         for page_num in range(len(doc)):
-            out_path = output_dir / f"page-{page_num + 1}.webp"
+            out_path = output_dir / f"page-{page_num + 1}.png"
             if out_path.exists():
                 count += 1
                 continue
@@ -84,9 +84,9 @@ async def upload_to_storage(pdf_path: Path, images_dir: Path, slug: str) -> bool
             bucket.upload(f"{slug}.pdf", f.read(), {"content-type": "application/pdf", "upsert": "true"})
 
         if images_dir.exists():
-            for img_path in sorted(images_dir.glob("*.webp")):
+            for img_path in sorted(images_dir.glob("*.png")):
                 with open(img_path, "rb") as f:
-                    bucket.upload(f"{slug}/{img_path.name}", f.read(), {"content-type": "image/webp", "upsert": "true"})
+                    bucket.upload(f"{slug}/{img_path.name}", f.read(), {"content-type": "image/png", "upsert": "true"})
         return True
     except Exception as e:
         print(f"  Upload error: {e}")
@@ -120,7 +120,7 @@ async def download_pdfs(
                 stats["skipped"] += 1
                 if gen_images:
                     img_dir = IMAGES_DIR / slug
-                    if not img_dir.exists() or not list(img_dir.glob("*.webp")):
+                    if not img_dir.exists() or not list(img_dir.glob("*.png")):
                         count = generate_page_images(pdf_path, img_dir)
                         stats["images_generated"] += count
                 continue
