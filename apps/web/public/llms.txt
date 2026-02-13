@@ -1,0 +1,41 @@
+# Pasal.id
+
+> Pasal.id is the first open, AI-native Indonesian legal platform. It provides structured access to Indonesian legislation (Undang-Undang, Peraturan Pemerintah, Peraturan Presiden) through a website, REST API, and Model Context Protocol (MCP) server. All legal content is in Bahasa Indonesia.
+
+## API
+
+- [Search API](https://pasal.id/api/v1/search?q=upah+minimum&limit=5): Full-text search across Indonesian laws. Params: q (required), type (UU/PP/PERPRES), limit (max 50).
+- [List Laws](https://pasal.id/api/v1/laws?type=UU): List all regulations with optional filters. Params: type, year, status (berlaku/dicabut/diubah), limit, offset.
+- [Law Detail](https://pasal.id/api/v1/laws/akn/id/act/uu/2003/13): Full text of a law by FRBR URI, including all articles (pasal), chapters (bab), and amendment relationships.
+
+## MCP Server
+
+- [Connect via MCP](https://pasal.id/connect): Instructions for connecting Claude Desktop or Claude Code to the Pasal.id MCP server for grounded Indonesian legal Q&A with real citations.
+
+The MCP server endpoint is `https://pasal-mcp-server-production.up.railway.app/mcp/` and provides these tools:
+
+- `search_laws(query, type?, limit?)` — Full-text search across Indonesian legislation
+- `get_pasal(type, number, year, pasal)` — Retrieve a specific article from a specific law
+- `get_law_detail(type, number, year)` — Get full metadata and structure of a law
+- `list_laws(type?, year?, status?)` — List available regulations with filters
+
+## Topics
+
+- [Ketenagakerjaan](https://pasal.id/topik/ketenagakerjaan): Labor law — worker rights, minimum wage, termination, leave, overtime (UU 13/2003, UU 6/2023 Cipta Kerja)
+- [Pernikahan & Keluarga](https://pasal.id/topik/pernikahan-keluarga): Marriage law — requirements, minimum age, divorce, marital property (UU 1/1974, UU 16/2019)
+- [Data Pribadi](https://pasal.id/topik/data-pribadi): Personal data protection — data subject rights, controller obligations, sanctions (UU 27/2022)
+- [Hukum Pidana](https://pasal.id/topik/hukum-pidana): Criminal law — the new 2023 Criminal Code (KUHP), types of punishment, rights of suspects (UU 1/2023)
+
+## Key Laws
+
+- [UU 13/2003 Ketenagakerjaan](https://pasal.id/peraturan/uu/uu-nomor-13-tahun-2003): Indonesia's primary labor law
+- [UU 1/1974 Perkawinan](https://pasal.id/peraturan/uu/uu-nomor-1-tahun-1974): Marriage law
+- [UU 27/2022 Perlindungan Data Pribadi](https://pasal.id/peraturan/uu/uu-nomor-27-tahun-2022): Personal data protection (Indonesia's GDPR equivalent)
+- [UU 1/2023 KUHP](https://pasal.id/peraturan/uu/uu-nomor-1-tahun-2023): The new Indonesian Criminal Code
+- [UU 6/2023 Cipta Kerja](https://pasal.id/peraturan/uu/uu-nomor-6-tahun-2023): Omnibus Job Creation Law
+
+## Optional
+
+- [API Documentation](https://pasal.id/api): Full API documentation page with examples
+- [All Topics](https://pasal.id/topik): Browse all legal topic guides
+- [Search](https://pasal.id/search): Search interface for Indonesian regulations

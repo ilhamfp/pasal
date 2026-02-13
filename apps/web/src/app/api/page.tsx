@@ -1,4 +1,16 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
+
+export const metadata: Metadata = {
+  title: "API Dokumentasi",
+  description:
+    "API publik Pasal.id untuk mengakses data peraturan Indonesia. Gratis, tanpa autentikasi, mendukung CORS.",
+  openGraph: {
+    title: "API Dokumentasi — Pasal.id",
+    description:
+      "API publik Pasal.id untuk mengakses data peraturan Indonesia. Gratis, tanpa autentikasi.",
+  },
+};
 
 const ENDPOINTS = [
   {

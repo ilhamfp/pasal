@@ -1,7 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Briefcase, Heart, Scale, Shield } from "lucide-react";
 import Header from "@/components/Header";
 import { TOPICS } from "@/data/topics";
+
+export const metadata: Metadata = {
+  title: "Topik Hukum — Kenali Hakmu",
+  description:
+    "Panduan hukum berdasarkan topik kehidupan sehari-hari. Ketenagakerjaan, pernikahan, data pribadi, dan hukum pidana.",
+  openGraph: {
+    title: "Topik Hukum — Kenali Hakmu | Pasal.id",
+    description:
+      "Panduan hukum berdasarkan topik kehidupan sehari-hari.",
+  },
+};
 
 const ICONS: Record<string, React.ElementType> = {
   Briefcase,

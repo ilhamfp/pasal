@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Search } from "lucide-react";
@@ -11,6 +12,25 @@ export function generateStaticParams() {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const topic = getTopicBySlug(slug);
+  if (!topic) return {};
+
+  const lawList = topic.relatedLaws
+    .map((l) => `${l.type} ${l.number}/${l.year}`)
+    .join(", ");
+
+  return {
+    title: `${topic.title} — Panduan Hukum`,
+    description: `${topic.description} Peraturan terkait: ${lawList}.`,
+    openGraph: {
+      title: `${topic.title} — Panduan Hukum | Pasal.id`,
+      description: topic.description,
+    },
+  };
 }
 
 export default async function TopicDetailPage({ params }: PageProps) {

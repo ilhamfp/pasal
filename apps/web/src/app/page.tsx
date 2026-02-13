@@ -2,16 +2,44 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
 import CuratedLaws from "@/components/landing/CuratedLaws";
 import TrustBlock from "@/components/landing/TrustBlock";
 import RevealOnScroll from "@/components/landing/RevealOnScroll";
 
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Pasal.id",
+  url: "https://pasal.id",
+  description: "Platform hukum Indonesia terbuka pertama berbasis AI.",
+  inLanguage: "id",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://pasal.id/search?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Pasal.id",
+    url: "https://pasal.id",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://pasal.id/og-image.png",
+    },
+  },
+};
+
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+      <JsonLd data={websiteLd} />
 
       {/* 1. Hero — staggered reveal on load */}
       <HeroSection />

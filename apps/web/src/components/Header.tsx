@@ -10,7 +10,6 @@ interface HeaderProps {
 const NAV_LINKS = [
   { href: "/search", label: "Cari" },
   { href: "/topik", label: "Topik" },
-  { href: "/bookmark", label: "Simpan" },
   { href: "/connect", label: "Hubungkan" },
 ] as const;
 
