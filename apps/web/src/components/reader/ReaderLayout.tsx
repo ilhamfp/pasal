@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, X } from "lucide-react";
 import PdfViewer from "./PdfViewer";
@@ -9,6 +9,8 @@ interface ReaderLayoutProps {
   toc: React.ReactNode;
   content: React.ReactNode;
   contextWidgets: React.ReactNode;
+  /** Right sidebar content (status, timeline, source) — shown when PDF is off */
+  sidebar: React.ReactNode;
   sourcePdfUrl: string | null;
   slug: string;
   supabaseUrl: string;
@@ -18,13 +20,13 @@ export default function ReaderLayout({
   toc,
   content,
   contextWidgets,
+  sidebar,
   sourcePdfUrl,
   slug,
   supabaseUrl,
 }: ReaderLayoutProps) {
   const [showPdf, setShowPdf] = useState(false);
   const [activePdfPage, setActivePdfPage] = useState(1);
-  const mainRef = useRef<HTMLElement>(null);
 
   // Scroll sync: observe which pasal is in view and update PDF page
   useEffect(() => {
@@ -32,7 +34,6 @@ export default function ReaderLayout({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find the topmost visible pasal with a page mapping
         let bestEntry: IntersectionObserverEntry | null = null;
         for (const entry of entries) {
           if (entry.isIntersecting) {
@@ -54,7 +55,6 @@ export default function ReaderLayout({
       { rootMargin: "-20% 0px -60% 0px", threshold: 0 },
     );
 
-    // Observe all pasal articles with data-pdf-page
     const articles = document.querySelectorAll("article[data-pdf-page]");
     articles.forEach((el) => observer.observe(el));
 
@@ -96,31 +96,29 @@ export default function ReaderLayout({
         )}
       </div>
 
-      {/* Main grid — animate between 2-col and 3-col */}
+      {/* 3-column grid: TOC | content | sidebar/PDF */}
       <div
         className={`grid grid-cols-1 gap-8 transition-[grid-template-columns] duration-300 ease-in-out ${
           showPdf
             ? "lg:grid-cols-[220px_1fr_1fr]"
-            : "lg:grid-cols-[220px_1fr]"
+            : "lg:grid-cols-[220px_1fr_280px]"
         }`}
       >
         {/* TOC sidebar */}
         <aside>{toc}</aside>
 
         {/* Main content */}
-        <main ref={mainRef} className="min-w-0">
-          {content}
-        </main>
+        <main className="min-w-0">{content}</main>
 
-        {/* PDF panel with framer-motion enter/exit */}
-        <AnimatePresence mode="popLayout">
-          {showPdf && (
+        {/* Right column: context sidebar OR PDF */}
+        <AnimatePresence mode="wait" initial={false}>
+          {showPdf ? (
             <motion.aside
               key="pdf-panel"
-              initial={{ opacity: 0, x: 40 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 40 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-2">
@@ -139,6 +137,17 @@ export default function ReaderLayout({
                 page={activePdfPage}
                 onPageChange={setActivePdfPage}
               />
+            </motion.aside>
+          ) : (
+            <motion.aside
+              key="sidebar"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
+            >
+              {sidebar}
             </motion.aside>
           )}
         </AnimatePresence>

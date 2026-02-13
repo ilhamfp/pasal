@@ -286,18 +286,42 @@ export default async function LawDetailPage({ params }: PageProps) {
           </p>
         </div>
 
-        <AmendmentTimeline
-          currentWork={work}
-          relationships={resolvedRels}
-          regTypeCode={type.toUpperCase()}
-        />
-
         <DisclaimerBanner className="mb-6" />
 
         <ReaderLayout
           toc={<TableOfContents babs={babNodes} pasals={pasalNodes} />}
           content={mainContent}
           contextWidgets={contextWidgets}
+          sidebar={
+            <div className="space-y-4">
+              <div className="rounded-lg border p-4">
+                <h3 className="font-heading text-sm mb-2">Status</h3>
+                <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                  {STATUS_LABELS[work.status] || work.status}
+                </Badge>
+              </div>
+
+              <AmendmentTimeline
+                currentWork={work}
+                relationships={resolvedRels}
+                regTypeCode={type.toUpperCase()}
+              />
+
+              {work.source_url && (
+                <div className="rounded-lg border p-4">
+                  <h3 className="font-heading text-sm mb-2">Sumber</h3>
+                  <a
+                    href={work.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:text-primary/80 break-all"
+                  >
+                    peraturan.go.id
+                  </a>
+                </div>
+              )}
+            </div>
+          }
           sourcePdfUrl={work.source_pdf_url ?? null}
           slug={work.slug || slug}
           supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
