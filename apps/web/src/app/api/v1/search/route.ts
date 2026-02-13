@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getRegTypeCode } from "@/lib/get-reg-type-code";
+import { CORS_HEADERS } from "@/lib/api/cors";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-export async function OPTIONS() {
+export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
   const q = searchParams.get("q");
   const type = searchParams.get("type");
@@ -41,9 +37,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Fetch work metadata
-  const workIds = [...new Set((chunks || []).map((c: { work_id: number }) => c.work_id))];
+  const chunkList = chunks || [];
+  const workIds = [...new Set(chunkList.map((c: { work_id: number }) => c.work_id))];
   let worksMap: Record<number, Record<string, unknown>> = {};
+
   if (workIds.length > 0) {
     const { data: works } = await supabase
       .from("works")
@@ -52,7 +49,7 @@ export async function GET(request: NextRequest) {
     worksMap = Object.fromEntries((works || []).map((w: { id: number }) => [w.id, w]));
   }
 
-  const results = (chunks || []).map((chunk: {
+  const results = chunkList.map((chunk: {
     id: number;
     work_id: number;
     snippet?: string;
@@ -68,6 +65,7 @@ export async function GET(request: NextRequest) {
       status: string;
       regulation_types: { code: string }[] | { code: string } | null;
     } | undefined;
+
     return {
       id: chunk.id,
       snippet: (chunk.snippet || chunk.content || "").replace(/<\/?mark>/g, ""),
@@ -80,9 +78,7 @@ export async function GET(request: NextRequest) {
             number: work.number,
             year: work.year,
             status: work.status,
-            type: Array.isArray(work.regulation_types)
-              ? work.regulation_types[0]?.code
-              : work.regulation_types?.code || "",
+            type: getRegTypeCode(work.regulation_types),
           }
         : null,
     };

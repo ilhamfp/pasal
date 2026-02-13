@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, ShieldCheck } from "lucide-react";
 import Header from "@/components/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CopyButton from "@/components/CopyButton";
-import { Search, FileText, ShieldCheck, BookOpen, MessageSquare, Database, Scale, Quote } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp/";
 const INSTALL_CMD = `claude mcp add pasal-id --transport http --url ${MCP_URL}`;
@@ -26,25 +26,21 @@ const EXAMPLE_PROMPTS = [
 
 const HOW_IT_WORKS_STEPS = [
   {
-    step: 1,
     icon: MessageSquare,
     title: "Ketik pertanyaan hukum",
     description: "Tanyakan apa saja tentang hukum Indonesia kepada Claude, dalam bahasa sehari-hari.",
   },
   {
-    step: 2,
     icon: Database,
     title: "MCP mencari database",
     description: "Claude secara otomatis memanggil Pasal.id untuk mencari peraturan yang relevan.",
   },
   {
-    step: 3,
     icon: Scale,
     title: "Dapatkan pasal yang tepat",
     description: "Sistem mengembalikan teks pasal asli beserta metadata dan status hukumnya.",
   },
   {
-    step: 4,
     icon: Quote,
     title: "Jawaban dengan sitasi",
     description: "Claude menjawab pertanyaan Anda dengan mengutip langsung dari sumber hukum resmi.",
@@ -147,12 +143,12 @@ export default function ConnectPage() {
               Cara Kerjanya
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {HOW_IT_WORKS_STEPS.map((item) => (
-                <Card key={item.step}>
+              {HOW_IT_WORKS_STEPS.map((item, i) => (
+                <Card key={item.title}>
                   <CardContent className="p-6 space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-sans font-semibold">
-                        {item.step}
+                        {i + 1}
                       </div>
                       <item.icon className="w-5 h-5 text-muted-foreground" />
                     </div>

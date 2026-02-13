@@ -1,22 +1,41 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import {
+  BookOpen,
+  Code,
+  FileCheck,
+  Link as LinkIcon,
+  Scale,
+  Search,
+  Shield,
+} from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import LawTypeChips from "@/components/LawTypeChips";
 import StatsBar from "@/components/StatsBar";
-import Link from "next/link";
-import {
-  Scale,
-  BookOpen,
-  Link as LinkIcon,
-  Search,
-  FileCheck,
-  Shield,
-  Code,
-} from "lucide-react";
+
+const AUDIENCES = [
+  { icon: Scale, title: "Warga Negara", desc: "Cari tahu hak Anda tanpa jargon hukum" },
+  { icon: BookOpen, title: "Profesional Hukum", desc: "Riset cepat dengan kutipan pasal yang akurat" },
+  { icon: LinkIcon, title: "Developer", desc: "API & MCP server untuk integrasi AI" },
+] as const;
+
+const STEPS = [
+  { title: "Ketik Pertanyaan", desc: "Tulis pertanyaan hukum Anda dalam bahasa sehari-hari" },
+  { title: "AI Mencari Database", desc: "Sistem pencarian cerdas menelusuri ribuan pasal peraturan" },
+  { title: "Jawaban dengan Sitasi", desc: "Dapatkan jawaban lengkap dengan rujukan pasal yang tepat" },
+] as const;
+
+const FEATURES = [
+  { icon: Search, title: "Pencarian Cerdas", desc: "Full-text search dengan stemmer Bahasa Indonesia untuk hasil pencarian yang relevan" },
+  { icon: FileCheck, title: "Sitasi Akurat", desc: "Rujukan presisi ke Pasal X UU No. Y Tahun Z, langsung dari sumber resmi" },
+  { icon: Shield, title: "Status Hukum", desc: "Ketahui apakah peraturan masih berlaku, telah diubah, atau sudah dicabut" },
+  { icon: Code, title: "Open Source", desc: "Kode terbuka, data publik. Siapa saja bisa berkontribusi dan memverifikasi" },
+] as const;
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* ── Hero Section ── */}
+      {/* Hero */}
       <main className="flex flex-col items-center justify-center px-4 pb-24 pt-24 sm:pt-32">
         <div className="flex flex-col items-center gap-8 text-center">
           <div className="space-y-3">
@@ -31,14 +50,6 @@ export default function HomePage() {
           <SearchBar autoFocus />
 
           <LawTypeChips />
-
-          <Suspense
-            fallback={
-              <div className="text-sm text-muted-foreground">Memuat...</div>
-            }
-          >
-            <StatsBar />
-          </Suspense>
 
           <Link
             href="/connect"
@@ -58,7 +69,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* ── Live Stats Bar (full-width) ── */}
+      {/* Stats */}
       <section className="border-y bg-card py-6">
         <div className="mx-auto max-w-5xl px-4">
           <Suspense
@@ -73,7 +84,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Untuk Siapa? ── */}
+      {/* Untuk Siapa? */}
       <section className="py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4">
           <h2 className="font-heading text-center text-3xl tracking-tight sm:text-4xl">
@@ -84,40 +95,22 @@ export default function HomePage() {
           </p>
 
           <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Scale className="h-5 w-5 text-primary" />
+            {AUDIENCES.map((item) => (
+              <div key={item.title} className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <item.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-heading text-xl">{item.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
-              <h3 className="font-heading text-xl">Warga Negara</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Cari tahu hak Anda tanpa jargon hukum
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl">Profesional Hukum</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Riset cepat dengan kutipan pasal yang akurat
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <LinkIcon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl">Developer</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                API &amp; MCP server untuk integrasi AI
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Bagaimana Cara Kerjanya? ── */}
+      {/* Bagaimana Cara Kerjanya? */}
       <section className="border-y bg-card py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4">
           <h2 className="font-heading text-center text-3xl tracking-tight sm:text-4xl">
@@ -128,42 +121,22 @@ export default function HomePage() {
           </p>
 
           <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-heading text-xl">
-                1
+            {STEPS.map((step, i) => (
+              <div key={step.title} className="flex flex-col items-center text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-heading text-xl">
+                  {i + 1}
+                </div>
+                <h3 className="mt-4 font-heading text-xl">{step.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {step.desc}
+                </p>
               </div>
-              <h3 className="mt-4 font-heading text-xl">Ketik Pertanyaan</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Tulis pertanyaan hukum Anda dalam bahasa sehari-hari
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-heading text-xl">
-                2
-              </div>
-              <h3 className="mt-4 font-heading text-xl">AI Mencari Database</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Sistem pencarian cerdas menelusuri ribuan pasal peraturan
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-heading text-xl">
-                3
-              </div>
-              <h3 className="mt-4 font-heading text-xl">
-                Jawaban dengan Sitasi
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Dapatkan jawaban lengkap dengan rujukan pasal yang tepat
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Fitur Utama ── */}
+      {/* Fitur Utama */}
       <section className="py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4">
           <h2 className="font-heading text-center text-3xl tracking-tight sm:text-4xl">
@@ -174,54 +147,22 @@ export default function HomePage() {
           </p>
 
           <div className="mt-12 grid gap-8 sm:grid-cols-2">
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Search className="h-5 w-5 text-primary" />
+            {FEATURES.map((feature) => (
+              <div key={feature.title} className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <feature.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-heading text-xl">{feature.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {feature.desc}
+                </p>
               </div>
-              <h3 className="font-heading text-xl">Pencarian Cerdas</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Full-text search dengan stemmer Bahasa Indonesia untuk hasil
-                pencarian yang relevan
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <FileCheck className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl">Sitasi Akurat</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Rujukan presisi ke Pasal X UU No. Y Tahun Z, langsung dari
-                sumber resmi
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Shield className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl">Status Hukum</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Ketahui apakah peraturan masih berlaku, telah diubah, atau sudah
-                dicabut
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Code className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl">Open Source</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Kode terbuka, data publik. Siapa saja bisa berkontribusi dan
-                memverifikasi
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA Section ── */}
+      {/* CTA */}
       <section className="border-t bg-card py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4 text-center">
           <h2 className="font-heading text-3xl tracking-tight sm:text-4xl">
@@ -250,7 +191,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
         <div className="flex items-center justify-center gap-4">
           <Link

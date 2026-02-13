@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { Briefcase, Heart, Scale, Shield } from "lucide-react";
 import Header from "@/components/Header";
 import { TOPICS } from "@/data/topics";
-import { Briefcase, Heart, Shield, Scale } from "lucide-react";
 
 const ICONS: Record<string, React.ElementType> = {
   Briefcase,
