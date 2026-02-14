@@ -25,9 +25,17 @@ PARAGRAF_RE = re.compile(r'^Paragraf\s+(\d+)\s*$', re.MULTILINE)
 PASAL_RE = re.compile(r'^Pasal[ \t]+(\d+[A-Z]?)\s*$', re.MULTILINE)
 PENJELASAN_RE = re.compile(r'^\s*PENJELASAN\s*$', re.MULTILINE)
 
+# UUD 1945 special sections: ATURAN PERALIHAN and ATURAN TAMBAHAN
+# These act as top-level sections (like BAB) but without BAB numbering.
+ATURAN_RE = re.compile(r'^(ATURAN\s+PERALIHAN|ATURAN\s+TAMBAHAN)\s*$', re.MULTILINE)
+
+# Roman numeral Pasal pattern (used legitimately in ATURAN PERALIHAN)
+PASAL_ROMAN_RE = re.compile(r'^Pasal[ \t]+([IVXLCDM]+)\s*$', re.MULTILINE)
+
 # Combined boundary pattern for detecting section breaks
 BOUNDARY_RE = re.compile(
-    r'^(BAB\s+[IVXLCDM]+|Pasal[ \t]+\d+[A-Z]?|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN)\s*$',
+    r'^(BAB\s+[IVXLCDM]+|Pasal[ \t]+\d+[A-Z]?|Pasal[ \t]+[IVXLCDM]+'
+    r'|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN|ATURAN\s+PERALIHAN|ATURAN\s+TAMBAHAN)\s*$',
     re.MULTILINE | re.IGNORECASE,
 )
 
@@ -49,13 +57,36 @@ def _is_amendment_law(text: str) -> bool:
     return bool(_AMENDMENT_RE.search(text[:2000]))
 
 
+def _has_aturan_peralihan(text: str) -> bool:
+    """Check if text contains ATURAN PERALIHAN (uses Roman Pasal numbers legitimately)."""
+    return bool(ATURAN_RE.search(text))
+
+
 def _fix_roman_pasals(text: str) -> str:
     """Convert OCR-artifact Roman Pasals to Arabic digits.
 
-    Amendment laws legitimately use Roman numeral Pasal numbers, so skip those.
+    Preserves Roman Pasal numbers when they're legitimate:
+    - Amendment laws use Roman Pasals throughout
+    - ATURAN PERALIHAN sections use Roman Pasals (I, II, III, IV)
     """
     if _is_amendment_law(text):
         return text
+
+    if _has_aturan_peralihan(text):
+        # Only convert Roman Pasals BEFORE the ATURAN PERALIHAN section.
+        # Pasals after that marker are legitimately Roman-numbered.
+        aturan_match = ATURAN_RE.search(text)
+        before = text[:aturan_match.start()]
+        after = text[aturan_match.start():]
+
+        def _replacer(m: re.Match) -> str:
+            roman = m.group(2)
+            arabic = _ROMAN_MAP.get(roman)
+            if arabic is not None:
+                return f"{m.group(1)} {arabic}"
+            return m.group(0)
+
+        return _ROMAN_PASAL_RE.sub(_replacer, before) + after
 
     def _replacer(m: re.Match) -> str:
         roman = m.group(2)
@@ -103,14 +134,26 @@ def _find_markers(text: str) -> list[tuple[str, str, int, int]]:
     for m in BAB_RE.finditer(text):
         markers.append(("bab", m.group(1), m.start(), m.end()))
 
+    # ATURAN PERALIHAN / ATURAN TAMBAHAN — top-level sections like BAB
+    for m in ATURAN_RE.finditer(text):
+        label = m.group(1).strip()
+        markers.append(("aturan", label, m.start(), m.end()))
+
     for m in BAGIAN_RE.finditer(text):
         markers.append(("bagian", m.group(1), m.start(), m.end()))
 
     for m in PARAGRAF_RE.finditer(text):
         markers.append(("paragraf", m.group(1), m.start(), m.end()))
 
+    # Arabic Pasals (Pasal 1, Pasal 2, etc.)
     for m in PASAL_RE.finditer(text):
         markers.append(("pasal", m.group(1), m.start(), m.end()))
+
+    # Roman Pasals (Pasal I, Pasal II, etc.) — used in ATURAN PERALIHAN
+    for m in PASAL_ROMAN_RE.finditer(text):
+        # Only add if not already captured as an Arabic Pasal
+        if not any(em[2] == m.start() for em in markers):
+            markers.append(("pasal", m.group(1), m.start(), m.end()))
 
     markers.sort(key=lambda x: x[2])
     return markers
@@ -216,6 +259,20 @@ def parse_structure(text: str) -> list[dict]:
                 "number": number,
                 "heading": heading,
                 "content": leftover,
+                "children": [],
+                "sort_order": sort_order,
+            }
+            nodes.append(current_bab)
+            current_bagian = None
+            sort_order += 1
+
+        elif mtype == "aturan":
+            # ATURAN PERALIHAN / ATURAN TAMBAHAN — top-level like BAB
+            current_bab = {
+                "type": "aturan",
+                "number": number,  # "ATURAN PERALIHAN" or "ATURAN TAMBAHAN"
+                "heading": number,
+                "content": raw_content,
                 "children": [],
                 "sort_order": sort_order,
             }

@@ -136,7 +136,7 @@ def load_nodes_recursive(
             if result.data:
                 inserted_id = result.data[0]["id"]
 
-                if node_type in ("pasal", "preamble", "content", "penjelasan_umum", "penjelasan_pasal"):
+                if node_type in ("pasal", "preamble", "content", "aturan", "penjelasan_umum", "penjelasan_pasal"):
                     pasal_nodes.append({
                         "node_id": inserted_id,
                         "number": number,
@@ -211,8 +211,9 @@ def create_chunks(
                 "year": law_year,
                 "penjelasan": pasal.get("number", "umum"),
             }
-        elif node_type in ("preamble", "content"):
-            chunk_text = f"{law_title}\n\n{content}"
+        elif node_type in ("preamble", "content", "aturan"):
+            heading = pasal.get("heading", node_type)
+            chunk_text = f"{law_title}\n{heading}\n\n{content}" if heading else f"{law_title}\n\n{content}"
             metadata = {
                 "type": law_type,
                 "number": law_number,
