@@ -1,0 +1,10 @@
+data/
+apps/
+packages/
+.git/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.md
+scripts/eval/
