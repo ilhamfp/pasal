@@ -40,7 +40,7 @@ async function DashboardContent() {
   const supabase = await createClient();
 
   // Run all queries in parallel to avoid sequential round-trips
-  const [countResults, worksResult, chunksResult, runsResult, typeBreakdownResult] =
+  const [countResults, worksResult, chunksResult, runsResult, typeBreakdownResult, worksTypeResult, regTypesResult] =
     await Promise.all([
       // Job counts by status — 6 queries in parallel
       Promise.all(
@@ -61,8 +61,12 @@ async function DashboardContent() {
         .select("*")
         .order("started_at", { ascending: false })
         .limit(10),
-      // Type breakdown
+      // Crawl jobs type breakdown
       supabase.from("crawl_jobs").select("regulation_type").limit(10000),
+      // Works type breakdown (actual loaded regulations)
+      supabase.from("works").select("regulation_type_id"),
+      // Regulation types (for mapping ID → code)
+      supabase.from("regulation_types").select("id, code").order("hierarchy_level"),
     ]);
 
   const jobCounts: Record<string, number> = {};
@@ -75,11 +79,33 @@ async function DashboardContent() {
   const chunksCount = chunksResult.count;
   const runs = runsResult.data;
 
-  const typeCounts: Record<string, number> = {};
+  // Crawl jobs per type
+  const crawlTypeCounts: Record<string, number> = {};
   for (const row of typeBreakdownResult.data || []) {
     const t = row.regulation_type || "unknown";
-    typeCounts[t] = (typeCounts[t] || 0) + 1;
+    crawlTypeCounts[t] = (crawlTypeCounts[t] || 0) + 1;
   }
+
+  // Works per type (actual loaded regulations)
+  const regTypeMap: Record<number, string> = {};
+  for (const rt of regTypesResult.data || []) {
+    regTypeMap[rt.id] = rt.code;
+  }
+  const worksTypeCounts: Record<string, number> = {};
+  for (const w of worksTypeResult.data || []) {
+    const code = regTypeMap[w.regulation_type_id] || "unknown";
+    worksTypeCounts[code] = (worksTypeCounts[code] || 0) + 1;
+  }
+
+  // Merge both into a unified set of types
+  const allTypeKeys = new Set([...Object.keys(crawlTypeCounts), ...Object.keys(worksTypeCounts)]);
+  const mergedTypes = [...allTypeKeys]
+    .map((code) => ({
+      code,
+      crawlCount: crawlTypeCounts[code] || 0,
+      worksCount: worksTypeCounts[code] || 0,
+    }))
+    .sort((a, b) => b.worksCount - a.worksCount || b.crawlCount - a.crawlCount);
 
   return (
     <div className="space-y-8">
@@ -146,29 +172,37 @@ async function DashboardContent() {
         </Card>
       </div>
 
-      {/* Type Breakdown */}
-      {Object.keys(typeCounts).length > 0 && (
+      {/* Type Breakdown — shows both works in DB and crawl jobs in pipeline */}
+      {mergedTypes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="font-heading text-xl">
               Per Jenis Peraturan
             </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Di DB = peraturan yang sudah dimuat &middot; Jobs = crawl jobs di pipeline
+            </p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              {Object.entries(typeCounts)
-                .sort(([, a], [, b]) => b - a)
-                .map(([type, count]) => (
-                  <div
-                    key={type}
-                    className="flex items-center gap-2 rounded-lg border px-3 py-2"
-                  >
-                    <span className="font-mono text-sm font-medium">{type}</span>
-                    <span className="text-muted-foreground text-sm">
-                      {count.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
+              {mergedTypes.map(({ code, crawlCount, worksCount }) => (
+                <Link
+                  key={code}
+                  href={`/admin/peraturan?type=${code.toLowerCase()}`}
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2 hover:border-primary/30 transition-colors"
+                >
+                  <span className="font-mono text-sm font-medium">{code}</span>
+                  <span className="text-primary text-sm font-medium">
+                    {worksCount.toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground text-xs">di DB</span>
+                  <span className="text-muted-foreground text-xs">/</span>
+                  <span className="text-muted-foreground text-sm">
+                    {crawlCount.toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground text-xs">jobs</span>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>
