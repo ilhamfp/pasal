@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, X } from "lucide-react";
+import { ExternalLink, FileText, X } from "lucide-react";
 import PdfViewer from "./PdfViewer";
 
 interface ReaderLayoutProps {
@@ -114,7 +114,19 @@ export default function ReaderLayout({
               className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-heading">PDF Sumber</span>
+                {sourcePdfUrl ? (
+                  <a
+                    href={sourcePdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-heading text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                  >
+                    PDF Sumber
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <span className="text-sm font-heading">PDF Sumber</span>
+                )}
                 <button
                   onClick={() => setShowPdf(false)}
                   aria-label="Tutup panel PDF"
