@@ -212,7 +212,7 @@ async function DashboardContent() {
 
       {/* Recent Runs */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="font-heading text-xl">
             Riwayat Scraper Runs
           </CardTitle>

@@ -1,4 +1,4 @@
-"""Python wrapper for the apply_revision SQL function.
+"""Apply a revision to document_nodes.content_text.
 
 THE CRITICAL FUNCTION — the only way to mutate document_nodes.content_text.
 
@@ -7,8 +7,6 @@ Steps:
 2. UPDATE document_nodes.content_text + revision_id
 3. UPDATE legal_chunks.content (regenerate search index)
 4. If suggestion_id: UPDATE suggestions.status='approved'
-
-If any step fails, the entire operation must roll back.
 """
 import os
 from pathlib import Path
@@ -29,52 +27,20 @@ def apply_revision(
     actor_type: str = "system",
     created_by: str | None = None,
 ) -> int | None:
-    """Apply a revision using the SQL RPC function.
+    """Apply a revision to a document node.
 
     Returns the revision ID or None on failure.
     """
     sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
     try:
-        result = sb.rpc("apply_revision", {
-            "p_node_id": node_id,
-            "p_work_id": work_id,
-            "p_new_content": new_content,
-            "p_revision_type": revision_type,
-            "p_reason": reason,
-            "p_suggestion_id": suggestion_id,
-            "p_actor_type": actor_type,
-            "p_created_by": created_by,
-        }).execute()
-
-        if result.data is not None:
-            return int(result.data)
-        return None
-
-    except Exception as e:
-        print(f"apply_revision failed: {e}")
-        # Fallback: manual steps
-        return _apply_revision_manual(
-            sb, node_id, work_id, new_content,
-            revision_type, reason, suggestion_id,
-            actor_type, created_by,
-        )
-
-
-def _apply_revision_manual(
-    sb, node_id: int, work_id: int, new_content: str,
-    revision_type: str, reason: str, suggestion_id: int | None,
-    actor_type: str, created_by: str | None,
-) -> int | None:
-    """Manual fallback if the RPC function is not available."""
-    try:
         # 1. Get current content
         node = sb.table("document_nodes").select("content_text, node_type, number").eq("id", node_id).single().execute()
         if not node.data:
             return None
 
-        # 2. Create revision
-        rev_data = {
+        # 2. Create revision (append-only — always created FIRST)
+        rev = sb.table("revisions").insert({
             "work_id": work_id,
             "node_id": node_id,
             "node_type": node.data["node_type"],
@@ -86,8 +52,7 @@ def _apply_revision_manual(
             "suggestion_id": suggestion_id,
             "actor_type": actor_type,
             "created_by": created_by,
-        }
-        rev = sb.table("revisions").insert(rev_data).select("id").single().execute()
+        }).select("id").single().execute()
         if not rev.data:
             return None
         revision_id = rev.data["id"]
@@ -114,5 +79,5 @@ def _apply_revision_manual(
         return revision_id
 
     except Exception as e:
-        print(f"Manual apply_revision failed: {e}")
+        print(f"apply_revision failed: {e}")
         return None
