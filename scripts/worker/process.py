@@ -203,7 +203,7 @@ async def process_jobs(
                 now = datetime.now(timezone.utc).isoformat()
 
                 # 1. Download PDF (or use cached copy)
-                if pdf_path.exists():
+                if pdf_path.exists() and pdf_path.stat().st_size >= 1000:
                     local_hash = _sha256(pdf_path)
                     existing_hash = job.get("pdf_hash")
                     if existing_hash and existing_hash == local_hash:
@@ -215,6 +215,11 @@ async def process_jobs(
                     pdf_path.parent.mkdir(parents=True, exist_ok=True)
                     resp = await client.get(pdf_url, headers=DEFAULT_HEADERS)
                     resp.raise_for_status()
+                    content_type = resp.headers.get("content-type", "")
+                    if "pdf" not in content_type and "octet-stream" not in content_type:
+                        raise ValueError(f"Not a PDF (content-type: {content_type}), server returned soft 404")
+                    if len(resp.content) < 1000:
+                        raise ValueError(f"PDF download too small ({len(resp.content)} bytes), likely empty or error page")
                     pdf_path.write_bytes(resp.content)
                     local_hash = _sha256(pdf_path)
                     print(f"    Downloaded {pdf_path.stat().st_size:,} bytes")
