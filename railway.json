@@ -5,7 +5,7 @@
     "dockerfilePath": "scripts/worker/Dockerfile"
   },
   "deploy": {
-    "cronSchedule": "0 */6 * * *",
-    "restartPolicyType": "never"
+    "restartPolicyType": "on_failure",
+    "restartPolicyMaxRetries": 5
   }
 }

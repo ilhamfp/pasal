@@ -14,9 +14,11 @@ COPY scripts/ ./scripts/
 
 # Set PYTHONPATH so imports (crawler.db, loader.load_to_supabase, etc.) resolve
 ENV PYTHONPATH=/app/scripts
+# Disable output buffering for real-time logs on Railway
+ENV PYTHONUNBUFFERED=1
 
 # Create data dir for temporary PDF downloads
 RUN mkdir -p /app/data/raw/pdfs
 
-# Default: full run with UU and PP, 50 jobs per batch, 25 min max
-CMD ["python", "-m", "worker.run", "full", "--types", "uu,pp", "--batch-size", "50", "--max-runtime", "1500"]
+# Run as continuous long-running service: 100 jobs per batch, discover every 5 batches
+CMD ["python", "-m", "worker.run", "continuous", "--types", "uu,pp,perpres", "--batch-size", "100", "--sleep", "10", "--discover-interval", "5"]

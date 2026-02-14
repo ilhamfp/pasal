@@ -147,6 +147,75 @@ def cmd_reprocess(args: argparse.Namespace) -> None:
     print(f"Skipped (no PDF): {stats['skipped']}")
 
 
+def cmd_continuous(args: argparse.Namespace) -> None:
+    """Run continuously: loop discover → process → sleep → repeat forever.
+
+    Designed for Railway as a long-running service (not a cron job).
+    Processes pending jobs non-stop until none remain, then discovers more.
+    """
+    import time
+
+    types = args.types.split(",") if args.types else ["uu", "pp", "perpres"]
+    batch_size = args.batch_size
+    sleep_between = args.sleep  # seconds between batches
+
+    print(f"=== CONTINUOUS MODE ===")
+    print(f"Types: {types}")
+    print(f"Batch size: {batch_size}")
+    print(f"Sleep between batches: {sleep_between}s")
+    print(f"Discover every N batches: {args.discover_interval}")
+    print()
+
+    batch_count = 0
+    total_processed = 0
+    total_succeeded = 0
+
+    while True:
+        batch_count += 1
+
+        # Periodically discover new regulations
+        if batch_count == 1 or batch_count % args.discover_interval == 0:
+            print(f"\n--- Batch {batch_count}: DISCOVERING ---")
+            try:
+                discover_stats = asyncio.run(discover_regulations(
+                    reg_types=types,
+                    max_pages_per_type=args.max_pages or 10,
+                ))
+                print(f"  Discovered {discover_stats['discovered']} regulations")
+            except Exception as e:
+                print(f"  Discovery failed: {e}")
+
+        # Process a batch
+        print(f"\n--- Batch {batch_count}: PROCESSING (batch_size={batch_size}) ---")
+        run_id = _create_run("continuous")
+
+        try:
+            stats = asyncio.run(process_jobs(
+                batch_size=batch_size,
+                max_runtime=args.max_runtime,
+                run_id=run_id,
+            ))
+            _update_run(run_id, stats, "completed")
+
+            total_processed += stats["processed"]
+            total_succeeded += stats["succeeded"]
+
+            print(f"  Batch: {stats['processed']} processed, {stats['succeeded']} ok, {stats['failed']} fail")
+            print(f"  Total: {total_processed} processed, {total_succeeded} succeeded")
+
+            # If no pending jobs were found, sleep longer
+            if stats["processed"] == 0:
+                print(f"  No pending jobs. Sleeping {sleep_between * 5}s...")
+                time.sleep(sleep_between * 5)
+            else:
+                time.sleep(sleep_between)
+
+        except Exception as e:
+            _update_run(run_id, {"processed": 0, "succeeded": 0, "failed": 0}, "failed", str(e))
+            print(f"  ERROR: {e}")
+            time.sleep(sleep_between * 2)
+
+
 def cmd_stats(args: argparse.Namespace) -> None:
     """Show current scraper stats."""
     sb = get_sb()
@@ -204,6 +273,15 @@ def main() -> None:
     p_reprocess.add_argument("--force", action="store_true", help="Reprocess all, not just outdated versions")
     p_reprocess.add_argument("--batch-size", type=int, default=50)
 
+    # continuous
+    p_cont = sub.add_parser("continuous", help="Run continuously (long-running service)")
+    p_cont.add_argument("--types", help="Comma-separated types (default: uu,pp,perpres)")
+    p_cont.add_argument("--max-pages", type=int, help="Max pages per type for discovery (default: 10)")
+    p_cont.add_argument("--batch-size", type=int, default=100, help="Jobs per batch (default: 100)")
+    p_cont.add_argument("--max-runtime", type=int, default=3600, help="Max runtime per batch in seconds")
+    p_cont.add_argument("--sleep", type=int, default=10, help="Seconds between batches (default: 10)")
+    p_cont.add_argument("--discover-interval", type=int, default=5, help="Discover every N batches (default: 5)")
+
     # stats
     sub.add_parser("stats", help="Show scraper stats")
 
@@ -213,6 +291,7 @@ def main() -> None:
         "discover": cmd_discover,
         "process": cmd_process,
         "full": cmd_full,
+        "continuous": cmd_continuous,
         "reprocess": cmd_reprocess,
         "stats": cmd_stats,
     }

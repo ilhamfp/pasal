@@ -30,9 +30,39 @@ from loader.load_to_supabase import (
 from parser.parse_law import extract_text_from_pdf, parse_into_nodes
 
 PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
+STORAGE_BUCKET = "regulation-pdfs"
 
 # Bump this when the parser changes significantly to trigger re-extraction
 EXTRACTION_VERSION = 1
+
+
+def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
+    """Upload PDF to Supabase Storage. Returns public URL or None on failure."""
+    storage_path = f"{slug}.pdf"
+    try:
+        db.storage.from_(STORAGE_BUCKET).upload(
+            storage_path,
+            pdf_bytes,
+            {"content-type": "application/pdf", "upsert": "true"},
+        )
+        url = db.storage.from_(STORAGE_BUCKET).get_public_url(storage_path)
+        return url
+    except Exception as e:
+        # Don't fail the whole job if storage upload fails
+        print(f"    Storage upload failed: {e}")
+        return None
+
+
+def _storage_exists(db, slug: str) -> str | None:
+    """Check if PDF already exists in Supabase Storage. Returns public URL or None."""
+    storage_path = f"{slug}.pdf"
+    try:
+        # Try to get file info — will raise if not found
+        db.storage.from_(STORAGE_BUCKET).list(path="", options={"search": storage_path, "limit": 1})
+        url = db.storage.from_(STORAGE_BUCKET).get_public_url(storage_path)
+        return url
+    except Exception:
+        return None
 
 
 def _sha256(path: Path) -> str:
@@ -201,16 +231,24 @@ async def process_jobs(
                     "updated_at": now,
                 }).eq("id", job_id).execute()
 
+                # 1b. Upload PDF to Supabase Storage for persistence
+                storage_url = _upload_to_storage(db, slug, pdf_path.read_bytes())
+                if storage_url:
+                    print(f"    Uploaded to storage: {slug}.pdf")
+
                 # 2. Extract, parse, load
                 work_id, pasal_count, chunk_count = _extract_and_load(sb, job, pdf_path)
 
-                # 3. Mark as loaded with extraction version
-                db.table("crawl_jobs").update({
+                # 3. Mark as loaded with extraction version + storage URL
+                loaded_update: dict = {
                     "status": "loaded",
                     "work_id": work_id,
                     "extraction_version": EXTRACTION_VERSION,
                     "updated_at": datetime.now(timezone.utc).isoformat(),
-                }).eq("id", job_id).execute()
+                }
+                if storage_url:
+                    loaded_update["pdf_storage_url"] = storage_url
+                db.table("crawl_jobs").update(loaded_update).eq("id", job_id).execute()
 
                 stats["succeeded"] += 1
                 print(f"    OK: {pasal_count} pasals, {chunk_count} chunks, hash={local_hash[:12]}...")
