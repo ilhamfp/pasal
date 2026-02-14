@@ -29,7 +29,10 @@ from loader.load_to_supabase import (
     load_nodes_recursive,
     load_work,
 )
-from parser.parse_law import extract_text_from_pdf, parse_into_nodes
+from parser.extract_pymupdf import extract_text_pymupdf
+from parser.classify_pdf import classify_pdf_quality
+from parser.ocr_correct import correct_ocr_errors
+from parser.parse_structure import parse_structure
 
 PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
 STORAGE_BUCKET = "regulation-pdfs"
@@ -37,7 +40,8 @@ STORAGE_BUCKET = "regulation-pdfs"
 # Bump this when the parser changes significantly to trigger re-extraction.
 # v1: original parser (sort_order * 100 per level — overflows bigint)
 # v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
-EXTRACTION_VERSION = 2
+# v3: text-first parser — captures all text, preambles, OCR corrections
+EXTRACTION_VERSION = 3
 
 
 async def _extract_pdf_url_from_detail_page(
@@ -172,14 +176,19 @@ def _build_law_dict(job: dict, text: str, nodes: list) -> dict:
 def _extract_and_load(sb, job: dict, pdf_path: Path) -> tuple[int, int, int]:
     """Extract text from PDF, parse, and load to Supabase.
 
+    Uses the text-first parser pipeline: extract → classify → OCR correct → parse.
     Returns (work_id, pasal_count, chunk_count).
     Raises on failure.
     """
-    text = extract_text_from_pdf(pdf_path)
+    text, _ = extract_text_pymupdf(pdf_path)
     if not text or len(text) < 100:
         raise ValueError(f"PDF text too short ({len(text)} chars)")
 
-    nodes = parse_into_nodes(text)
+    quality, _ = classify_pdf_quality(pdf_path)
+    if quality in ("scanned_clean", "image_only"):
+        text = correct_ocr_errors(text)
+
+    nodes = parse_structure(text)
     law = _build_law_dict(job, text, nodes)
 
     work_id = load_work(sb, law)
