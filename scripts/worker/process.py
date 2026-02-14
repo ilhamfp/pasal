@@ -107,7 +107,9 @@ def _extract_metadata_from_soup(soup: BeautifulSoup) -> dict:
 # v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
 # v3: text-first parser — captures all text, preambles, OCR corrections
 # v4: OCR on all PDFs, Roman Pasal fix, FRESIDEN/header stripping, PENJELASAN fallback
-EXTRACTION_VERSION = 4
+# v5: noise stripping (djpp, peraturan.go.id, file:///, timestamps), line rejoining,
+#     metadata extraction from detail pages, type code mapping safety
+EXTRACTION_VERSION = 5
 
 
 async def _extract_pdf_url_from_detail_page(
