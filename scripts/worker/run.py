@@ -21,8 +21,12 @@ import asyncio
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Graceful dotenv loading — Railway sets env vars directly, no .env needed
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except Exception:
+    pass
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

@@ -1,10 +1,13 @@
 """Shared Supabase client for crawler modules."""
 import os
 
-from dotenv import load_dotenv
 from supabase import Client, create_client
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 _sb: Client | None = None
 
