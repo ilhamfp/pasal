@@ -31,9 +31,9 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
   const supabase = await createClient();
 
   const typeCode = type.toUpperCase();
+  const typePath = type.toLowerCase();
   const typeLabel = TYPE_LABELS[typeCode] || typeCode;
 
-  // Get regulation type
   const { data: regType } = await supabase
     .from("regulation_types")
     .select("id, code, name_id")
@@ -45,17 +45,19 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
   const currentPage = Math.max(1, parseInt(pageStr || "1"));
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  // Build query
   let query = supabase
     .from("works")
-    .select("id, frbr_uri, number, year, title_id, status, slug, tanggal_pengundangan", { count: "exact" })
+    .select("id, number, year, title_id, status", { count: "exact" })
     .eq("regulation_type_id", regType.id)
     .order("year", { ascending: false })
     .order("number", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (year) {
-    query = query.eq("year", parseInt(year));
+    const parsedYear = parseInt(year);
+    if (!isNaN(parsedYear)) {
+      query = query.eq("year", parsedYear);
+    }
   }
   if (status) {
     query = query.eq("status", status);
@@ -65,27 +67,42 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
 
   const totalPages = Math.ceil((count || 0) / PAGE_SIZE);
 
-  // Get available years for filter
-  const { data: yearData } = await supabase
-    .from("works")
-    .select("year")
-    .eq("regulation_type_id", regType.id)
-    .order("year", { ascending: false });
+  // Fetch min/max year for the year filter dropdown
+  const [{ data: minYearRow }, { data: maxYearRow }] = await Promise.all([
+    supabase
+      .from("works")
+      .select("year")
+      .eq("regulation_type_id", regType.id)
+      .order("year", { ascending: true })
+      .limit(1)
+      .single(),
+    supabase
+      .from("works")
+      .select("year")
+      .eq("regulation_type_id", regType.id)
+      .order("year", { ascending: false })
+      .limit(1)
+      .single(),
+  ]);
 
-  const uniqueYears = [...new Set((yearData || []).map((w) => w.year))];
+  const minYear = minYearRow?.year ?? 2000;
+  const maxYear = maxYearRow?.year ?? new Date().getFullYear();
+  const uniqueYears = Array.from(
+    { length: maxYear - minYear + 1 },
+    (_, i) => maxYear - i,
+  );
 
-  // Build slug for reader page links
-  function readerUrl(work: { number: string; year: number }) {
-    return `/peraturan/${type.toLowerCase()}/${type.toLowerCase()}-${work.number}-${work.year}`;
+  function readerUrl(work: { number: string; year: number }): string {
+    return `/peraturan/${typePath}/${typePath}-${work.number}-${work.year}`;
   }
 
-  function pageUrl(p: number) {
-    const params = new URLSearchParams();
-    if (p > 1) params.set("page", String(p));
-    if (year) params.set("year", year);
-    if (status) params.set("status", status);
-    const qs = params.toString();
-    return `/jelajahi/${type.toLowerCase()}${qs ? `?${qs}` : ""}`;
+  function pageUrl(p: number): string {
+    const queryParams = new URLSearchParams();
+    if (p > 1) queryParams.set("page", String(p));
+    if (year) queryParams.set("year", year);
+    if (status) queryParams.set("status", status);
+    const qs = queryParams.toString();
+    return `/jelajahi/${typePath}${qs ? `?${qs}` : ""}`;
   }
 
   return (
@@ -115,7 +132,8 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           <select
             name="year"
             defaultValue={year || ""}
-            className="rounded-lg border bg-card px-3 py-2 text-sm"
+            aria-label="Filter tahun"
+            className="rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
           >
             <option value="">Semua Tahun</option>
             {uniqueYears.map((y) => (
@@ -126,7 +144,8 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           <select
             name="status"
             defaultValue={status || ""}
-            className="rounded-lg border bg-card px-3 py-2 text-sm"
+            aria-label="Filter status"
+            className="rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
           >
             <option value="">Semua Status</option>
             <option value="berlaku">Berlaku</option>
@@ -183,10 +202,11 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <nav aria-label="Halaman" className="flex items-center justify-center gap-2 mt-8">
             {currentPage > 1 && (
               <Link
                 href={pageUrl(currentPage - 1)}
+                aria-label="Halaman sebelumnya"
                 className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -195,9 +215,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
 
             {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
               let page: number;
-              if (totalPages <= 7) {
-                page = i + 1;
-              } else if (currentPage <= 4) {
+              if (totalPages <= 7 || currentPage <= 4) {
                 page = i + 1;
               } else if (currentPage >= totalPages - 3) {
                 page = totalPages - 6 + i;
@@ -208,6 +226,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
                 <Link
                   key={page}
                   href={pageUrl(page)}
+                  aria-current={page === currentPage ? "page" : undefined}
                   className={`rounded-lg border px-3 py-2 text-sm ${
                     page === currentPage
                       ? "bg-primary text-primary-foreground border-primary"
@@ -222,12 +241,13 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
             {currentPage < totalPages && (
               <Link
                 href={pageUrl(currentPage + 1)}
+                aria-label="Halaman berikutnya"
                 className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
               >
                 <ChevronRight className="h-4 w-4" />
               </Link>
             )}
-          </div>
+          </nav>
         )}
       </div>
     </div>

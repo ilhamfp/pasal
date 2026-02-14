@@ -486,15 +486,16 @@ When user clicks a type card, show all regulations of that type:
 - The existing `/topik` routes can remain if the topic guides are still useful, or be removed — agent's call
 
 **Verification:**
-- [ ] `/jelajahi` shows card grid with real counts from DB
-- [ ] Counts match `SELECT regulation_type_id, COUNT(*) FROM works GROUP BY regulation_type_id`
-- [ ] Clicking a card goes to `/jelajahi/[type]` with correct filtered list
-- [ ] Year and status filters work
-- [ ] Pagination works
-- [ ] Each regulation row links to the existing reader page
-- [ ] Mobile responsive (cards stack, list remains readable)
-- [ ] Follows `BRAND_GUIDELINES.md`
-- [ ] Header nav updated
+- [x] `/jelajahi` shows card grid with real counts from DB (UUD=3, UU=1693, PERPPU=1, PP=2318, PERPRES=596)
+- [x] Counts match `SELECT regulation_type_id, COUNT(*) FROM works GROUP BY regulation_type_id` (uses head-only exact count queries)
+- [x] Clicking a card goes to `/jelajahi/[type]` with correct filtered list
+- [x] Year and status filters work (native form GET submission, year validated)
+- [x] Pagination works (85 pages for UU, 7-page sliding window)
+- [x] Each regulation row links to the existing reader page (`/peraturan/[type]/[slug]`)
+- [x] Mobile responsive (cards stack 1→2→3 cols, list remains readable)
+- [x] Follows `BRAND_GUIDELINES.md` (font-heading, verdigris primary, rounded-lg, warm stone bg)
+- [x] Header nav updated ("Jelajahi" between "Cari" and "Hubungkan")
+- [x] Landing page browse section added (top 6 types with "Lihat semua" link)
 
 > 🔁 `git commit -m "feat: browse by regulation type page" && git push origin main`
 

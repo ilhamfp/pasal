@@ -8,6 +8,7 @@ import JsonLd from "@/components/JsonLd";
 import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
 import CuratedLaws from "@/components/landing/CuratedLaws";
+import BrowseSection from "@/components/landing/BrowseSection";
 import TrustBlock from "@/components/landing/TrustBlock";
 import RevealOnScroll from "@/components/landing/RevealOnScroll";
 
@@ -88,10 +89,31 @@ export default function HomePage() {
         <CuratedLaws />
       </Suspense>
 
-      {/* 4. Trust Block — staggered items on scroll */}
+      {/* 4. Browse by Type — regulation type cards */}
+      <Suspense
+        fallback={
+          <section className="py-16 sm:py-20">
+            <div className="mx-auto max-w-5xl px-4">
+              <div className="mx-auto h-10 w-64 rounded bg-muted animate-pulse" />
+              <div className="mt-10 grid gap-3 grid-cols-2 sm:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="h-28 rounded-lg bg-muted animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        }
+      >
+        <BrowseSection />
+      </Suspense>
+
+      {/* 5. Trust Block — staggered items on scroll */}
       <TrustBlock />
 
-      {/* 5. Developer CTAs — reveal on scroll */}
+      {/* 6. Developer CTAs — reveal on scroll */}
       <RevealOnScroll>
         <section className="border-y bg-card py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-4">
@@ -134,7 +156,7 @@ export default function HomePage() {
         </section>
       </RevealOnScroll>
 
-      {/* 6. Final CTA — reveal on scroll */}
+      {/* 7. Final CTA — reveal on scroll */}
       <RevealOnScroll>
         <section className="py-20 sm:py-32">
           <div className="mx-auto max-w-5xl px-4 text-center">

@@ -15,31 +15,26 @@ export const dynamic = "force-dynamic";
 export default async function JelajahiPage() {
   const supabase = await createClient();
 
-  // Get regulation types with live counts
   const { data: types } = await supabase
     .from("regulation_types")
     .select("id, code, name_id, hierarchy_level")
     .order("hierarchy_level");
 
-  // Get counts per type
-  const { data: works } = await supabase
-    .from("works")
-    .select("regulation_type_id");
-
-  // Count works per type
-  const countMap: Record<number, number> = {};
-  for (const w of works || []) {
-    countMap[w.regulation_type_id] = (countMap[w.regulation_type_id] || 0) + 1;
-  }
-
-  // Filter types that have at least 1 regulation
-  const typesWithCounts = (types || [])
-    .map((t) => ({
-      ...t,
-      count: countMap[t.id] || 0,
-      label: TYPE_LABELS[t.code] || t.name_id,
-    }))
-    .filter((t) => t.count > 0);
+  const typesWithCounts = (
+    await Promise.all(
+      (types || []).map(async (t) => {
+        const { count } = await supabase
+          .from("works")
+          .select("id", { count: "exact", head: true })
+          .eq("regulation_type_id", t.id);
+        return {
+          ...t,
+          count: count || 0,
+          label: TYPE_LABELS[t.code] || t.name_id,
+        };
+      }),
+    )
+  ).filter((t) => t.count > 0);
 
   return (
     <div className="min-h-screen">
@@ -60,7 +55,7 @@ export default async function JelajahiPage() {
             <Link
               key={type.id}
               href={`/jelajahi/${type.code.toLowerCase()}`}
-              className="group rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors"
+              className="rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <FileText className="h-5 w-5 text-primary/60" />
