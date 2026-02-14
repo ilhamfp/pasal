@@ -8,9 +8,8 @@ interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { href: "/search", label: "Cari" },
   { href: "/jelajahi", label: "Jelajahi" },
-  { href: "/connect", label: "Hubungkan" },
+  { href: "/api", label: "API" },
 ] as const;
 
 const navLinkClass = "text-muted-foreground hover:text-foreground transition-colors";
@@ -21,7 +20,7 @@ export default function Header({ showSearch = false, searchDefault }: HeaderProp
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 py-4 px-6">
         <Link href="/" className="flex items-center gap-2 text-2xl font-heading shrink-0">
           <PasalLogo size={32} />
-          Pasal<span className="text-muted-foreground">.id</span>
+          <span>Pasal<span className="text-muted-foreground">.id</span></span>
         </Link>
         {showSearch && <SearchBar defaultValue={searchDefault} />}
         <nav className="flex items-center gap-6 text-base shrink-0">
@@ -30,6 +29,12 @@ export default function Header({ showSearch = false, searchDefault }: HeaderProp
               {label}
             </Link>
           ))}
+          <Link
+            href="/connect"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Connect Claude
+          </Link>
         </nav>
       </div>
     </header>

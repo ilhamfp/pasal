@@ -81,9 +81,9 @@ export const metadata: Metadata = {
 
 const FOOTER_LINKS = [
   { href: "/", label: "Beranda" },
-  { href: "/search", label: "Cari" },
+  { href: "/jelajahi", label: "Jelajahi" },
   { href: "/topik", label: "Topik" },
-  { href: "/connect", label: "Hubungkan" },
+  { href: "/connect", label: "Connect Claude" },
   { href: "/api", label: "API" },
 ] as const;
 

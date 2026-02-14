@@ -167,9 +167,6 @@ export default function HomePage() {
                 adalah hak setiap warga
               </em>
             </h2>
-            <p className="mx-auto mt-4 max-w-md text-lg text-muted-foreground">
-              Mulai dari satu pencarian.
-            </p>
             <div className="mt-8">
               <Link
                 href="/search"

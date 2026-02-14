@@ -130,14 +130,56 @@ console.log(data.results);`}
           </pre>
         </div>
 
+        {/* Rate Limiting */}
+        <div className="mt-12 rounded-lg border p-6 space-y-4">
+          <h2 className="font-heading text-xl">Rate Limit</h2>
+          <p className="text-sm text-muted-foreground">
+            API ini <strong className="text-foreground">gratis</strong> dan terbuka untuk semua.
+            Untuk menjaga kualitas layanan, kami menerapkan batas berikut:
+          </p>
+          <div className="rounded-lg bg-muted p-4 text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Request per menit</span>
+              <span className="font-mono font-medium">60</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Request per hari</span>
+              <span className="font-mono font-medium">1.000</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Autentikasi</span>
+              <span className="font-mono font-medium">Tidak diperlukan</span>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Request yang melebihi batas akan mendapat respons{" "}
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">429 Too Many Requests</code>.
+            Kami juga menerapkan captcha untuk mencegah penyalahgunaan otomatis.
+          </p>
+        </div>
+
+        {/* Contact for higher limits */}
+        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-6 space-y-3">
+          <h2 className="font-heading text-xl">Butuh limit lebih besar?</h2>
+          <p className="text-sm text-muted-foreground">
+            Jika Anda membangun aplikasi yang memerlukan akses lebih banyak, kami siap membantu.
+            Hubungi kami untuk mendiskusikan kebutuhan Anda — termasuk API key khusus dan batas yang lebih besar.
+          </p>
+          <a
+            href="mailto:hello@pasal.id"
+            className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Hubungi kami
+          </a>
+        </div>
+
         <div className="mt-8 text-sm text-muted-foreground">
           <p>
-            API ini bersifat publik dan gratis. Kami menerapkan rate limiting untuk
-            menjaga kualitas layanan. Untuk integrasi AI, gunakan{" "}
+            Untuk integrasi AI, gunakan{" "}
             <a href="/connect" className="text-primary hover:underline">
               MCP Server
             </a>{" "}
-            kami.
+            kami — akses langsung dari Claude tanpa perlu menulis kode.
           </p>
         </div>
       </main>
