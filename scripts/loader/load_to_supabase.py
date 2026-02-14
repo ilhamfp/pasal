@@ -136,7 +136,7 @@ def load_nodes_recursive(
             if result.data:
                 inserted_id = result.data[0]["id"]
 
-                if node_type in ("pasal", "penjelasan_umum", "penjelasan_pasal"):
+                if node_type in ("pasal", "preamble", "content", "penjelasan_umum", "penjelasan_pasal"):
                     pasal_nodes.append({
                         "node_id": inserted_id,
                         "number": number,
@@ -210,6 +210,14 @@ def create_chunks(
                 "number": law_number,
                 "year": law_year,
                 "penjelasan": pasal.get("number", "umum"),
+            }
+        elif node_type in ("preamble", "content"):
+            chunk_text = f"{law_title}\n\n{content}"
+            metadata = {
+                "type": law_type,
+                "number": law_number,
+                "year": law_year,
+                "section": node_type,
             }
         else:
             # Prepend context for better keyword search
