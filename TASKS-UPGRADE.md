@@ -377,11 +377,11 @@ Modify: `apps/web/src/app/peraturan/[type]/[slug]/page.tsx`
 Add PdfViewer to existing 3-column layout. Context `<aside>` hides when PDF is shown to make room. Keep main page as Server Component; wrap toggle in client component.
 
 **Verification:**
-- [ ] Existing reader works exactly as before when PDF hidden
-- [ ] "Tampilkan PDF" toggle works
-- [ ] Graceful fallback when no page images exist
-- [ ] Mobile responsive
-- [ ] Follows `BRAND_GUIDELINES.md`
+- [x] Existing reader works exactly as before when PDF hidden
+- [x] "Tampilkan PDF" toggle works
+- [x] Graceful fallback when no page images exist
+- [x] Mobile responsive
+- [x] Follows `BRAND_GUIDELINES.md`
 
 > 🔁 `git commit -m "feat: PDF side-by-side viewer" && git push origin main`
 

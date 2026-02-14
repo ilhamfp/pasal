@@ -117,6 +117,7 @@ export default function ReaderLayout({
                 <span className="text-sm font-heading">PDF Sumber</span>
                 <button
                   onClick={() => setShowPdf(false)}
+                  aria-label="Tutup panel PDF"
                   className="rounded-lg border p-1 hover:border-primary/30 transition-colors"
                 >
                   <X className="h-4 w-4" />

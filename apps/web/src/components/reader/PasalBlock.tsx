@@ -17,20 +17,12 @@ interface PasalNode {
 
 interface PasalBlockProps {
   pasal: PasalNode;
-  frbrUri: string;
-  lawTitle: string;
-  workId: number;
-  slug: string;
-  supabaseUrl: string;
-  sourcePdfUrl: string | null;
 }
 
-export default function PasalBlock({ pasal, frbrUri, lawTitle, workId, slug, supabaseUrl, sourcePdfUrl }: PasalBlockProps) {
+export default function PasalBlock({ pasal }: PasalBlockProps) {
   const pathname = usePathname();
   const content = pasal.content_text || "";
   const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
-
-  // Build koreksi URL: /peraturan/uu/uu-5-2025/koreksi/123
   const koreksiHref = `${pathname}/koreksi/${pasal.id}`;
 
   return (
