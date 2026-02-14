@@ -1,35 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { getLandingStats } from "@/lib/stats";
 import AnimatedStats from "./AnimatedStats";
 import RevealOnScroll from "./RevealOnScroll";
 
 export default async function StatsSection() {
-  const supabase = await createClient();
-
-  const [totalWorksResult, pasalResult, minYearResult, maxYearResult] =
-    await Promise.all([
-      supabase.from("works").select("id", { count: "exact", head: true }),
-      supabase
-        .from("document_nodes")
-        .select("id", { count: "exact", head: true })
-        .eq("node_type", "pasal"),
-      supabase
-        .from("works")
-        .select("year")
-        .order("year", { ascending: true })
-        .limit(1)
-        .single(),
-      supabase
-        .from("works")
-        .select("year")
-        .order("year", { ascending: false })
-        .limit(1)
-        .single(),
-    ]);
-
-  const totalWorks = totalWorksResult.count ?? 0;
-  const pasalCount = pasalResult.count ?? 0;
-  const minYear = minYearResult.data?.year ?? 1974;
-  const maxYear = maxYearResult.data?.year ?? 2023;
+  const { totalWorks, pasalCount, minYear, maxYear } = await getLandingStats();
 
   const stats = [
     {

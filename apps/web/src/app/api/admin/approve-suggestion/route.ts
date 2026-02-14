@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin-auth";
@@ -48,6 +49,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("apply_revision RPC error:", rpcError);
     return NextResponse.json({ error: "Gagal menerapkan revisi." }, { status: 500 });
   }
+
+  revalidateTag("landing-stats", { expire: 0 });
 
   return NextResponse.json({ revision_id: revisionId });
 }
