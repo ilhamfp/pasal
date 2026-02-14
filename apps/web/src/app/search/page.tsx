@@ -9,6 +9,8 @@ import PasalLogo from "@/components/PasalLogo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
+import type { ChunkResult } from "@/lib/group-search-results";
+import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,15 +31,6 @@ export async function generateMetadata({
     title: query ? `Hasil pencarian: ${query}` : "Cari Peraturan",
     robots: { index: false, follow: true },
   };
-}
-
-interface ChunkResult {
-  id: number;
-  work_id: number;
-  content: string;
-  metadata: Record<string, string>;
-  score: number;
-  snippet?: string;
 }
 
 interface WorkResult {
@@ -75,7 +68,7 @@ async function SearchResults({ query, type }: SearchResultsProps) {
 
   const { data: chunks, error } = await supabase.rpc("search_legal_chunks", {
     query_text: query,
-    match_count: 20,
+    match_count: 50,
     metadata_filter: metadataFilter,
   });
 
@@ -100,8 +93,11 @@ async function SearchResults({ query, type }: SearchResultsProps) {
     );
   }
 
+  // Group chunks by regulation
+  const grouped = groupChunksByWork(chunks as ChunkResult[]);
+
   // Fetch work metadata for all results
-  const workIds = [...new Set(chunks.map((c: ChunkResult) => c.work_id))];
+  const workIds = grouped.map((g) => g.work_id);
   const { data: works } = await supabase
     .from("works")
     .select("id, frbr_uri, title_id, number, year, status, regulation_types(code)")
@@ -109,28 +105,28 @@ async function SearchResults({ query, type }: SearchResultsProps) {
 
   const worksMap = new Map((works || []).map((w: WorkResult) => [w.id, w]));
 
-  const maxScore = Math.max(...chunks.map((c: ChunkResult) => c.score), 0.001);
+  const maxScore = Math.max(...grouped.map((g) => g.bestScore), 0.001);
 
   return (
     <div className="space-y-4">
       <DisclaimerBanner />
 
       <p className="text-sm text-muted-foreground">
-        {chunks.length} hasil ditemukan untuk &ldquo;{query}&rdquo;
+        {grouped.length} peraturan ditemukan untuk &ldquo;{query}&rdquo;
       </p>
 
-      {chunks.map((chunk: ChunkResult) => {
-        const work = worksMap.get(chunk.work_id);
+      {grouped.map((group) => {
+        const work = worksMap.get(group.work_id);
         if (!work) return null;
 
         const regType = getRegTypeCode(work.regulation_types);
-        const meta = chunk.metadata || {};
         const slug = `${regType.toLowerCase()}-${work.number}-${work.year}`;
-        const rawSnippet = chunk.snippet || chunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+        const rawSnippet = group.bestChunk.snippet || group.bestChunk.content.split("\n").slice(2).join(" ").slice(0, 250);
         const snippetHtml = sanitizeSnippet(rawSnippet);
+        const pasalLabel = formatPasalList(group.matchingPasals);
 
         return (
-          <Link key={chunk.id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
+          <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
             <Card className="hover:border-primary/50 transition-colors cursor-pointer">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -141,21 +137,26 @@ async function SearchResults({ query, type }: SearchResultsProps) {
                   <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
                     {STATUS_LABELS[work.status] || work.status}
                   </Badge>
+                  {group.totalChunks > 1 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {group.totalChunks} bagian cocok
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">
                   {work.title_id}
                 </p>
               </CardHeader>
               <CardContent>
-                {meta.pasal && (
-                  <p className="text-sm font-medium mb-1">Pasal {meta.pasal}</p>
+                {pasalLabel && (
+                  <p className="text-sm font-medium mb-1">{pasalLabel}</p>
                 )}
                 <p
                   className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
                   dangerouslySetInnerHTML={{ __html: snippetHtml }}
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Relevansi: {formatRelevance(chunk.score, maxScore)}
+                  Relevansi: {formatRelevance(group.bestScore, maxScore)}
                 </p>
               </CardContent>
             </Card>

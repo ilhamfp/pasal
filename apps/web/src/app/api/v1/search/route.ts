@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
+import type { ChunkResult } from "@/lib/group-search-results";
+import { groupChunksByWork } from "@/lib/group-search-results";
 import { CORS_HEADERS } from "@/lib/api/cors";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -24,9 +26,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
   const metadataFilter = type ? { type: type.toUpperCase() } : {};
 
+  // Over-fetch to account for grouping collapse
+  const fetchCount = Math.min(limit * 3, 150);
+
   const { data: chunks, error } = await supabase.rpc("search_legal_chunks", {
     query_text: q,
-    match_count: limit,
+    match_count: fetchCount,
     metadata_filter: metadataFilter,
   });
 
@@ -38,8 +43,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const chunkList = chunks || [];
-  const workIds = [...new Set(chunkList.map((c: { work_id: number }) => c.work_id))];
+  const chunkList = (chunks || []) as ChunkResult[];
+
+  // Group by regulation and trim to requested limit
+  const grouped = groupChunksByWork(chunkList).slice(0, limit);
+
+  const workIds = grouped.map((g) => g.work_id);
   let worksMap: Record<number, Record<string, unknown>> = {};
 
   if (workIds.length > 0) {
@@ -50,15 +59,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     worksMap = Object.fromEntries((works || []).map((w: { id: number }) => [w.id, w]));
   }
 
-  const results = chunkList.map((chunk: {
-    id: number;
-    work_id: number;
-    snippet?: string;
-    content: string;
-    metadata: Record<string, string>;
-    score: number;
-  }) => {
-    const work = worksMap[chunk.work_id] as {
+  const results = grouped.map((group) => {
+    const work = worksMap[group.work_id] as {
       frbr_uri: string;
       title_id: string;
       number: string;
@@ -68,10 +70,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } | undefined;
 
     return {
-      id: chunk.id,
-      snippet: (chunk.snippet || chunk.content || "").replace(/<\/?mark>/g, ""),
-      metadata: chunk.metadata,
-      score: chunk.score,
+      work_id: group.work_id,
+      snippet: (group.bestChunk.snippet || group.bestChunk.content || "").replace(/<\/?mark>/g, ""),
+      score: group.bestScore,
+      matching_pasals: group.matchingPasals,
+      total_chunks: group.totalChunks,
       work: work
         ? {
             frbr_uri: work.frbr_uri,

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const suggestions = [
   "hak pekerja kontrak",
-  "usia minimum menikah",
+  "perlindungan konsumen",
   "pidana korupsi",
 ];
 
