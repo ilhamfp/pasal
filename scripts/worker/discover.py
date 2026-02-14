@@ -89,9 +89,8 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
         type_name = type_names.get(parsed["type"], parsed["type"])
         formal_title = f"{type_name} Nomor {parsed['number']} Tahun {parsed['year']} tentang {topic_text}"
 
-        # Look for PDF link nearby
+        # Look for PDF link nearby (rare on listing pages)
         pdf_url = None
-        # Check siblings and parent for PDF links
         parent = link.parent
         if parent:
             pdf_link = parent.find("a", href=re.compile(r"\.pdf$", re.IGNORECASE))
@@ -99,9 +98,8 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
                 pdf_href = pdf_link["href"]
                 pdf_url = pdf_href if pdf_href.startswith("http") else BASE_URL + pdf_href
 
-        # Construct PDF URL from slug pattern if not found
-        if not pdf_url:
-            pdf_url = f"{BASE_URL}/files/{slug}.pdf"
+        # Don't guess PDF URLs — peraturan.go.id uses unpredictable filenames.
+        # The real URL will be extracted from the detail page during processing.
 
         detail_url = f"{BASE_URL}{href}"
 
