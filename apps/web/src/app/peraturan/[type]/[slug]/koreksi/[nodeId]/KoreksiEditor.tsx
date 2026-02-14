@@ -117,6 +117,12 @@ export default function KoreksiEditor({
         return;
       }
 
+      if (res.status === 409) {
+        setStatus("error");
+        setErrorMsg("Teks sudah diperbarui oleh pihak lain. Muat ulang halaman untuk melihat versi terbaru.");
+        return;
+      }
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setStatus("error");
