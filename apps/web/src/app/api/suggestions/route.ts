@@ -39,10 +39,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate metadata size if provided
+    if (metadata) {
+      const metaStr = JSON.stringify(metadata);
+      if (metaStr.length > 10_000) {
+        return NextResponse.json(
+          { error: "Metadata terlalu besar." },
+          { status: 400 }
+        );
+      }
+    }
+
     const supabase = await createClient();
 
-    // Get IP for rate limiting
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    // Get IP for rate limiting (x-real-ip is set by Vercel and not spoofable)
+    const ip = request.headers.get("x-real-ip")
+      || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || "unknown";
 
     // Rate limit: count suggestions from this IP in last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();

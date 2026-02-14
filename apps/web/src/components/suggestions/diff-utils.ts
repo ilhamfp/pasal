@@ -9,12 +9,23 @@ export interface DiffStats {
   charsInserted: number;
 }
 
+/** Max words before falling back to simple delete+insert diff */
+const MAX_DIFF_WORDS = 2000;
+
 /** Word-level diff using simple LCS algorithm */
 export function computeDiff(original: string, modified: string): DiffOp[] {
   const origWords = original.split(/(\s+)/);
   const modWords = modified.split(/(\s+)/);
   const m = origWords.length;
   const n = modWords.length;
+
+  // Guard against O(m*n) explosion on very large texts
+  if (m * n > MAX_DIFF_WORDS * MAX_DIFF_WORDS) {
+    return [
+      { type: "delete", text: original },
+      { type: "insert", text: modified },
+    ];
+  }
 
   // Build LCS table
   const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));

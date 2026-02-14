@@ -505,29 +505,29 @@ When user clicks a type card, show all regulations of that type:
 
 **📖 Read `BRAND_GUIDELINES.md` before writing any frontend code.**
 
-### 5.1 — Extract and Enhance PasalBlock Component
+### 5.1 — Extract and Enhance PasalBlock Component ✅
 
-The `PasalBlock` function is currently defined inline in `apps/web/src/app/peraturan/[type]/[slug]/page.tsx`. Extract it to `apps/web/src/components/reader/PasalBlock.tsx` as a `"use client"` component. Add "📝 Sarankan Koreksi" button to the existing header row, next to the `<CopyButton>`.
+Extracted to `apps/web/src/components/reader/PasalBlock.tsx` as `"use client"` component. "Koreksi" button (Pencil icon) next to CopyButton links to dedicated `/koreksi/[nodeId]` page.
 
-### 5.2 — Suggestion Form Component
+### 5.2 — Suggestion Correction Editor ✅
 
-File: `apps/web/src/components/suggestions/SuggestionForm.tsx` (NEW)
+Implemented as a dedicated page: `apps/web/src/app/peraturan/[type]/[slug]/koreksi/[nodeId]/KoreksiEditor.tsx`
 
-Modal with current text (read-only), editable correction, diff preview, reason, reference, email fields. Styling: `font-heading` title, `font-mono` for legal text, verdigris primary button.
+Full-featured editor with: PDF source panel (60% width) with zoom/navigation, side-by-side current text + editable correction, diff preview mode (word-level LCS), correction timing metadata, reason/email fields. Uses `diff-utils.ts` and `use-correction-timer.ts` from `components/suggestions/`.
 
-### 5.3 — Suggestions API Route
+### 5.3 — Suggestions API Route ✅
 
-File: `apps/web/src/app/api/suggestions/route.ts` (NEW)
+File: `apps/web/src/app/api/suggestions/route.ts`
 
-POST endpoint. Validates input, rate limits 10/IP/hour via `suggestions` table query, inserts with `status="pending"`.
+POST endpoint. Validates input (required fields, max 50KB content, identical text rejection), rate limits 10/IP/hour via `suggestions` table query on `submitter_ip`, inserts with `status="pending"` and optional metadata.
 
 **Verification:**
-- [ ] Suggest button appears next to existing JSON copy button
-- [ ] Cannot submit identical or empty text
-- [ ] Diff preview works
-- [ ] Rate limiting at 11th submission → 429
-- [ ] **Existing reader functionality unchanged**
-- [ ] Follows `BRAND_GUIDELINES.md`
+- [x] Suggest button appears next to existing JSON copy button (PasalBlock.tsx: "Koreksi" link with Pencil icon → dedicated /koreksi/[nodeId] page)
+- [x] Cannot submit identical or empty text (client: hasChanges disables button; server: route.ts validates identical → 400)
+- [x] Diff preview works (KoreksiEditor "Perubahan" tab with word-level LCS diff via diff-utils.ts)
+- [x] Rate limiting at 11th submission → 429 (route.ts: RATE_LIMIT=10, queries suggestions by IP in last hour)
+- [x] **Existing reader functionality unchanged** (PasalBlock adds "Koreksi" link, no modification to existing rendering)
+- [x] Follows `BRAND_GUIDELINES.md` (font-heading, font-mono, rounded-lg, verdigris primary, warm stone bg)
 
 > 🔁 `git commit -m "feat: suggestion form and API" && git push origin main`
 

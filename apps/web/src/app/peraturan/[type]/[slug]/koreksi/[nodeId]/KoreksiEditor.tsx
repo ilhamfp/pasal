@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -156,8 +156,14 @@ export default function KoreksiEditor({
     );
   }
 
-  const diffOps = viewMode === "diff" ? computeDiff(currentContent, suggestedContent) : [];
-  const stats = viewMode === "diff" ? diffStats(diffOps) : null;
+  const diffOps = useMemo(
+    () => viewMode === "diff" ? computeDiff(currentContent, suggestedContent) : [],
+    [viewMode, currentContent, suggestedContent],
+  );
+  const stats = useMemo(
+    () => viewMode === "diff" ? diffStats(diffOps) : null,
+    [viewMode, diffOps],
+  );
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -166,6 +172,7 @@ export default function KoreksiEditor({
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => router.push(backHref)}
+            aria-label="Kembali"
             className="rounded-lg p-1.5 hover:bg-secondary flex-none"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -181,7 +188,7 @@ export default function KoreksiEditor({
         </div>
 
         {/* View toggle */}
-        <div className="hidden sm:flex items-center gap-1 rounded-lg border p-0.5">
+        <div className="flex items-center gap-1 rounded-lg border p-0.5">
           <button
             onClick={() => setViewMode("edit")}
             className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
@@ -240,6 +247,7 @@ export default function KoreksiEditor({
               <button
                 onClick={() => { setPdfPage(Math.max(1, pdfPage - 1)); }}
                 disabled={pdfPage <= 1}
+                aria-label="Halaman sebelumnya"
                 className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -249,7 +257,8 @@ export default function KoreksiEditor({
               </span>
               <button
                 onClick={() => setPdfPage(pdfPage + 1)}
-                disabled={pdfPageEnd != null && pdfPage >= pdfPageEnd}
+                disabled={pdfError || (pdfPageEnd != null && pdfPage >= pdfPageEnd)}
+                aria-label="Halaman berikutnya"
                 className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
               >
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -331,6 +340,7 @@ export default function KoreksiEditor({
                 <textarea
                   value={suggestedContent}
                   onChange={(e) => setSuggestedContent(e.target.value)}
+                  maxLength={50000}
                   className="flex-1 min-h-0 w-full font-mono text-sm leading-relaxed whitespace-pre-wrap p-4 outline-none resize-none bg-card"
                 />
               </div>
