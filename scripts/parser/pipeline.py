@@ -27,6 +27,13 @@ from ocr_correct import correct_ocr_errors
 from parse_structure import parse_structure, count_pasals
 from validate import validate_structure
 
+# Lazy imports for DB operations (optional dependency)
+try:
+    from supabase import create_client
+    _SUPABASE_AVAILABLE = True
+except ImportError:
+    _SUPABASE_AVAILABLE = False
+
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 PARSED_DIR = DATA_DIR / "parsed"
@@ -175,14 +182,15 @@ def process_pdf(pdf_path: str | Path, metadata: dict | None = None) -> dict | No
 
 def load_to_db(result: dict) -> int | None:
     """Load a parsed result into Supabase. Returns work_id or None."""
-    from supabase import create_client
+    if not _SUPABASE_AVAILABLE:
+        print("  ERROR: supabase package not available")
+        return None
 
     sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
-    # Reuse load_to_supabase.py's pattern
     sys.path.insert(0, str(Path(__file__).parent.parent / "loader"))
     from load_to_supabase import (
-        load_work, cleanup_work_data, load_nodes_recursive, create_chunks, _load_reg_type_map,
+        load_work, cleanup_work_data, load_nodes_recursive, create_chunks,
     )
 
     work_id = load_work(sb, result)
@@ -218,8 +226,8 @@ def load_to_db(result: dict) -> int | None:
                 "reason": f"Initial parse via {result.get('parse_method', 'pymupdf')}",
                 "actor_type": "system",
             }).execute()
-        except Exception:
-            pass  # Skip revision errors (non-critical)
+        except Exception as e:
+            print(f"  Warning: Failed to create revision for node {pn.get('number')}: {e}")
 
     return work_id
 
@@ -232,32 +240,28 @@ def _dedup_pdfs(pdf_files: list[Path]) -> list[Path]:
     suffixes like -dpr, -new.
     """
     seen_keys: dict[str, Path] = {}
-    skipped: list[str] = []
+    skipped_count = 0
 
     for pdf_path in pdf_files:
         stem = pdf_path.stem
 
-        # Skip files with extra suffixes (known bad downloads)
         if re.search(r'-(dpr|new|old|backup|copy)\b', stem, re.IGNORECASE):
-            skipped.append(stem)
+            skipped_count += 1
             continue
 
         m = FILENAME_LONG_RE.match(stem) or FILENAME_SHORT_RE.match(stem)
         if not m:
-            skipped.append(stem)
+            skipped_count += 1
             continue
 
         key = f"{m.group(1).upper()}-{m.group(2)}-{m.group(3)}"
         is_short = bool(FILENAME_SHORT_RE.match(stem))
 
-        if key not in seen_keys:
-            seen_keys[key] = pdf_path
-        elif is_short:
-            # Prefer short format (tends to have better content)
+        if key not in seen_keys or is_short:
             seen_keys[key] = pdf_path
 
-    if skipped:
-        print(f"Skipped {len(skipped)} files with unrecognized names: {skipped[:5]}")
+    if skipped_count > 0:
+        print(f"Skipped {skipped_count} files with unrecognized or invalid names")
 
     return sorted(seen_keys.values())
 

@@ -168,22 +168,12 @@ def cleanup_work_data(sb, work_id: int) -> None:
 
     Order matters: suggestions/revisions reference nodes via FK.
     """
-    try:
-        sb.table("suggestions").delete().eq("work_id", work_id).execute()
-    except Exception:
-        pass
-    try:
-        sb.table("revisions").delete().eq("work_id", work_id).execute()
-    except Exception:
-        pass
-    try:
-        sb.table("legal_chunks").delete().eq("work_id", work_id).execute()
-    except Exception:
-        pass
-    try:
-        sb.table("document_nodes").delete().eq("work_id", work_id).execute()
-    except Exception as e:
-        print(f"  Warning: cleanup for work {work_id}: {e}")
+    tables = ["suggestions", "revisions", "legal_chunks", "document_nodes"]
+    for table in tables:
+        try:
+            sb.table(table).delete().eq("work_id", work_id).execute()
+        except Exception as e:
+            print(f"  Warning: Failed to clean {table} for work {work_id}: {e}")
 
 
 def create_chunks(
@@ -261,19 +251,17 @@ def create_chunks(
 
     # Batch insert chunks
     if chunks:
-        # Insert in batches of 50
         for i in range(0, len(chunks), 50):
             batch = chunks[i:i+50]
             try:
                 sb.table("legal_chunks").insert(batch).execute()
             except Exception as e:
-                print(f"  ERROR inserting chunks batch: {e}")
-                # Try one by one
-                for chunk in batch:
+                print(f"  ERROR inserting batch {i}-{i+len(batch)}: {e}")
+                for j, chunk in enumerate(batch):
                     try:
                         sb.table("legal_chunks").insert(chunk).execute()
                     except Exception as e2:
-                        print(f"  ERROR inserting single chunk: {e2}")
+                        print(f"  ERROR inserting chunk {i+j}: {e2}")
 
     return len(chunks)
 
