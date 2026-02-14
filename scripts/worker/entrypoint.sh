@@ -21,7 +21,7 @@ fi
 
 exec python -m worker.run continuous \
     --types "${WORKER_TYPES:-uu,pp,perpres,perppu,keppres,inpres,penpres,uudrt,tapmpr,permen,perban,perda}" \
-    --batch-size "${WORKER_BATCH_SIZE:-100}" \
+    --batch-size "${WORKER_BATCH_SIZE:-10}" \
     --sleep "${WORKER_SLEEP:-3}" \
     --discover-interval "${WORKER_DISCOVER_INTERVAL:-5}" \
     --freshness-hours "${WORKER_FRESHNESS_HOURS:-24}" \
