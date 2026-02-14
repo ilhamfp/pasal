@@ -7,51 +7,38 @@ interface PdfViewerProps {
   slug: string;
   supabaseUrl: string;
   sourcePdfUrl?: string | null;
-  totalPages?: number;
-  /** Controlled page — parent can drive this via scroll sync */
-  page?: number;
-  onPageChange?: (page: number) => void;
+  page: number;
+  onPageChange: (page: number) => void;
 }
 
-export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages, page, onPageChange }: PdfViewerProps) {
-  const [internalPage, setInternalPage] = useState(page || 1);
+export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, page, onPageChange }: PdfViewerProps) {
   const [hasError, setHasError] = useState(false);
 
-  // Sync with controlled page prop
   useEffect(() => {
-    if (page != null && page !== internalPage) {
-      setInternalPage(page);
-      setHasError(false);
-    }
+    setHasError(false);
   }, [page]);
 
-  const currentPage = internalPage;
-  const maxPages = totalPages || 500;
-  const imageUrl = `${supabaseUrl}/storage/v1/object/public/regulation-pdfs/${slug}/page-${currentPage}.png`;
-
-  const goToPage = (p: number) => {
-    setInternalPage(p);
-    setHasError(false);
-    onPageChange?.(p);
-  };
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/regulation-pdfs/${slug}/page-${page}.png`;
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="flex items-center justify-between p-3 border-b">
         <span className="text-sm font-medium tabular-nums">
-          Halaman {currentPage}
+          Halaman {page}
         </span>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => goToPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage <= 1}
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            aria-label="Halaman sebelumnya"
             className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
-            onClick={() => goToPage(Math.min(maxPages, currentPage + 1))}
-            disabled={currentPage >= maxPages}
+            onClick={() => onPageChange(page + 1)}
+            disabled={hasError}
+            aria-label="Halaman berikutnya"
             className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
           >
             <ChevronRight className="h-4 w-4" />
@@ -89,11 +76,10 @@ export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, totalPages,
         ) : (
           <img
             src={imageUrl}
-            alt={`Halaman ${currentPage}`}
+            alt={`Halaman ${page}`}
             className="w-full h-auto"
             loading="lazy"
             onError={() => setHasError(true)}
-            onLoad={() => setHasError(false)}
           />
         )}
       </div>

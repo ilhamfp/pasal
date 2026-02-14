@@ -109,19 +109,19 @@ export default async function LawDetailPage({ params }: PageProps) {
   const { lawNumber, lawYear } = parsed;
 
   // Get regulation type ID
-  const { data: regTypes } = await supabase
+  const { data: regType } = await supabase
     .from("regulation_types")
     .select("id, code")
     .eq("code", type.toUpperCase())
     .single();
 
-  if (!regTypes) notFound();
+  if (!regType) notFound();
 
   // Get the work
   const { data: work } = await supabase
     .from("works")
     .select("*")
-    .eq("regulation_type_id", regTypes.id)
+    .eq("regulation_type_id", regType.id)
     .eq("number", lawNumber)
     .eq("year", lawYear)
     .single();
@@ -200,7 +200,8 @@ export default async function LawDetailPage({ params }: PageProps) {
           const nestedPasals = pasalNodes.filter(
             (p) => subSectionIds.has(p.parent_id ?? -1) && !directPasalIds.has(p.id),
           );
-          const allBabPasals = [...directPasals, ...nestedPasals];
+          const allBabPasals = [...directPasals, ...nestedPasals]
+            .sort((a, b) => a.sort_order - b.sort_order);
 
           return (
             <section key={bab.id} id={`bab-${bab.number}`} className="mb-12">
@@ -214,14 +215,14 @@ export default async function LawDetailPage({ params }: PageProps) {
               )}
 
               {allBabPasals.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} workId={work.id} slug={slug} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} sourcePdfUrl={work.source_pdf_url ?? null} />
+                <PasalBlock key={pasal.id} pasal={pasal} />
               ))}
             </section>
           );
         })
       ) : (
         pasalNodes.map((pasal) => (
-          <PasalBlock key={pasal.id} pasal={pasal} frbrUri={work.frbr_uri} lawTitle={work.title_id} workId={work.id} slug={slug} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} sourcePdfUrl={work.source_pdf_url ?? null} />
+          <PasalBlock key={pasal.id} pasal={pasal} />
         ))
       )}
 
