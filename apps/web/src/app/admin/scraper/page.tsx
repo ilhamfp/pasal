@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
@@ -40,40 +39,44 @@ interface RunRow {
 async function DashboardContent() {
   const supabase = await createClient();
 
-  // Fetch job counts by status
+  // Run all queries in parallel to avoid sequential round-trips
+  const [countResults, worksResult, chunksResult, runsResult, typeBreakdownResult] =
+    await Promise.all([
+      // Job counts by status — 6 queries in parallel
+      Promise.all(
+        STATUS_ORDER.map((status) =>
+          supabase
+            .from("crawl_jobs")
+            .select("id", { count: "exact", head: true })
+            .eq("status", status)
+        )
+      ),
+      // Works total
+      supabase.from("works").select("id", { count: "exact", head: true }),
+      // Chunks total
+      supabase.from("legal_chunks").select("id", { count: "exact", head: true }),
+      // Recent runs
+      supabase
+        .from("scraper_runs")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(10),
+      // Type breakdown
+      supabase.from("crawl_jobs").select("regulation_type").limit(10000),
+    ]);
+
   const jobCounts: Record<string, number> = {};
-  for (const status of STATUS_ORDER) {
-    const { count } = await supabase
-      .from("crawl_jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("status", status);
-    jobCounts[status] = count || 0;
-  }
+  STATUS_ORDER.forEach((status, i) => {
+    jobCounts[status] = countResults[i].count || 0;
+  });
   const totalJobs = Object.values(jobCounts).reduce((a, b) => a + b, 0);
 
-  // Fetch works & chunks totals
-  const { count: worksCount } = await supabase
-    .from("works")
-    .select("id", { count: "exact", head: true });
-  const { count: chunksCount } = await supabase
-    .from("legal_chunks")
-    .select("id", { count: "exact", head: true });
-
-  // Fetch recent runs
-  const { data: runs } = await supabase
-    .from("scraper_runs")
-    .select("*")
-    .order("started_at", { ascending: false })
-    .limit(10);
-
-  // Fetch type breakdown
-  const { data: typeBreakdown } = await supabase
-    .from("crawl_jobs")
-    .select("regulation_type")
-    .limit(10000);
+  const worksCount = worksResult.count;
+  const chunksCount = chunksResult.count;
+  const runs = runsResult.data;
 
   const typeCounts: Record<string, number> = {};
-  for (const row of typeBreakdown || []) {
+  for (const row of typeBreakdownResult.data || []) {
     const t = row.regulation_type || "unknown";
     typeCounts[t] = (typeCounts[t] || 0) + 1;
   }
@@ -257,28 +260,25 @@ async function DashboardContent() {
 
 export default function ScraperDashboardPage() {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="container mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-heading">Monitor Scraper</h1>
-          <p className="text-muted-foreground mt-1">
-            Status pipeline scraping peraturan.go.id
-          </p>
-        </div>
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-heading">Monitor Scraper</h1>
+        <p className="text-muted-foreground mt-1">
+          Status pipeline scraping peraturan.go.id
+        </p>
+      </div>
 
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
-              ))}
-            </div>
-          }
-        >
-          <DashboardContent />
-        </Suspense>
-      </main>
-    </div>
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+        }
+      >
+        <DashboardContent />
+      </Suspense>
+    </>
   );
 }
