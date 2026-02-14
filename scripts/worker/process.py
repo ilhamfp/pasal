@@ -32,8 +32,10 @@ from parser.parse_law import extract_text_from_pdf, parse_into_nodes
 PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
 STORAGE_BUCKET = "regulation-pdfs"
 
-# Bump this when the parser changes significantly to trigger re-extraction
-EXTRACTION_VERSION = 1
+# Bump this when the parser changes significantly to trigger re-extraction.
+# v1: original parser (sort_order * 100 per level — overflows bigint)
+# v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
+EXTRACTION_VERSION = 2
 
 
 def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
@@ -275,15 +277,29 @@ async def process_jobs(
     return stats
 
 
+def _download_from_storage(db, slug: str, dest: Path) -> bool:
+    """Download PDF from Supabase Storage to local path. Returns True on success."""
+    try:
+        data = db.storage.from_(STORAGE_BUCKET).download(f"{slug}.pdf")
+        if data and len(data) > 1000:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+            return True
+    except Exception as e:
+        print(f"    Storage download failed: {e}")
+    return False
+
+
 def reprocess_jobs(
     batch_size: int = 50,
     force: bool = False,
 ) -> dict:
-    """Re-extract and reload from existing local PDFs (no re-download).
+    """Re-extract and reload from PDFs (local cache or Supabase Storage).
 
-    Finds jobs that are 'loaded' or 'parsed' and have a local PDF,
-    then re-runs the extraction pipeline. Useful for iterating on
-    parser quality.
+    Finds jobs that are 'loaded' or 'parsed' and have an outdated
+    extraction_version, then re-runs the extraction pipeline.
+    Downloads PDFs from Supabase Storage when local files are missing
+    (e.g. after Railway container restart).
 
     Args:
         batch_size: Max jobs to reprocess.
@@ -294,7 +310,7 @@ def reprocess_jobs(
     db = get_sb()
     sb = init_supabase()
 
-    # Find loaded jobs with local PDFs
+    # Find loaded jobs needing re-extraction
     query = db.table("crawl_jobs").select("*").in_("status", ["loaded", "parsed", "downloaded"])
     if not force:
         # Only reprocess if extraction version is outdated
@@ -313,17 +329,19 @@ def reprocess_jobs(
         slug = job.get("url", "").split("/")[-1] or f"job_{job_id}"
         pdf_local = job.get("pdf_local_path")
 
-        # Try to find the PDF
+        # Try to find the PDF: local cache first, then Supabase Storage
         if pdf_local:
             pdf_path = Path(pdf_local)
         else:
             pdf_path = PDF_DIR / f"{slug}.pdf"
 
         if not pdf_path.exists():
-            print(f"  [{stats['processed']+1}] {slug}: PDF not found at {pdf_path}, skipping")
-            stats["skipped"] += 1
-            stats["processed"] += 1
-            continue
+            print(f"  [{stats['processed']+1}/{len(jobs)}] {slug}: downloading from storage...")
+            if not _download_from_storage(db, slug, pdf_path):
+                print(f"    PDF not in storage either, skipping")
+                stats["skipped"] += 1
+                stats["processed"] += 1
+                continue
 
         print(f"  [{stats['processed']+1}/{len(jobs)}] Reprocessing {slug}...")
 

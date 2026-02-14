@@ -185,7 +185,7 @@ def cmd_continuous(args: argparse.Namespace) -> None:
             except Exception as e:
                 print(f"  Discovery failed: {e}")
 
-        # Process a batch
+        # Process a batch of pending jobs
         print(f"\n--- Batch {batch_count}: PROCESSING (batch_size={batch_size}) ---")
         run_id = _create_run("continuous")
 
@@ -203,10 +203,17 @@ def cmd_continuous(args: argparse.Namespace) -> None:
             print(f"  Batch: {stats['processed']} processed, {stats['succeeded']} ok, {stats['failed']} fail")
             print(f"  Total: {total_processed} processed, {total_succeeded} succeeded")
 
-            # If no pending jobs were found, sleep longer
+            # If no pending jobs, try reprocessing old extractions
             if stats["processed"] == 0:
-                print(f"  No pending jobs. Sleeping {sleep_between * 5}s...")
-                time.sleep(sleep_between * 5)
+                print(f"\n--- Batch {batch_count}: REPROCESSING outdated extractions ---")
+                rp_stats = reprocess_jobs(batch_size=batch_size)
+                if rp_stats["processed"] > 0:
+                    print(f"  Reprocessed: {rp_stats['processed']}, ok: {rp_stats['succeeded']}, "
+                          f"fail: {rp_stats['failed']}, skip: {rp_stats['skipped']}")
+                    time.sleep(sleep_between)
+                else:
+                    print(f"  Nothing to reprocess. Sleeping {sleep_between * 5}s...")
+                    time.sleep(sleep_between * 5)
             else:
                 time.sleep(sleep_between)
 
