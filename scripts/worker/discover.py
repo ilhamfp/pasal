@@ -137,7 +137,7 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str, type_code
         type_code: Parent type code like 'PERMEN' (from REG_TYPES)
     """
     results = []
-    skipped = 0
+    skipped_slugs = []
 
     # Find all links to regulation detail pages
     for link in soup.find_all("a", href=True):
@@ -148,7 +148,7 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str, type_code
         slug = href.replace("/id/", "").strip("/")
         parsed = _parse_slug(slug, page_type_code=type_code)
         if not parsed:
-            skipped += 1
+            skipped_slugs.append(slug)
             continue
 
         topic_text = link.get_text(strip=True)
@@ -189,8 +189,11 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str, type_code
             "frbr_uri": f"/akn/id/act/{prefix}/{parsed['year']}/{parsed['number']}",
         })
 
-    if skipped:
-        print(f"    ({skipped} links skipped — no -no-...-tahun- pattern)")
+    if skipped_slugs:
+        unique_skipped = sorted(set(skipped_slugs))
+        print(f"    ({len(skipped_slugs)} links skipped — no -no-...-tahun- pattern)")
+        for s in unique_skipped:
+            print(f"      SKIP: /id/{s}")
 
     # Deduplicate by URL within the same page
     seen = set()
