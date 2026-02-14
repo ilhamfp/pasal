@@ -48,8 +48,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     .range(offset, offset + limit - 1);
 
   if (error) {
+    console.error("Laws API error:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: "Terjadi kesalahan saat memuat data." },
       { status: 500, headers: CORS_HEADERS },
     );
   }

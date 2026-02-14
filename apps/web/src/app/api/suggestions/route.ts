@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const resolvedNodeType = node_type || "pasal";
     if (!VALID_NODE_TYPES.has(resolvedNodeType)) {
       return NextResponse.json(
-        { error: `node_type tidak valid: ${resolvedNodeType}` },
+        { error: "node_type tidak valid." },
         { status: 400 },
       );
     }

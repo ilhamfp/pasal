@@ -1,5 +1,9 @@
 """Crawler configuration."""
+import logging
+import os
 import ssl
+
+logger = logging.getLogger(__name__)
 
 DELAY_BETWEEN_REQUESTS = 0.5  # seconds
 DELAY_BETWEEN_PAGES = 1.0
@@ -12,14 +16,20 @@ DEFAULT_HEADERS = {
 PDF_STORAGE_DIR = "data/pdfs/"
 PARSED_DIR = "data/parsed/"
 
+# Set ALLOW_INSECURE_SSL=true only for known-broken government TLS endpoints
+ALLOW_INSECURE_SSL = os.environ.get("ALLOW_INSECURE_SSL", "false").lower() == "true"
 
-def create_permissive_ssl_context() -> ssl.SSLContext:
-    """Create an SSL context that skips certificate verification.
 
-    peraturan.go.id has intermittent TLS handshake issues,
-    so we disable hostname checking and certificate verification.
+def create_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context. Uses verified SSL by default.
+
+    Set ALLOW_INSECURE_SSL=true env var to skip certificate verification
+    (only for peraturan.go.id which has intermittent TLS issues).
     """
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    return ctx
+    if ALLOW_INSECURE_SSL:
+        logger.warning("SSL verification disabled via ALLOW_INSECURE_SSL — use only for trusted government endpoints")
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    return ssl.create_default_context()

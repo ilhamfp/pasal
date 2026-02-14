@@ -15,7 +15,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_PAGES, create_permissive_ssl_context
+from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_PAGES, create_ssl_context
 from crawler.state import is_discovery_fresh, upsert_discovery_progress, upsert_job
 
 BASE_URL = "https://peraturan.go.id"
@@ -234,7 +234,7 @@ async def discover_regulations(
         "upserted": 0,
     }
 
-    ssl_ctx = create_permissive_ssl_context()
+    ssl_ctx = create_ssl_context()
     transport = httpx.AsyncHTTPTransport(retries=3, verify=ssl_ctx)
     async with httpx.AsyncClient(
         timeout=30,

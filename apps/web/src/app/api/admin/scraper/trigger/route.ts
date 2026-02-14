@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
-  // Simple API key auth — just checks for a header
+  // Dual auth: API key OR Supabase session — fail-closed
+  let isAuthed = false;
+
   const authHeader = request.headers.get("x-admin-key");
   const adminKey = process.env.ADMIN_API_KEY;
+  if (adminKey && authHeader === adminKey) {
+    isAuthed = true;
+  }
 
-  if (adminKey && authHeader !== adminKey) {
+  if (!isAuthed) {
+    const supabaseAuth = await createClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    if (user && isAdminEmail(user.email)) {
+      isAuthed = true;
+    }
+  }
+
+  if (!isAuthed) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

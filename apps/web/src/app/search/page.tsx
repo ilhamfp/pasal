@@ -51,7 +51,9 @@ interface WorkResult {
 }
 
 function sanitizeSnippet(html: string): string {
-  return html.replace(/<(?!\/?mark\b)[^>]*>/gi, "");
+  let cleaned = html.replace(/<(?!\/?mark\b)[^>]*>/gi, "");
+  cleaned = cleaned.replace(/<mark\b[^>]*>/gi, "<mark>");
+  return cleaned;
 }
 
 function formatRelevance(score: number, maxScore: number): string {
@@ -78,9 +80,10 @@ async function SearchResults({ query, type }: SearchResultsProps) {
   });
 
   if (error) {
+    console.error("Search error:", error);
     return (
       <div className="rounded-lg border border-destructive p-4 text-destructive">
-        Terjadi kesalahan saat mencari: {error.message}
+        Terjadi kesalahan saat mencari. Silakan coba lagi.
       </div>
     );
   }

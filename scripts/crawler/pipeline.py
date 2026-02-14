@@ -1,6 +1,7 @@
 """Crawl pipeline: download, parse, load."""
 import asyncio
 import os
+import re
 from pathlib import Path
 
 import httpx
@@ -9,8 +10,19 @@ from .config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS, PDF_STORAGE_DIR
 from .state import get_pending_jobs, update_status
 
 
+def _safe_filename(source_id: str) -> str:
+    """Sanitize source_id to prevent path traversal."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", source_id)
+
+
 async def download_pdf(client: httpx.AsyncClient, pdf_url: str, save_path: str) -> str:
     """Download a PDF file. Returns the local file path."""
+    # Verify save_path is within PDF_STORAGE_DIR
+    real_storage = os.path.realpath(PDF_STORAGE_DIR)
+    real_save = os.path.realpath(save_path)
+    if not real_save.startswith(real_storage + os.sep) and real_save != real_storage:
+        raise ValueError(f"Path escapes storage directory: {save_path}")
+
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     resp = await client.get(pdf_url, headers=DEFAULT_HEADERS, follow_redirects=True)
     resp.raise_for_status()
@@ -35,7 +47,8 @@ async def run_pipeline(source_id: str | None = None, limit: int = 10) -> dict:
 
             try:
                 update_status(job_id, "crawling")
-                filename = f"{job['source_id']}_{job_id}.pdf"
+                safe_id = _safe_filename(job["source_id"])
+                filename = f"{safe_id}_{job_id}.pdf"
                 save_path = os.path.join(PDF_STORAGE_DIR, filename)
                 await download_pdf(client, pdf_url, save_path)
                 update_status(job_id, "downloaded")

@@ -18,7 +18,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS, create_permissive_ssl_context
+from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS, create_ssl_context
 from crawler.db import get_sb
 from crawler.state import claim_pending_jobs, update_status
 from loader.load_to_supabase import (
@@ -368,7 +368,7 @@ async def process_jobs(
     sb = init_supabase()
     db = get_sb()
 
-    ssl_ctx = create_permissive_ssl_context()
+    ssl_ctx = create_ssl_context()
     transport = httpx.AsyncHTTPTransport(retries=3, verify=ssl_ctx)
 
     async with httpx.AsyncClient(timeout=60, transport=transport, follow_redirects=True) as client:

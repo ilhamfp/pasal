@@ -31,8 +31,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   });
 
   if (error) {
+    console.error("Search API error:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: "Terjadi kesalahan saat mencari." },
       { status: 500, headers: CORS_HEADERS },
     );
   }
