@@ -20,5 +20,14 @@ ENV PYTHONUNBUFFERED=1
 # Create data dir for temporary PDF downloads
 RUN mkdir -p /app/data/raw/pdfs
 
-# Run as continuous long-running service: 100 jobs per batch, discover every 5 batches
-CMD ["python", "-m", "worker.run", "continuous", "--types", "uu,pp,perpres", "--batch-size", "100", "--sleep", "10", "--discover-interval", "5"]
+# Configurable via Railway env vars per service:
+#   WORKER_BATCH_SIZE=100         (jobs per batch)
+#   WORKER_SLEEP=3                (seconds between batches)
+#   WORKER_DISCOVER=true|false    (set false for process-only workers)
+#   WORKER_DISCOVER_INTERVAL=5    (discover every N batches)
+#   WORKER_TYPES=uu,pp,perpres,perppu  (types to discover)
+#
+# Job claiming is atomic (FOR UPDATE SKIP LOCKED) — workers never duplicate work.
+COPY scripts/worker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+CMD ["/app/entrypoint.sh"]

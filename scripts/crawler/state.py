@@ -13,8 +13,23 @@ def upsert_job(job: dict) -> int:
     return result.data[0]["id"]
 
 
-def get_pending_jobs(source_id: str | None = None, limit: int = 50) -> list[dict]:
-    """Get pending crawl jobs, optionally filtered by source."""
+def claim_pending_jobs(limit: int = 50) -> list[dict]:
+    """Atomically claim pending jobs via FOR UPDATE SKIP LOCKED.
+
+    Calls the claim_jobs() SQL function which atomically selects
+    pending jobs and sets their status to 'crawling' in one query.
+    Multiple workers calling this concurrently will never get the same jobs.
+    """
+    sb = get_sb()
+    result = sb.rpc("claim_jobs", {"p_limit": limit}).execute()
+    return result.data or []
+
+
+def get_pending_jobs(
+    source_id: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
+    """Get pending crawl jobs (non-atomic, use claim_pending_jobs for workers)."""
     sb = get_sb()
     query = sb.table("crawl_jobs").select("*").eq("status", "pending")
     if source_id:

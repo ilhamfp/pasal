@@ -19,7 +19,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS
 from crawler.db import get_sb
-from crawler.state import get_pending_jobs, update_status
+from crawler.state import claim_pending_jobs, update_status
 from loader.load_to_supabase import (
     cleanup_work_data,
     create_chunks,
@@ -156,13 +156,14 @@ async def process_jobs(
 ) -> dict:
     """Process pending crawl_jobs through the full pipeline.
 
+    Uses atomic claim_pending_jobs() so multiple workers never get the same jobs.
     Downloads PDF (or uses cached copy), parses, loads to Supabase.
     Tracks PDF hash, size, and download timestamp for reproducibility.
     """
     stats = {"processed": 0, "succeeded": 0, "failed": 0, "skipped": 0}
     start_time = time.time()
 
-    jobs = get_pending_jobs(source_id=source_id, limit=batch_size)
+    jobs = claim_pending_jobs(limit=batch_size)
     if not jobs:
         print("  No pending jobs found")
         return stats
@@ -213,7 +214,7 @@ async def process_jobs(
                     else:
                         print(f"    PDF exists locally, computing hash...")
                 else:
-                    update_status(job_id, "crawling")
+                    # Status already set to 'crawling' by claim_jobs()
                     pdf_path.parent.mkdir(parents=True, exist_ok=True)
                     resp = await client.get(pdf_url, headers=DEFAULT_HEADERS)
                     resp.raise_for_status()
