@@ -38,10 +38,13 @@ def claim_pending_jobs(limit: int = 50) -> list[dict]:
     Calls the claim_jobs() SQL function which atomically selects
     pending jobs and sets their status to 'crawling' in one query.
     Multiple workers calling this concurrently will never get the same jobs.
+    The DB function also auto-recovers jobs stuck in 'crawling' for >15 min.
     """
-    sb = get_sb()
-    result = sb.rpc("claim_jobs", {"p_limit": limit}).execute()
-    return result.data or []
+    def _do():
+        sb = get_sb()
+        result = sb.rpc("claim_jobs", {"p_limit": limit}).execute()
+        return result.data or []
+    return _retry(_do, "claim_pending_jobs")
 
 
 def get_pending_jobs(

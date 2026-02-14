@@ -170,6 +170,122 @@ def load_nodes_recursive(
     return pasal_nodes
 
 
+_CHUNK_NODE_TYPES = ("pasal", "preamble", "content", "aturan", "penjelasan_umum", "penjelasan_pasal")
+
+
+def _flatten_tree(nodes: list[dict]) -> list[dict]:
+    """Flatten a recursive node tree into a list with depth/parent metadata.
+
+    Each entry: {node, depth, parent_idx, path, sort_order}
+    parent_idx is the index into the returned flat list (not the DB id).
+    """
+    result: list[dict] = []
+    counter = [0]
+
+    def _walk(children: list[dict], parent_global_idx: int | None, path_prefix: str, depth: int) -> None:
+        for node in children:
+            counter[0] += 1
+            node_type = node["type"]
+            number = node.get("number", "")
+            path_segment = f"{node_type}_{number}".replace(".", "_").replace(" ", "_")
+            path = f"{path_prefix}.{path_segment}" if path_prefix else path_segment
+
+            my_idx = len(result)
+            result.append({
+                "node": node,
+                "depth": depth,
+                "parent_idx": parent_global_idx,
+                "path": path,
+                "sort_order": counter[0],
+            })
+            if node.get("children"):
+                _walk(node["children"], my_idx, path, depth + 1)
+
+    _walk(nodes, None, "", 0)
+    return result
+
+
+def load_nodes_by_level(sb, work_id: int, nodes: list[dict]) -> list[dict]:
+    """Insert document nodes in breadth-first batches (one batch per tree depth).
+
+    Turns ~50 individual INSERTs into ~4-5 batch INSERTs.
+    Returns list of pasal nodes for chunking (same format as load_nodes_recursive).
+    """
+    flat = _flatten_tree(nodes)
+    if not flat:
+        return []
+
+    # Group by depth
+    max_depth = max(f["depth"] for f in flat)
+    # Map flat-list index → inserted DB id
+    idx_to_db_id: dict[int, int] = {}
+    pasal_nodes: list[dict] = []
+
+    for d in range(max_depth + 1):
+        batch = []
+        batch_indices = []
+        for i, f in enumerate(flat):
+            if f["depth"] != d:
+                continue
+            node = f["node"]
+            parent_db_id = idx_to_db_id.get(f["parent_idx"]) if f["parent_idx"] is not None else None
+            batch.append({
+                "work_id": work_id,
+                "node_type": node["type"],
+                "number": node.get("number", ""),
+                "heading": node.get("heading", ""),
+                "content_text": node.get("content", ""),
+                "parent_id": parent_db_id,
+                "path": f["path"],
+                "depth": d,
+                "sort_order": f["sort_order"],
+            })
+            batch_indices.append(i)
+
+        if not batch:
+            continue
+
+        try:
+            result = sb.table("document_nodes").insert(batch).execute()
+            if result.data:
+                for j, row in enumerate(result.data):
+                    flat_idx = batch_indices[j]
+                    idx_to_db_id[flat_idx] = row["id"]
+                    node = flat[flat_idx]["node"]
+                    if node["type"] in _CHUNK_NODE_TYPES:
+                        pasal_nodes.append({
+                            "node_id": row["id"],
+                            "number": node.get("number", ""),
+                            "content": node.get("content", ""),
+                            "heading": node.get("heading", ""),
+                            "parent_heading": flat[flat_idx]["path"].rsplit(".", 1)[0] if "." in flat[flat_idx]["path"] else "",
+                            "node_type": node["type"],
+                        })
+        except Exception as e:
+            print(f"  ERROR batch-inserting depth {d} ({len(batch)} nodes): {e}")
+            # Fallback: insert one by one
+            for j, node_data in enumerate(batch):
+                try:
+                    result = sb.table("document_nodes").insert(node_data).execute()
+                    if result.data:
+                        flat_idx = batch_indices[j]
+                        idx_to_db_id[flat_idx] = result.data[0]["id"]
+                        node = flat[flat_idx]["node"]
+                        if node["type"] in _CHUNK_NODE_TYPES:
+                            pasal_nodes.append({
+                                "node_id": result.data[0]["id"],
+                                "number": node.get("number", ""),
+                                "content": node.get("content", ""),
+                                "heading": node.get("heading", ""),
+                                "parent_heading": flat[flat_idx]["path"].rsplit(".", 1)[0] if "." in flat[flat_idx]["path"] else "",
+                                "node_type": node["type"],
+                            })
+                except Exception as e2:
+                    print(f"  ERROR inserting node {node_data['node_type']} {node_data['number']}: {e2}")
+
+    return pasal_nodes
+
+
 def cleanup_work_data(sb, work_id: int) -> None:
     """Delete existing document_nodes and legal_chunks for a specific work.
 

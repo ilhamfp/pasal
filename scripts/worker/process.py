@@ -25,6 +25,7 @@ from loader.load_to_supabase import (
     cleanup_work_data,
     create_chunks,
     init_supabase,
+    load_nodes_by_level,
     load_nodes_recursive,
     load_work,
 )
@@ -188,28 +189,35 @@ def _sha256(path: Path) -> str:
 
 def _create_run(source_id: str | None) -> int:
     """Create a scraper_runs record and return its ID."""
-    sb = get_sb()
-    result = sb.table("scraper_runs").insert({
-        "source_id": source_id or "all",
-        "status": "running",
-        "started_at": datetime.now(timezone.utc).isoformat(),
-    }).execute()
-    return result.data[0]["id"]
+    from crawler.state import _retry
+
+    def _do():
+        sb = get_sb()
+        result = sb.table("scraper_runs").insert({
+            "source_id": source_id or "all",
+            "status": "running",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+        return result.data[0]["id"]
+    return _retry(_do, "create_run")
 
 
 def _update_run(run_id: int, stats: dict, status: str = "completed", error: str | None = None) -> None:
-    """Update a scraper_runs record with final stats."""
-    sb = get_sb()
-    update = {
-        "status": status,
-        "jobs_processed": stats.get("processed", 0),
-        "jobs_succeeded": stats.get("succeeded", 0),
-        "jobs_failed": stats.get("failed", 0),
-        "completed_at": datetime.now(timezone.utc).isoformat(),
-    }
-    if error:
-        update["error_message"] = error
-    sb.table("scraper_runs").update(update).eq("id", run_id).execute()
+    """Update a scraper_runs record with final stats. Never raises."""
+    try:
+        sb = get_sb()
+        update = {
+            "status": status,
+            "jobs_processed": stats.get("processed", 0),
+            "jobs_succeeded": stats.get("succeeded", 0),
+            "jobs_failed": stats.get("failed", 0),
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if error:
+            update["error_message"] = error[:500]
+        sb.table("scraper_runs").update(update).eq("id", run_id).execute()
+    except Exception as e:
+        print(f"  WARNING: _update_run failed (non-fatal): {e}")
 
 
 def _build_law_dict(job: dict, text: str, nodes: list, detail_metadata: dict | None = None) -> dict:
@@ -264,7 +272,7 @@ def _extract_and_load(
         raise ValueError("Failed to upsert work")
 
     cleanup_work_data(sb, work_id)
-    pasal_nodes = load_nodes_recursive(sb, work_id, nodes)
+    pasal_nodes = load_nodes_by_level(sb, work_id, nodes)
     chunk_count = create_chunks(sb, work_id, law, pasal_nodes)
 
     return work_id, len(pasal_nodes), chunk_count

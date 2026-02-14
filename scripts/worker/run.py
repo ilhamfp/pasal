@@ -365,7 +365,7 @@ def main() -> None:
     p_cont = sub.add_parser("continuous", help="Run continuously (long-running service)")
     p_cont.add_argument("--types", help="Comma-separated types for discovery (default: all 12 types)")
     p_cont.add_argument("--max-pages", type=int, help="Max pages per type for discovery (default: all pages)")
-    p_cont.add_argument("--batch-size", type=int, default=100, help="Jobs per batch (default: 100)")
+    p_cont.add_argument("--batch-size", type=int, default=10, help="Jobs per batch (default: 10)")
     p_cont.add_argument("--max-runtime", type=int, default=3600, help="Max runtime per batch in seconds")
     p_cont.add_argument("--sleep", type=int, default=10, help="Seconds between batches (default: 10)")
     p_cont.add_argument("--discover-interval", type=int, default=5, help="Discover every N batches (default: 5)")
