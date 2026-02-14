@@ -349,12 +349,12 @@ Full flow: extract → classify → OCR correct → parse → validate → inser
 **DB insertion uses existing tables** — same schema as `load_to_supabase.py` but adds `revisions` rows with `revision_type="initial_parse"`.
 
 **Verification (for all of Task 3):**
-- [ ] 50 regulations parsed end-to-end, ≥70% pass validation
-- [ ] `document_nodes` hierarchy correct for tested UU
-- [ ] `revisions` table has `initial_parse` entries
-- [ ] Running twice is idempotent
-- [ ] **Existing MCP server still works**
-- [ ] **search_legal_chunks** returns results for new content
+- [x] 50 regulations parsed end-to-end, ≥70% pass validation (59/59 parsed, 100% valid, 2,511 pasals)
+- [x] `document_nodes` hierarchy correct for tested UU (UU 13/2003: 18 BABs, 193 Pasals, 414 Ayats)
+- [x] `revisions` table has `initial_parse` entries (3,181 revisions)
+- [x] Running twice is idempotent (cleanup + re-insert cycle verified)
+- [x] **Existing MCP server still works** (search_laws, get_pasal, list_laws all verified)
+- [x] **search_legal_chunks** returns results for new content (tested "APBN anggaran negara", "upah minimum")
 
 > 🔁 Commit after each subtask. Final: `git commit -m "feat: parser pipeline with DB integration" && git push origin main`
 

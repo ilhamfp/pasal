@@ -164,9 +164,23 @@ def load_nodes_recursive(
 
 
 def cleanup_work_data(sb, work_id: int) -> None:
-    """Delete existing document_nodes and legal_chunks for a specific work."""
+    """Delete existing document_nodes and legal_chunks for a specific work.
+
+    Order matters: suggestions/revisions reference nodes via FK.
+    """
+    try:
+        sb.table("suggestions").delete().eq("work_id", work_id).execute()
+    except Exception:
+        pass
+    try:
+        sb.table("revisions").delete().eq("work_id", work_id).execute()
+    except Exception:
+        pass
     try:
         sb.table("legal_chunks").delete().eq("work_id", work_id).execute()
+    except Exception:
+        pass
+    try:
         sb.table("document_nodes").delete().eq("work_id", work_id).execute()
     except Exception as e:
         print(f"  Warning: cleanup for work {work_id}: {e}")

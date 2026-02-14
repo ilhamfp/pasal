@@ -3,7 +3,7 @@
 Full flow for processing a PDF into structured legal data in Supabase.
 
 Usage:
-    python pipeline.py --pdf data/raw/pdfs/uu-no-13-tahun-2003.pdf
+    python pipeline.py --pdf data/raw/pdfs/uu-13-2003.pdf
     python pipeline.py --dir data/raw/pdfs/ --limit 50
     python pipeline.py --dir data/raw/pdfs/ --load  # Also insert into DB
 """
@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,9 +31,17 @@ from validate import validate_structure
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 PARSED_DIR = DATA_DIR / "parsed"
 
-# Filename pattern for extracting type/number/year
-FILENAME_RE = re.compile(
-    r'^(uu|pp|perpres|perppu|permen|perban|perda|keppres|inpres|tapmpr)-no-(\d+[a-z]?)-tahun-(\d{4})$',
+_REG_TYPES = r'uu|pp|perpres|perppu|permen|perban|perda|keppres|inpres|tapmpr'
+
+# Filename patterns for extracting type/number/year
+# Format 1: uu-no-13-tahun-2003
+FILENAME_LONG_RE = re.compile(
+    rf'^({_REG_TYPES})-no-(\d+[a-z]?)-tahun-(\d{{4}})$',
+    re.IGNORECASE,
+)
+# Format 2: uu-13-2003
+FILENAME_SHORT_RE = re.compile(
+    rf'^({_REG_TYPES})-(\d+[a-z]?)-(\d{{4}})$',
     re.IGNORECASE,
 )
 
@@ -46,9 +55,9 @@ _TYPE_NAME_MAP = {
 
 
 def _metadata_from_filename(filename: str) -> dict | None:
-    """Extract metadata from PDF filename."""
+    """Extract metadata from PDF filename. Handles both naming formats."""
     stem = Path(filename).stem
-    m = FILENAME_RE.match(stem)
+    m = FILENAME_LONG_RE.match(stem) or FILENAME_SHORT_RE.match(stem)
     if not m:
         return None
     raw_type = m.group(1).upper()
@@ -111,6 +120,15 @@ def process_pdf(pdf_path: str | Path, metadata: dict | None = None) -> dict | No
     text, extract_stats = extract_text_pymupdf(pdf_path)
     if not text or len(text) < 100:
         print(f"  Too little text ({len(text)} chars), skipping")
+        return None
+
+    # Detect junk PDFs (website captures, not actual legal documents)
+    first_300 = text[:300]
+    if "Beranda" in first_300 and "Progsun" in first_300:
+        print(f"  Junk PDF (website capture), skipping")
+        return None
+    if "Access Denied" in first_300:
+        print(f"  Junk PDF (access denied page), skipping")
         return None
 
     # 4. OCR correction (for scanned PDFs)
@@ -183,7 +201,7 @@ def load_to_db(result: dict) -> int | None:
         "parse_method": result.get("parse_method"),
         "parse_confidence": result.get("parse_confidence"),
         "parse_errors": result.get("parse_errors", []),
-        "parsed_at": "now()",
+        "parsed_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", work_id).execute()
 
     # Create initial_parse revision for each pasal
@@ -206,6 +224,44 @@ def load_to_db(result: dict) -> int | None:
     return work_id
 
 
+def _dedup_pdfs(pdf_files: list[Path]) -> list[Path]:
+    """Deduplicate PDFs that represent the same regulation.
+
+    Prefers short format (uu-13-2003) over long format (uu-no-13-tahun-2003)
+    because they tend to have more reliable content. Skips files with extra
+    suffixes like -dpr, -new.
+    """
+    seen_keys: dict[str, Path] = {}
+    skipped: list[str] = []
+
+    for pdf_path in pdf_files:
+        stem = pdf_path.stem
+
+        # Skip files with extra suffixes (known bad downloads)
+        if re.search(r'-(dpr|new|old|backup|copy)\b', stem, re.IGNORECASE):
+            skipped.append(stem)
+            continue
+
+        m = FILENAME_LONG_RE.match(stem) or FILENAME_SHORT_RE.match(stem)
+        if not m:
+            skipped.append(stem)
+            continue
+
+        key = f"{m.group(1).upper()}-{m.group(2)}-{m.group(3)}"
+        is_short = bool(FILENAME_SHORT_RE.match(stem))
+
+        if key not in seen_keys:
+            seen_keys[key] = pdf_path
+        elif is_short:
+            # Prefer short format (tends to have better content)
+            seen_keys[key] = pdf_path
+
+    if skipped:
+        print(f"Skipped {len(skipped)} files with unrecognized names: {skipped[:5]}")
+
+    return sorted(seen_keys.values())
+
+
 def main():
     parser = argparse.ArgumentParser(description="Parse legal PDFs into structured data")
     parser.add_argument("--pdf", type=str, help="Single PDF file path")
@@ -213,6 +269,7 @@ def main():
     parser.add_argument("--limit", type=int, help="Max PDFs to process")
     parser.add_argument("--load", action="store_true", help="Also load into Supabase")
     parser.add_argument("--save-json", action="store_true", default=True, help="Save parsed JSON")
+    parser.add_argument("--no-dedup", action="store_true", help="Disable deduplication")
     args = parser.parse_args()
 
     PARSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -224,17 +281,22 @@ def main():
     else:
         pdf_files = sorted((DATA_DIR / "raw" / "pdfs").glob("*.pdf"))
 
+    if not args.pdf and not args.no_dedup:
+        pdf_files = _dedup_pdfs(pdf_files)
+
     if args.limit:
         pdf_files = pdf_files[:args.limit]
 
     print(f"Processing {len(pdf_files)} PDFs...")
 
     results = []
+    failed = []
     for i, pdf_path in enumerate(pdf_files):
         print(f"\n[{i+1}/{len(pdf_files)}] {pdf_path.name}")
         result = process_pdf(pdf_path)
 
         if not result:
+            failed.append(pdf_path.name)
             continue
 
         results.append(result)
@@ -251,12 +313,15 @@ def main():
                 print(f"  Loaded: work_id={work_id}")
             else:
                 print(f"  Failed to load into DB")
+                failed.append(pdf_path.name)
 
     print(f"\n=== Summary: {len(results)}/{len(pdf_files)} parsed ===")
     total_pasals = sum(r["stats"]["pasal_count"] for r in results)
     print(f"Total pasals: {total_pasals}")
     valid = sum(1 for r in results if r["validation"]["valid"])
     print(f"Valid: {valid}/{len(results)}")
+    if failed:
+        print(f"Failed ({len(failed)}): {failed}")
 
 
 if __name__ == "__main__":
