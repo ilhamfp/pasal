@@ -64,7 +64,14 @@ def load_work(sb, law: dict) -> int | None:
     reg_map = _load_reg_type_map(sb)
     reg_type_id = reg_map.get(law["type"])
     if not reg_type_id:
-        print(f"  Unknown regulation type: {law['type']}")
+        # Try common parent types as fallback
+        for fallback in ("PERMEN", "PERBAN", "PERDA"):
+            reg_type_id = reg_map.get(fallback)
+            if reg_type_id:
+                print(f"  Warning: Unknown type '{law['type']}', falling back to {fallback}")
+                break
+    if not reg_type_id:
+        print(f"  ERROR: Unknown regulation type: {law['type']}, no fallback found")
         return None
 
     work_data = {

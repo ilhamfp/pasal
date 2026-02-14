@@ -36,16 +36,17 @@ REG_TYPES = {
     "perda": {"code": "PERDA", "path": "/perda"},
 }
 
-# Standard slug pattern: uu-no-13-tahun-2003
+# Generic slug pattern: captures [prefix]-no-[number]-tahun-[year]
+# Works for ALL slug formats including:
+#   uu-no-1-tahun-2026 (simple)
+#   permenkum-no-2-tahun-2026 (ministry embedded)
+#   permen-esdm-no-2-tahun-2026 (ministry dash-separated)
+#   peraturan-bpom-no-1-tahun-2026 (agency prefixed)
+#   perda-kabupaten-kendal-no-10-tahun-2025 (location embedded)
+#   tap-mpr-no-iv-mpr-1999-tahun-2004 (roman numerals)
+#   tapmpr-no-vi-mpr-2000-tahun-2000 (no-dash variant)
 SLUG_RE = re.compile(
-    r"(uu|pp|perpres|perppu|keppres|inpres|penpres|uudrt|permen|perban|perda)-no-(\d+[a-z]?)-tahun-(\d{4})",
-    re.IGNORECASE,
-)
-
-# TAP MPR has a different slug format: tap-mpr-no-iv-mpr-1999-tahun-2004
-# Uses Roman numerals instead of digits for the number
-TAP_MPR_RE = re.compile(
-    r"tap-mpr-no-([ivxlcdm]+(?:-mpr-\d{4})?)-tahun-(\d{4})",
+    r"^(.+?)-no-(.+)-tahun-(\d{4})$",
     re.IGNORECASE,
 )
 
@@ -66,25 +67,55 @@ TYPE_NAMES = {
 }
 
 
-def _parse_slug(slug: str) -> dict | None:
-    """Extract type, number, year from a URL slug."""
-    # Try TAP MPR first (special format)
-    m = TAP_MPR_RE.search(slug)
-    if m:
-        return {
-            "type": "TAP_MPR",
-            "number": m.group(1).upper(),
-            "year": int(m.group(2)),
-        }
+# Map of slug prefixes to parent regulation type codes
+_PREFIX_EXACT = {
+    "uu": "UU", "pp": "PP", "perpres": "PERPRES", "perppu": "PERPPU",
+    "keppres": "KEPPRES", "inpres": "INPRES", "penpres": "PENPRES",
+    "uudrt": "UUDRT",
+}
 
-    # Standard format
-    m = SLUG_RE.search(slug)
+
+def _infer_type_from_prefix(prefix: str) -> str:
+    """Map slug prefix to parent regulation type code (fallback when no page context)."""
+    p = prefix.lower()
+    if p in _PREFIX_EXACT:
+        return _PREFIX_EXACT[p]
+    if p.startswith("tap") and "mpr" in p:
+        return "TAP_MPR"
+    if p.startswith("permen") or p.startswith("kepmen"):
+        return "PERMEN"
+    if p.startswith(("perda", "perwako", "perwalkot", "perbup", "pergub",
+                     "perwal", "qanun")):
+        return "PERDA"
+    if p.startswith(("peraturan-", "perpusnas", "perka", "perdirjen",
+                     "perbpk", "perbi", "pojk")):
+        return "PERBAN"
+    # Safe default: most regulations on peraturan.go.id are ministerial
+    return "PERMEN"
+
+
+def _parse_slug(slug: str, page_type_code: str | None = None) -> dict | None:
+    """Extract prefix, number, year from a URL slug.
+
+    Args:
+        slug: URL slug like 'permenkum-no-2-tahun-2026'
+        page_type_code: Parent regulation type from page context (e.g. 'PERMEN')
+    """
+    m = SLUG_RE.match(slug)
     if not m:
         return None
+
+    prefix = m.group(1)
+    number = m.group(2).strip("-")
+    year = int(m.group(3))
+
+    type_code = page_type_code or _infer_type_from_prefix(prefix)
+
     return {
-        "type": m.group(1).upper(),
-        "number": m.group(2),
-        "year": int(m.group(3)),
+        "type": type_code,
+        "prefix": prefix,
+        "number": number,
+        "year": year,
     }
 
 
@@ -97,9 +128,16 @@ def _parse_total_from_page(soup: BeautifulSoup) -> int | None:
     return None
 
 
-def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[dict]:
-    """Extract regulation entries from a listing page."""
+def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str, type_code: str) -> list[dict]:
+    """Extract regulation entries from a listing page.
+
+    Args:
+        soup: Parsed HTML
+        reg_type: Type key like 'permen'
+        type_code: Parent type code like 'PERMEN' (from REG_TYPES)
+    """
     results = []
+    skipped = 0
 
     # Find all links to regulation detail pages
     for link in soup.find_all("a", href=True):
@@ -108,8 +146,9 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
             continue
 
         slug = href.replace("/id/", "").strip("/")
-        parsed = _parse_slug(slug)
+        parsed = _parse_slug(slug, page_type_code=type_code)
         if not parsed:
+            skipped += 1
             continue
 
         topic_text = link.get_text(strip=True)
@@ -134,6 +173,10 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
 
         detail_url = f"{BASE_URL}{href}"
 
+        # FRBR URI uses prefix for uniqueness
+        # Simple types: prefix == type (e.g. "uu") → /akn/id/act/uu/2003/13
+        # Complex types: prefix is specific (e.g. "permenkum") → /akn/id/act/permenkum/2026/2
+        prefix = parsed["prefix"].lower()
         results.append({
             "source_id": "peraturan_go_id",
             "url": detail_url,
@@ -143,8 +186,11 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
             "year": parsed["year"],
             "title": formal_title,
             "status": "pending",
-            "frbr_uri": f"/akn/id/act/{parsed['type'].lower()}/{parsed['year']}/{parsed['number']}",
+            "frbr_uri": f"/akn/id/act/{prefix}/{parsed['year']}/{parsed['number']}",
         })
+
+    if skipped:
+        print(f"    ({skipped} links skipped — no -no-...-tahun- pattern)")
 
     # Deduplicate by URL within the same page
     seen = set()
@@ -251,7 +297,7 @@ async def discover_regulations(
             print(f"  Total: {total or '?'} regulations, crawling {total_pages} pages")
 
             # Process first page
-            regs = _extract_regulations_from_page(soup, type_key)
+            regs = _extract_regulations_from_page(soup, type_key, reg_info["code"])
             stats["discovered"] += len(regs)
             if not dry_run:
                 for reg in regs:
@@ -270,7 +316,7 @@ async def discover_regulations(
                         continue
 
                     soup = BeautifulSoup(resp.text, "html.parser")
-                    regs = _extract_regulations_from_page(soup, type_key)
+                    regs = _extract_regulations_from_page(soup, type_key, reg_info["code"])
                     stats["discovered"] += len(regs)
                     if not dry_run:
                         for reg in regs:

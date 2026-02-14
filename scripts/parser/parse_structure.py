@@ -98,6 +98,91 @@ def _fix_roman_pasals(text: str) -> str:
     return _ROMAN_PASAL_RE.sub(_replacer, text)
 
 
+# ── Line rejoining ───────────────────────────────────────────────────────────
+# PDF extraction produces one line per visual line (~50-60 chars). We rejoin
+# lines that were split by column wrapping while preserving intentional breaks.
+#
+# Rule: join to previous line UNLESS:
+#   - blank line (paragraph break)
+#   - starts with (N) ayat marker
+#   - starts with a./b. or 1./2. list item
+#   - previous line ended with terminal punctuation (. ; :)
+#
+# This covers all cases: lowercase continuations, uppercase proper nouns
+# mid-sentence (Undang-Undang, Republik, PPATK), and comma-separated clauses.
+# Terminal punctuation on the previous line is the reliable signal that the
+# next line starts something new (a new ayat, list item, or sentence).
+
+_LIST_ITEM_RE = re.compile(r'^(?:[a-z]\.|[a-z]\.\s|\d+\.\s|\d+\.)')
+_AYAT_START_RE = re.compile(r'^\(\d+\)')
+
+
+_BARE_LIST_RE = re.compile(r'^[a-z]\.\s*$|^\d+\.\s*$')
+
+
+def _rejoin_content_lines(text: str) -> str:
+    """Rejoin PDF word-wrapped lines in node content.
+
+    Joins a line to the previous one when the previous line does NOT end
+    with terminal punctuation (. ; :), skipping blank lines and list/ayat
+    markers which always start a new line.
+
+    Special case: bare list markers ("a." / "1." alone on a line) get merged
+    with the next non-blank line since the PDF split the marker from its text.
+    """
+    lines = text.split('\n')
+    if not lines:
+        return text
+
+    # First pass: merge bare list markers with next non-blank line.
+    # PDF often puts "a." on one line and the item text on the next.
+    merged: list[str] = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        if _BARE_LIST_RE.match(stripped):
+            marker = stripped.rstrip()
+            i += 1
+            # Skip blanks between marker and its text
+            while i < len(lines) and not lines[i].strip():
+                i += 1
+            if i < len(lines):
+                merged.append(f'{marker} {lines[i].strip()}')
+                i += 1
+            else:
+                merged.append(marker)
+        else:
+            merged.append(lines[i])
+            i += 1
+
+    # Second pass: rejoin word-wrapped lines based on terminal punctuation.
+    result: list[str] = [merged[0].strip()]
+
+    for i in range(1, len(merged)):
+        stripped = merged[i].strip()
+
+        # Blank line → paragraph break
+        if not stripped:
+            result.append('')
+            continue
+
+        # Ayat marker or list item → always new line
+        if _AYAT_START_RE.match(stripped) or _LIST_ITEM_RE.match(stripped):
+            result.append(stripped)
+            continue
+
+        # Check what the previous non-blank line ended with
+        prev = result[-1] if result else ''
+        if prev and prev[-1] not in '.;:':
+            # Previous line ended mid-sentence → join
+            result[-1] = prev + ' ' + stripped
+        else:
+            # Previous line ended with terminal punctuation → new line
+            result.append(stripped)
+
+    return '\n'.join(result)
+
+
 def _parse_ayat(content: str) -> list[dict]:
     """Parse ayat (sub-article) from pasal content."""
     ayat_children = []
@@ -237,7 +322,7 @@ def parse_structure(text: str) -> list[dict]:
             "type": "preamble",
             "number": "",
             "heading": "",
-            "content": preamble,
+            "content": _rejoin_content_lines(preamble),
             "children": [],
             "sort_order": sort_order,
         })
@@ -317,11 +402,12 @@ def parse_structure(text: str) -> list[dict]:
             sort_order += 1
 
         elif mtype == "pasal":
-            ayat_children = _parse_ayat(raw_content)
+            rejoined = _rejoin_content_lines(raw_content)
+            ayat_children = _parse_ayat(rejoined)
             pasal_node = {
                 "type": "pasal",
                 "number": number,
-                "content": raw_content,
+                "content": rejoined,
                 "children": ayat_children,
                 "sort_order": sort_order,
             }
@@ -339,7 +425,7 @@ def parse_structure(text: str) -> list[dict]:
             "type": "content",
             "number": "",
             "heading": "",
-            "content": body_text.strip(),
+            "content": _rejoin_content_lines(body_text.strip()),
             "children": [],
             "sort_order": sort_order,
         })

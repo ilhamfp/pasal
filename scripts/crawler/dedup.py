@@ -2,9 +2,10 @@
 from .db import get_sb
 
 
-def build_frbr_uri(reg_type: str, number: str, year: int) -> str:
+def build_frbr_uri(reg_type: str, number: str, year: int, prefix: str | None = None) -> str:
     """Build a canonical FRBR URI for a regulation."""
-    return f"/akn/id/act/{reg_type.lower()}/{year}/{number}"
+    type_part = (prefix or reg_type).lower()
+    return f"/akn/id/act/{type_part}/{year}/{number}"
 
 
 def is_work_duplicate(frbr_uri: str) -> int | None:
