@@ -154,7 +154,7 @@ pasal-id/
 - Scripts go in `scripts/`, server code in `apps/mcp-server/`.
 - No classes unless genuinely needed. Prefer functions.
 - Use `pymupdf` (PyMuPDF) for new PDF text extraction and page image rendering — ~100x faster than pdfplumber. The existing pdfplumber-based parser (`scripts/parser/parse_law.py`) remains for reference but new parsing uses PyMuPDF in new files alongside it.
-- Use `from google import genai` (Gemini Flash 3.0. Model key: `emini-3-flash-preview`) for the verification agent in `scripts/agent/`. The agent is advisory only — admin must click Approve.
+- Use `from google import genai` (Gemini Flash 3.0. Model key: `gemini-3-flash-preview`) for the verification agent in `scripts/agent/`. The agent is advisory only — admin must click Approve.
 
 ### SQL (Supabase Migrations)
 
@@ -255,7 +255,7 @@ These Indonesian legal terms appear throughout the codebase:
 
 ### PDF Storage & Quality Pipeline
 - Original PDFs stored in Supabase Storage as `regulation-pdfs/{slug}.pdf`.
-- PDF page images pre-rendered with PyMuPDF (dpi=150, .webp format) and stored as `regulation-pdfs/{slug}/page-{N}.webp`.
+- PDF page images pre-rendered with PyMuPDF (dpi=150, .png format) and stored as `regulation-pdfs/{slug}/page-{N}.png`.
 - **Quality classification** routes each PDF through the right parser:
   - `born_digital` → direct text extraction + regex structural parser
   - `scanned_clean` → OCR correction + regex structural parser
@@ -377,7 +377,7 @@ After completing a phase, verify:
 | Where is the change history? | `revisions` table (append-only, never UPDATE/DELETE) |
 | How to change content? | `apply_revision()` ONLY — never UPDATE `content_text` directly |
 | Where are PDF files? | Supabase Storage: `regulation-pdfs/{slug}.pdf` |
-| Where are PDF page images? | Supabase Storage: `regulation-pdfs/{slug}/page-{N}.webp` |
+| Where are PDF page images? | Supabase Storage: `regulation-pdfs/{slug}/page-{N}.png` |
 | How do suggestions work? | `suggestions` table, anyone can submit (10/IP/hour rate limit) |
 | Who approves suggestions? | Admin only, via service_role key. Gemini agent is advisory only. |
 | Does the agent auto-apply? | **NO.** Admin must click "Setujui & Terapkan" (Approve & Apply). |
