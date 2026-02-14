@@ -3,16 +3,14 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin-auth";
 
-export async function POST(request: NextRequest) {
-  // Verify admin auth — must be authenticated AND in admin list
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { suggestion_id, use_ai_content } = body;
+  const { suggestion_id, use_ai_content } = await request.json();
 
   if (!suggestion_id) {
     return NextResponse.json({ error: "suggestion_id required" }, { status: 400 });
@@ -20,7 +18,6 @@ export async function POST(request: NextRequest) {
 
   const sb = createServiceClient();
 
-  // Get the suggestion
   const { data: suggestion, error: fetchErr } = await sb
     .from("suggestions")
     .select("*")
@@ -32,12 +29,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Suggestion not found or already processed" }, { status: 404 });
   }
 
-  // Determine which content to apply: user's suggestion or AI-corrected version
   const contentToApply = use_ai_content && suggestion.agent_modified_content
     ? suggestion.agent_modified_content
     : suggestion.suggested_content;
 
-  // Use atomic apply_revision RPC — no manual fallback
   const { data: revisionId, error: rpcError } = await sb.rpc("apply_revision", {
     p_node_id: suggestion.node_id,
     p_work_id: suggestion.work_id,

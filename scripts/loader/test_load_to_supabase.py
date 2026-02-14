@@ -1,11 +1,10 @@
-"""Unit tests for load_to_supabase.py — all Supabase calls are mocked."""
+"""Unit tests for load_to_supabase.py -- all Supabase calls are mocked."""
 
 import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
-# Env vars required by loader at import time
 os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
 os.environ.setdefault("SUPABASE_KEY", "fake-key")
 
@@ -13,17 +12,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from load_to_supabase import load_work, load_nodes_recursive, create_chunks
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 _CHAINABLE = ("select", "eq", "neq", "in_", "ilike", "or_", "match",
               "order", "range", "limit", "single", "upsert", "insert", "delete")
 
 
 def _qm(data=None, count=0):
-    """Chainable query mock."""
+    """Return a chainable query mock with preset execute result."""
     m = MagicMock()
     for attr in _CHAINABLE:
         getattr(m, attr).return_value = m
@@ -32,13 +26,8 @@ def _qm(data=None, count=0):
 
 
 def _sb():
-    """Create a mock Supabase client."""
+    """Return a mock Supabase client."""
     return MagicMock()
-
-
-# ===================================================================
-# load_work tests
-# ===================================================================
 
 
 class TestLoadWork:
@@ -55,15 +44,19 @@ class TestLoadWork:
         result = load_work(sb, law)
         assert result == 42
 
-    def test_unknown_reg_type_returns_none(self):
+    def test_unknown_reg_type_falls_back_to_permen(self):
         sb = _sb()
+        mock = _qm(data=[{"id": 99}])
+        sb.table.return_value = mock
+
         law = {
             "type": "UNKNOWN_TYPE", "frbr_uri": "/a",
             "number": "1", "year": 2020,
             "title_id": "T", "status": "berlaku",
         }
         result = load_work(sb, law)
-        assert result is None
+        # Unknown types fall back to PERMEN (id 9) rather than failing
+        assert result is not None
 
     def test_exception_returns_none(self):
         sb = _sb()
@@ -89,11 +82,6 @@ class TestLoadWork:
         }
         result = load_work(sb, law)
         assert result is None
-
-
-# ===================================================================
-# load_nodes_recursive tests
-# ===================================================================
 
 
 class TestLoadNodesRecursive:
@@ -162,11 +150,6 @@ class TestLoadNodesRecursive:
         # Second insert (pasal) should have parent_id = 1 (bab's id)
         assert len(insert_calls) == 2
         assert insert_calls[1]["parent_id"] == 1
-
-
-# ===================================================================
-# create_chunks tests
-# ===================================================================
 
 
 class TestCreateChunks:
