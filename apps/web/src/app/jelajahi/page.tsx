@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Telusuri database hukum Indonesia berdasarkan jenis peraturan.",
 };
 
-export const revalidate = 3600; // ISR: 1 hour
+export const dynamic = "force-dynamic";
 
 export default async function JelajahiPage() {
   const supabase = await createClient();

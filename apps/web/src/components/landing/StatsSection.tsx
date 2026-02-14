@@ -5,15 +5,9 @@ import RevealOnScroll from "./RevealOnScroll";
 export default async function StatsSection() {
   const supabase = await createClient();
 
-  const [uuResult, pasalResult, minYearResult, maxYearResult] =
+  const [totalWorksResult, pasalResult, minYearResult, maxYearResult] =
     await Promise.all([
-      supabase
-        .from("works")
-        .select("id, regulation_types!inner(code)", {
-          count: "exact",
-          head: true,
-        })
-        .eq("regulation_types.code", "UU"),
+      supabase.from("works").select("id", { count: "exact", head: true }),
       supabase
         .from("document_nodes")
         .select("id", { count: "exact", head: true })
@@ -32,16 +26,16 @@ export default async function StatsSection() {
         .single(),
     ]);
 
-  const uuCount = uuResult.count ?? 0;
+  const totalWorks = totalWorksResult.count ?? 0;
   const pasalCount = pasalResult.count ?? 0;
   const minYear = minYearResult.data?.year ?? 1974;
   const maxYear = maxYearResult.data?.year ?? 2023;
 
   const stats = [
     {
-      numericValue: uuCount,
-      label: "Undang-Undang",
-      detail: `dari ${minYear} hingga ${maxYear}`,
+      numericValue: totalWorks,
+      label: "Peraturan",
+      detail: `UU, PP, & Perpres — dari ${minYear} hingga ${maxYear}`,
     },
     {
       numericValue: pasalCount,
@@ -51,7 +45,7 @@ export default async function StatsSection() {
     {
       displayValue: "100%",
       label: "Gratis & Open Source",
-      detail: "sumber: peraturan.go.id",
+      detail: "akses terbuka untuk semua",
     },
   ];
 

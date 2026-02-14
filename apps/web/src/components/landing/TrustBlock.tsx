@@ -7,9 +7,9 @@ import PasalLogo from "@/components/PasalLogo";
 
 const ITEMS = [
   {
-    title: "Data bersumber dari peraturan.go.id",
+    title: "Data dari sumber resmi pemerintah",
     detail:
-      "Sumber resmi Jaringan Dokumentasi dan Informasi Hukum Nasional (JDIHN).",
+      "Dikumpulkan dari publikasi resmi lembaga negara dan jaringan dokumentasi hukum nasional.",
   },
   {
     title: "Terstruktur, bukan PDF",
