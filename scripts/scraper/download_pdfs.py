@@ -40,7 +40,7 @@ def _pdf_url_for_slug(slug: str) -> list[str]:
 
 
 def generate_page_images(pdf_path: Path, output_dir: Path, dpi: int = 150) -> int:
-    """Generate .webp page images from a PDF using PyMuPDF. Returns page count."""
+    """Generate .png page images from a PDF using PyMuPDF. Returns page count."""
     try:
         import pymupdf
     except ImportError:

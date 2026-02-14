@@ -26,7 +26,7 @@ PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
 PASAL_RE = re.compile(r'^Pasal\s+(\d+[A-Z]?)\s*$', re.MULTILINE)
 
 
-def scan_pdf_for_pasals(pdf_path: Path) -> dict[str, int]:
+def scan_pdf_for_pasals(pdf_path: Path) -> tuple[dict[str, int], int]:
     """Scan a PDF and return {pasal_number: first_page_seen (1-indexed)}."""
     import pymupdf
 

@@ -6,12 +6,27 @@ const RATE_LIMIT = 10; // max suggestions per IP per hour
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { work_id, node_id, node_type, node_number, current_content, suggested_content, user_reason, submitter_email } = body;
+    const { work_id, node_id, node_type, node_number, current_content, suggested_content, user_reason, submitter_email, metadata } = body;
 
     // Validate required fields
     if (!work_id || !node_id || !current_content || !suggested_content) {
       return NextResponse.json(
         { error: "Semua field wajib harus diisi." },
+        { status: 400 }
+      );
+    }
+
+    // Validate content length (max 50KB each)
+    const MAX_CONTENT_LENGTH = 50_000;
+    if (current_content.length > MAX_CONTENT_LENGTH || suggested_content.length > MAX_CONTENT_LENGTH) {
+      return NextResponse.json(
+        { error: "Teks terlalu panjang (maks 50.000 karakter)." },
+        { status: 400 }
+      );
+    }
+    if (user_reason && user_reason.length > 2_000) {
+      return NextResponse.json(
+        { error: "Alasan terlalu panjang (maks 2.000 karakter)." },
         { status: 400 }
       );
     }
@@ -58,6 +73,7 @@ export async function POST(request: NextRequest) {
         submitter_email: submitter_email || null,
         submitter_ip: ip,
         status: "pending",
+        metadata: metadata || {},
       })
       .select("id")
       .single();

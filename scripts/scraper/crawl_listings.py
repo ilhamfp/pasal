@@ -69,12 +69,16 @@ def _extract_slugs(soup: BeautifulSoup, reg_type: str, page: int) -> list[dict]:
             continue
 
         slug = href.replace("/id/", "").strip("/")
-        if slug in seen or not slug:
+        if slug in seen or not slug or slug == "#":
+            continue
+
+        # Must look like a real regulation slug (contains "no" and "tahun")
+        if "tahun" not in slug and "thn" not in slug:
             continue
 
         # Extract title text
         title = link.get_text(strip=True)
-        if not title or len(title) < 3:
+        if not title or len(title) < 5:
             continue
 
         seen.add(slug)
