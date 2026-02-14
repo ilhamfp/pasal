@@ -550,10 +550,10 @@ Diff view, "Verifikasi AI" button, "Setujui & Terapkan" (calls `apply_revision()
 Uses existing `@supabase/ssr` pattern from `src/lib/supabase/server.ts`. Check admin role, redirect/403.
 
 **Verification:**
-- [ ] Auth works (redirect / 403)
-- [ ] "Setujui & Terapkan" creates revision + updates `document_nodes` + updates `legal_chunks`
-- [ ] Updated text visible in reader page
-- [ ] Follows `BRAND_GUIDELINES.md`
+- [x] Auth works (redirect / 403) — `requireAdmin()` redirects to /admin/login, API routes return 401 via `isAdminEmail()`
+- [x] "Setujui & Terapkan" creates revision + updates `document_nodes` + updates `legal_chunks` — manual apply_revision in approve-suggestion/route.ts
+- [x] Updated text visible in reader page — document_nodes.content_text updated, reader reads from same table
+- [x] Follows `BRAND_GUIDELINES.md` — font-heading, verdigris primary, rounded-lg, warm stone bg, warm graphite neutrals
 
 > 🔁 `git commit -m "feat: admin panel with suggestion review queue" && git push origin main`
 

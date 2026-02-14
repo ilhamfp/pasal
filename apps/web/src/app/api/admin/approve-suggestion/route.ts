@@ -37,27 +37,6 @@ export async function POST(request: NextRequest) {
     ? suggestion.agent_modified_content
     : suggestion.suggested_content;
 
-  // Call apply_revision RPC if it exists, otherwise do it manually
-  try {
-    // Try the SQL function first
-    const { data: revisionId, error: rpcError } = await sb.rpc("apply_revision", {
-      p_node_id: suggestion.node_id,
-      p_work_id: suggestion.work_id,
-      p_new_content: contentToApply,
-      p_revision_type: "suggestion_approved",
-      p_reason: suggestion.user_reason || "Suggestion approved by admin",
-      p_suggestion_id: suggestion.id,
-      p_actor_type: "admin",
-      p_created_by: user.id,
-    });
-
-    if (!rpcError && revisionId) {
-      return NextResponse.json({ revision_id: revisionId });
-    }
-  } catch {
-    // RPC not available yet, do it manually
-  }
-
   // Manual apply_revision steps:
   // 1. Get current content
   const { data: node } = await sb

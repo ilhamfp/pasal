@@ -31,6 +31,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
   }
 
+  // Prevent duplicate verification — if already triggered within last 30s, skip
+  if (suggestion.agent_triggered_at) {
+    const triggeredAt = new Date(suggestion.agent_triggered_at).getTime();
+    if (Date.now() - triggeredAt < 30_000 && !suggestion.agent_completed_at) {
+      return NextResponse.json({ error: "Verification already in progress" }, { status: 409 });
+    }
+  }
+
   // Mark as verification in progress
   await sb
     .from("suggestions")
