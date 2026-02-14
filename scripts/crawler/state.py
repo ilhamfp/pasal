@@ -1,16 +1,35 @@
 """Crawl job state management via Supabase."""
+import time
 from datetime import datetime, timedelta, timezone
 
 from .db import get_sb
 
+MAX_RETRIES = 3
+RETRY_BACKOFF = [1, 3, 7]  # seconds between retries
+
+
+def _retry(fn, description: str = "db call"):
+    """Retry a Supabase call with exponential backoff."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return fn()
+        except Exception as e:
+            if attempt == MAX_RETRIES - 1:
+                raise
+            wait = RETRY_BACKOFF[attempt]
+            print(f"  RETRY {attempt + 1}/{MAX_RETRIES} ({description}): {e} — waiting {wait}s")
+            time.sleep(wait)
+
 
 def upsert_job(job: dict) -> int:
     """Insert or update a crawl job. Returns the job ID."""
-    sb = get_sb()
-    result = sb.table("crawl_jobs").upsert(
-        job, on_conflict="source_id,url"
-    ).execute()
-    return result.data[0]["id"]
+    def _do():
+        sb = get_sb()
+        result = sb.table("crawl_jobs").upsert(
+            job, on_conflict="source_id,url"
+        ).execute()
+        return result.data[0]["id"]
+    return _retry(_do, f"upsert_job {job.get('url', '?')}")
 
 
 def claim_pending_jobs(limit: int = 50) -> list[dict]:
@@ -40,16 +59,18 @@ def get_pending_jobs(
 
 def update_status(job_id: int, status: str, error: str | None = None) -> None:
     """Update the status of a crawl job."""
-    sb = get_sb()
-    update: dict = {
-        "status": status,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
-    if error:
-        update["error_message"] = error
-    if status == "crawling":
-        update["last_crawled_at"] = datetime.now(timezone.utc).isoformat()
-    sb.table("crawl_jobs").update(update).eq("id", job_id).execute()
+    def _do():
+        sb = get_sb()
+        update: dict = {
+            "status": status,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if error:
+            update["error_message"] = error
+        if status == "crawling":
+            update["last_crawled_at"] = datetime.now(timezone.utc).isoformat()
+        sb.table("crawl_jobs").update(update).eq("id", job_id).execute()
+    _retry(_do, f"update_status job={job_id} status={status}")
 
 
 def is_url_visited(source_id: str, url: str) -> bool:
@@ -86,12 +107,14 @@ def get_discovery_progress(source_id: str, regulation_type: str) -> dict | None:
 
 def upsert_discovery_progress(progress: dict) -> None:
     """Insert or update discovery progress for a source + type pair."""
-    sb = get_sb()
-    progress["updated_at"] = datetime.now(timezone.utc).isoformat()
-    progress["last_discovered_at"] = datetime.now(timezone.utc).isoformat()
-    sb.table("discovery_progress").upsert(
-        progress, on_conflict="source_id,regulation_type"
-    ).execute()
+    def _do():
+        sb = get_sb()
+        progress["updated_at"] = datetime.now(timezone.utc).isoformat()
+        progress["last_discovered_at"] = datetime.now(timezone.utc).isoformat()
+        sb.table("discovery_progress").upsert(
+            progress, on_conflict="source_id,regulation_type"
+        ).execute()
+    _retry(_do, f"upsert_discovery_progress {progress.get('regulation_type', '?')}")
 
 
 def is_discovery_fresh(
