@@ -8,6 +8,7 @@ If a PDF already exists locally with the same hash, skips re-download.
 """
 import asyncio
 import hashlib
+import re
 import ssl
 import sys
 import time
@@ -15,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS
@@ -36,6 +38,49 @@ STORAGE_BUCKET = "regulation-pdfs"
 # v1: original parser (sort_order * 100 per level — overflows bigint)
 # v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
 EXTRACTION_VERSION = 2
+
+
+async def _extract_pdf_url_from_detail_page(
+    client: httpx.AsyncClient, detail_url: str
+) -> str | None:
+    """Fetch a regulation detail page and extract the real PDF URL.
+
+    peraturan.go.id uses unpredictable PDF filenames (e.g. ps4-2022.pdf
+    for perpres-no-4-tahun-2022), so we must scrape the detail page
+    to find the actual download link.
+    """
+    try:
+        resp = await client.get(detail_url, headers={
+            **DEFAULT_HEADERS,
+            "Accept": "text/html,application/xhtml+xml,*/*",
+        })
+        if resp.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Strategy 1: look for "Dokumen Peraturan" row in metadata table
+        for row in soup.find_all("tr"):
+            th = row.find("th")
+            td = row.find("td")
+            if not th or not td:
+                continue
+            key = th.get_text(strip=True).lower()
+            if "dokumen" in key:
+                pdf_link = td.find("a", href=re.compile(r"\.pdf", re.IGNORECASE))
+                if pdf_link:
+                    href = pdf_link["href"]
+                    return href if href.startswith("http") else f"https://peraturan.go.id{href}"
+
+        # Strategy 2: any <a> tag with .pdf or /files/ in href
+        for link in soup.find_all("a", href=True):
+            href = link["href"]
+            if href.endswith(".pdf") or "/files/" in href:
+                return href if href.startswith("http") else f"https://peraturan.go.id{href}"
+
+    except Exception as e:
+        print(f"    Detail page extraction failed: {e}")
+    return None
 
 
 def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
@@ -186,16 +231,11 @@ async def process_jobs(
                 break
 
             job_id = job["id"]
-            pdf_url = job.get("pdf_url")
+            stored_pdf_url = job.get("pdf_url")
             slug = job.get("url", "").split("/")[-1] or f"job_{job_id}"
+            detail_url = job.get("url", f"https://peraturan.go.id/id/{slug}")
 
             print(f"\n  [{stats['processed']+1}/{len(jobs)}] Processing {slug}...")
-
-            if not pdf_url:
-                update_status(job_id, "failed", "No PDF URL")
-                stats["failed"] += 1
-                stats["processed"] += 1
-                continue
 
             try:
                 # Link to run
@@ -214,18 +254,78 @@ async def process_jobs(
                     else:
                         print(f"    PDF exists locally, computing hash...")
                 else:
-                    # Status already set to 'crawling' by claim_jobs()
                     pdf_path.parent.mkdir(parents=True, exist_ok=True)
-                    resp = await client.get(pdf_url, headers=DEFAULT_HEADERS)
-                    resp.raise_for_status()
-                    content_type = resp.headers.get("content-type", "")
-                    if "pdf" not in content_type and "octet-stream" not in content_type:
-                        raise ValueError(f"Not a PDF (content-type: {content_type}), server returned soft 404")
-                    if len(resp.content) < 1000:
-                        raise ValueError(f"PDF download too small ({len(resp.content)} bytes), likely empty or error page")
-                    pdf_path.write_bytes(resp.content)
+
+                    # Resolve the real PDF URL from the detail page.
+                    # peraturan.go.id uses unpredictable PDF filenames (e.g. ps4-2022.pdf
+                    # for perpres-no-4-tahun-2022), so guessing from slugs doesn't work.
+                    pdf_url = None
+                    tried_urls: list[str] = []
+                    attempt_errors: list[str] = []
+
+                    print(f"    Fetching detail page: {detail_url}")
+                    real_pdf_url = await _extract_pdf_url_from_detail_page(client, detail_url)
+                    if real_pdf_url:
+                        print(f"    PDF URL from detail page: {real_pdf_url}")
+                        pdf_url = real_pdf_url
+                    else:
+                        attempt_errors.append(f"detail_page({detail_url}): no PDF link found")
+
+                    # Build candidate list: detail page URL first, then stored URL as fallback
+                    candidates = []
+                    if pdf_url:
+                        candidates.append(pdf_url)
+                    if stored_pdf_url and stored_pdf_url not in candidates:
+                        candidates.append(stored_pdf_url)
+
+                    if not candidates:
+                        raise ValueError(
+                            f"No PDF URL found | detail_page: {detail_url} | stored: {stored_pdf_url}"
+                        )
+
+                    # Rate-limit: pause before downloading after fetching the detail page
+                    await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
+
+                    pdf_content: bytes | None = None
+                    for attempt_url in candidates:
+                        tried_urls.append(attempt_url)
+                        try:
+                            resp = await client.get(attempt_url, headers=DEFAULT_HEADERS)
+                            resp.raise_for_status()
+                            content_type = resp.headers.get("content-type", "")
+                            if "pdf" not in content_type and "octet-stream" not in content_type:
+                                msg = f"{attempt_url}: not a PDF (content-type: {content_type})"
+                                print(f"    {msg}")
+                                attempt_errors.append(msg)
+                                continue
+                            if len(resp.content) < 1000:
+                                msg = f"{attempt_url}: too small ({len(resp.content)} bytes)"
+                                print(f"    {msg}")
+                                attempt_errors.append(msg)
+                                continue
+                            pdf_content = resp.content
+                            pdf_url = attempt_url
+                            break
+                        except httpx.HTTPStatusError as e:
+                            msg = f"{attempt_url}: HTTP {e.response.status_code}"
+                            print(f"    {msg}")
+                            attempt_errors.append(msg)
+                            continue
+
+                    if pdf_content is None:
+                        raise ValueError(
+                            f"PDF download failed | tried: {tried_urls} | errors: {attempt_errors}"
+                        )
+
+                    pdf_path.write_bytes(pdf_content)
                     local_hash = _sha256(pdf_path)
-                    print(f"    Downloaded {pdf_path.stat().st_size:,} bytes")
+                    print(f"    Downloaded {pdf_path.stat().st_size:,} bytes from {pdf_url}")
+
+                    # Persist the confirmed working PDF URL + attempt log
+                    db.table("crawl_jobs").update({
+                        "pdf_url": pdf_url,
+                        "updated_at": now,
+                    }).eq("id", job_id).execute()
 
                 # Store PDF metadata
                 local_hash = _sha256(pdf_path)
@@ -268,7 +368,7 @@ async def process_jobs(
                 print(f"    FAIL: {error_msg}")
 
             except Exception as e:
-                update_status(job_id, "failed", str(e)[:500])
+                update_status(job_id, "failed", str(e)[:1000])
                 stats["failed"] += 1
                 print(f"    FAIL: {e}")
 

@@ -227,6 +227,44 @@ def cmd_continuous(args: argparse.Namespace) -> None:
             time.sleep(sleep_between * 2)
 
 
+def cmd_retry_failed(args: argparse.Namespace) -> None:
+    """Reset failed jobs back to pending so they can be retried."""
+    sb = get_sb()
+
+    query = sb.table("crawl_jobs").select("id", count="exact").eq("status", "failed")
+    if args.error_like:
+        query = query.like("error_message", f"%{args.error_like}%")
+    result = query.execute()
+    count = result.count or 0
+
+    if count == 0:
+        print("No failed jobs to retry.")
+        return
+
+    if args.dry_run:
+        print(f"Would reset {count} failed jobs to pending (dry run).")
+        return
+
+    limit = args.limit or count
+    # Reset in batches
+    reset = 0
+    while reset < limit:
+        batch_q = sb.table("crawl_jobs").select("id").eq("status", "failed")
+        if args.error_like:
+            batch_q = batch_q.like("error_message", f"%{args.error_like}%")
+        batch = batch_q.limit(min(200, limit - reset)).execute()
+        if not batch.data:
+            break
+        ids = [r["id"] for r in batch.data]
+        sb.table("crawl_jobs").update({
+            "status": "pending",
+            "error_message": None,
+        }).in_("id", ids).execute()
+        reset += len(ids)
+
+    print(f"Reset {reset} failed jobs to pending (of {count} total failed).")
+
+
 def cmd_stats(args: argparse.Namespace) -> None:
     """Show current scraper stats."""
     sb = get_sb()
@@ -295,6 +333,12 @@ def main() -> None:
     p_cont.add_argument("--discover", action=argparse.BooleanOptionalAction, default=True,
                          help="Enable/disable discovery (default: enabled). Use --no-discover for process-only workers.")
 
+    # retry-failed
+    p_retry = sub.add_parser("retry-failed", help="Reset failed jobs to pending for retry")
+    p_retry.add_argument("--error-like", help="Only retry jobs whose error_message contains this string")
+    p_retry.add_argument("--limit", type=int, help="Max jobs to reset")
+    p_retry.add_argument("--dry-run", action="store_true", help="Show count without resetting")
+
     # stats
     sub.add_parser("stats", help="Show scraper stats")
 
@@ -306,6 +350,7 @@ def main() -> None:
         "full": cmd_full,
         "continuous": cmd_continuous,
         "reprocess": cmd_reprocess,
+        "retry-failed": cmd_retry_failed,
         "stats": cmd_stats,
     }
     commands[args.command](args)
