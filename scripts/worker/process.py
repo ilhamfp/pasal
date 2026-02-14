@@ -46,12 +46,14 @@ EXTRACTION_VERSION = 3
 
 async def _extract_pdf_url_from_detail_page(
     client: httpx.AsyncClient, detail_url: str
-) -> str | None:
+) -> tuple[str | None, str | None]:
     """Fetch a regulation detail page and extract the real PDF URL.
 
     peraturan.go.id uses unpredictable PDF filenames (e.g. ps4-2022.pdf
     for perpres-no-4-tahun-2022), so we must scrape the detail page
     to find the actual download link.
+
+    Returns (pdf_url, error_reason) — error_reason is set when extraction fails.
     """
     try:
         resp = await client.get(detail_url, headers={
@@ -59,7 +61,7 @@ async def _extract_pdf_url_from_detail_page(
             "Accept": "text/html,application/xhtml+xml,*/*",
         })
         if resp.status_code != 200:
-            return None
+            return None, f"HTTP {resp.status_code}"
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -74,17 +76,20 @@ async def _extract_pdf_url_from_detail_page(
                 pdf_link = td.find("a", href=re.compile(r"\.pdf", re.IGNORECASE))
                 if pdf_link:
                     href = pdf_link["href"]
-                    return href if href.startswith("http") else f"https://peraturan.go.id{href}"
+                    url = href if href.startswith("http") else f"https://peraturan.go.id{href}"
+                    return url, None
 
         # Strategy 2: any <a> tag with .pdf or /files/ in href
         for link in soup.find_all("a", href=True):
             href = link["href"]
             if href.endswith(".pdf") or "/files/" in href:
-                return href if href.startswith("http") else f"https://peraturan.go.id{href}"
+                url = href if href.startswith("http") else f"https://peraturan.go.id{href}"
+                return url, None
+
+        return None, "page loaded but no PDF link in HTML"
 
     except Exception as e:
-        print(f"    Detail page extraction failed: {e}")
-    return None
+        return None, f"network error: {e}"
 
 
 def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
@@ -273,12 +278,14 @@ async def process_jobs(
                     attempt_errors: list[str] = []
 
                     print(f"    Fetching detail page: {detail_url}")
-                    real_pdf_url = await _extract_pdf_url_from_detail_page(client, detail_url)
+                    real_pdf_url, extract_err = await _extract_pdf_url_from_detail_page(client, detail_url)
                     if real_pdf_url:
                         print(f"    PDF URL from detail page: {real_pdf_url}")
                         pdf_url = real_pdf_url
                     else:
-                        attempt_errors.append(f"detail_page({detail_url}): no PDF link found")
+                        msg = f"detail_page({detail_url}): {extract_err}"
+                        print(f"    {msg}")
+                        attempt_errors.append(msg)
 
                     # Build candidate list: detail page URL first, then stored URL as fallback
                     candidates = []
