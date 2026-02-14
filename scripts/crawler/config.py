@@ -1,4 +1,5 @@
 """Crawler configuration."""
+import ssl
 
 DELAY_BETWEEN_REQUESTS = 0.5  # seconds
 DELAY_BETWEEN_PAGES = 1.0
@@ -10,3 +11,15 @@ DEFAULT_HEADERS = {
 }
 PDF_STORAGE_DIR = "data/pdfs/"
 PARSED_DIR = "data/parsed/"
+
+
+def create_permissive_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context that skips certificate verification.
+
+    peraturan.go.id has intermittent TLS handshake issues,
+    so we disable hostname checking and certificate verification.
+    """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx

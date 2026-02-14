@@ -5,7 +5,6 @@ Extracts regulation metadata and upserts into crawl_jobs table.
 """
 import asyncio
 import re
-import ssl
 import sys
 from pathlib import Path
 
@@ -13,8 +12,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_PAGES
-from crawler.db import get_sb
+from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_PAGES, create_permissive_ssl_context
 from crawler.state import upsert_job
 
 BASE_URL = "https://peraturan.go.id"
@@ -34,6 +32,17 @@ SLUG_RE = re.compile(
     r"(uu|pp|perpres|perppu|permen|perban|perda)-no-(\d+[a-z]?)-tahun-(\d{4})",
     re.IGNORECASE,
 )
+
+# Formal names for regulation type codes
+TYPE_NAMES = {
+    "UU": "Undang-Undang",
+    "PP": "Peraturan Pemerintah",
+    "PERPRES": "Peraturan Presiden",
+    "PERPPU": "Peraturan Pemerintah Pengganti Undang-Undang",
+    "PERMEN": "Peraturan Menteri",
+    "PERBAN": "Peraturan Badan",
+    "PERDA": "Peraturan Daerah",
+}
 
 
 def _parse_slug(slug: str) -> dict | None:
@@ -77,16 +86,7 @@ def _extract_regulations_from_page(soup: BeautifulSoup, reg_type: str) -> list[d
             continue
 
         # Build full formal title: "Undang-Undang Nomor 1 Tahun 2026 tentang ..."
-        type_names = {
-            "UU": "Undang-Undang",
-            "PP": "Peraturan Pemerintah",
-            "PERPRES": "Peraturan Presiden",
-            "PERPPU": "Peraturan Pemerintah Pengganti Undang-Undang",
-            "PERMEN": "Peraturan Menteri",
-            "PERBAN": "Peraturan Badan",
-            "PERDA": "Peraturan Daerah",
-        }
-        type_name = type_names.get(parsed["type"], parsed["type"])
+        type_name = TYPE_NAMES.get(parsed["type"], parsed["type"])
         formal_title = f"{type_name} Nomor {parsed['number']} Tahun {parsed['year']} tentang {topic_text}"
 
         # Look for PDF link nearby (rare on listing pages)
@@ -144,12 +144,8 @@ async def discover_regulations(
     types_to_crawl = reg_types or list(REG_TYPES.keys())
     stats = {"types_crawled": 0, "pages_crawled": 0, "discovered": 0, "upserted": 0}
 
-    # peraturan.go.id has intermittent TLS handshake issues — use permissive SSL
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    transport = httpx.AsyncHTTPTransport(retries=3, verify=ctx)
+    ssl_ctx = create_permissive_ssl_context()
+    transport = httpx.AsyncHTTPTransport(retries=3, verify=ssl_ctx)
     async with httpx.AsyncClient(
         timeout=30,
         follow_redirects=True,

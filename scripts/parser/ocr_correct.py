@@ -1,7 +1,7 @@
 """Deterministic OCR error correction for Indonesian legal text.
 
 Fixes common OCR artifacts found in scanned legal documents.
-Extracted and expanded from parse_law.py's _clean_pdf_text().
+Fixes common OCR artifacts: broken ligatures, misread characters, spacing issues.
 """
 import re
 

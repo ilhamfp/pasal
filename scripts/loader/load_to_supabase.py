@@ -340,7 +340,7 @@ def main():
 
             if args.dry_run:
                 nodes = law.get("nodes", [])
-                from scripts.parser.parse_law import count_pasals
+                from scripts.parser.parse_structure import count_pasals
                 pc = count_pasals(nodes) if nodes else 0
                 print(f"  [DRY RUN] Would insert: 1 work, ~{pc} pasal nodes")
                 total_works += 1

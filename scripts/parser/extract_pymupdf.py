@@ -1,6 +1,6 @@
 """PyMuPDF-based text extraction for Indonesian legal PDFs.
 
-~100x faster than pdfplumber. Reuses dedup and cleaning logic from parse_law.py.
+~100x faster than pdfplumber.
 """
 import re
 from pathlib import Path

@@ -34,13 +34,15 @@ from worker.discover import discover_regulations
 from worker.process import EXTRACTION_VERSION, _create_run, _update_run, process_jobs, reprocess_jobs
 from crawler.db import get_sb
 
+EMPTY_STATS = {"processed": 0, "succeeded": 0, "failed": 0}
+
 
 def cmd_discover(args: argparse.Namespace) -> None:
     """Discover regulations from listing pages."""
     types = args.types.split(",") if args.types else None
     max_pages = args.max_pages
 
-    print(f"=== DISCOVER ===")
+    print("=== DISCOVER ===")
     print(f"Types: {types or 'all'}")
     print(f"Max pages per type: {max_pages or 'all'}")
     print(f"Dry run: {args.dry_run}")
@@ -51,7 +53,7 @@ def cmd_discover(args: argparse.Namespace) -> None:
         dry_run=args.dry_run,
     ))
 
-    print(f"\n=== DISCOVER RESULTS ===")
+    print("\n=== DISCOVER RESULTS ===")
     print(f"Types crawled: {stats['types_crawled']}")
     print(f"Pages crawled: {stats['pages_crawled']}")
     print(f"Regulations discovered: {stats['discovered']}")
@@ -60,7 +62,7 @@ def cmd_discover(args: argparse.Namespace) -> None:
 
 def cmd_process(args: argparse.Namespace) -> None:
     """Process pending crawl jobs."""
-    print(f"=== PROCESS ===")
+    print("=== PROCESS ===")
     print(f"Batch size: {args.batch_size}")
     print(f"Max runtime: {args.max_runtime}s")
 
@@ -75,10 +77,10 @@ def cmd_process(args: argparse.Namespace) -> None:
         ))
         _update_run(run_id, stats, "completed")
     except Exception as e:
-        _update_run(run_id, {"processed": 0, "succeeded": 0, "failed": 0}, "failed", str(e))
+        _update_run(run_id, EMPTY_STATS, "failed", str(e))
         raise
 
-    print(f"\n=== PROCESS RESULTS ===")
+    print("\n=== PROCESS RESULTS ===")
     print(f"Run ID: {run_id}")
     print(f"Processed: {stats['processed']}")
     print(f"Succeeded: {stats['succeeded']}")
@@ -87,7 +89,7 @@ def cmd_process(args: argparse.Namespace) -> None:
 
 def cmd_full(args: argparse.Namespace) -> None:
     """Full run: discover then process."""
-    print(f"=== FULL RUN ===\n")
+    print("=== FULL RUN ===\n")
 
     # Phase 1: Discover
     types = args.types.split(",") if args.types else ["uu", "pp"]
@@ -105,7 +107,6 @@ def cmd_full(args: argparse.Namespace) -> None:
     run_id = _create_run(",".join(types))
 
     try:
-        # Update run with discovery count
         get_sb().table("scraper_runs").update({
             "jobs_discovered": discover_stats["discovered"],
         }).eq("id", run_id).execute()
@@ -117,10 +118,10 @@ def cmd_full(args: argparse.Namespace) -> None:
         ))
         _update_run(run_id, process_stats, "completed")
     except Exception as e:
-        _update_run(run_id, {"processed": 0, "succeeded": 0, "failed": 0}, "failed", str(e))
+        _update_run(run_id, EMPTY_STATS, "failed", str(e))
         raise
 
-    print(f"\n=== FULL RUN RESULTS ===")
+    print("\n=== FULL RUN RESULTS ===")
     print(f"Run ID: {run_id}")
     print(f"Discovered: {discover_stats['discovered']}")
     print(f"Processed: {process_stats['processed']}")
@@ -130,7 +131,7 @@ def cmd_full(args: argparse.Namespace) -> None:
 
 def cmd_reprocess(args: argparse.Namespace) -> None:
     """Re-extract from existing local PDFs without re-downloading."""
-    print(f"=== REPROCESS ===")
+    print("=== REPROCESS ===")
     print(f"Extraction version: {EXTRACTION_VERSION}")
     print(f"Force: {args.force}")
     print(f"Batch size: {args.batch_size}")
@@ -140,7 +141,7 @@ def cmd_reprocess(args: argparse.Namespace) -> None:
         force=args.force,
     )
 
-    print(f"\n=== REPROCESS RESULTS ===")
+    print("\n=== REPROCESS RESULTS ===")
     print(f"Processed: {stats['processed']}")
     print(f"Succeeded: {stats['succeeded']}")
     print(f"Failed: {stats['failed']}")
@@ -161,7 +162,7 @@ def cmd_continuous(args: argparse.Namespace) -> None:
     sleep_between = args.sleep  # seconds between batches
     do_discover = args.discover
 
-    print(f"=== CONTINUOUS MODE ===")
+    print("=== CONTINUOUS MODE ===")
     print(f"Discovery types: {types}")
     print(f"Discovery enabled: {do_discover}")
     print(f"Batch size: {batch_size}")
@@ -222,7 +223,7 @@ def cmd_continuous(args: argparse.Namespace) -> None:
                 time.sleep(sleep_between)
 
         except Exception as e:
-            _update_run(run_id, {"processed": 0, "succeeded": 0, "failed": 0}, "failed", str(e))
+            _update_run(run_id, EMPTY_STATS, "failed", str(e))
             print(f"  ERROR: {e}")
             time.sleep(sleep_between * 2)
 
@@ -285,7 +286,7 @@ def cmd_stats(args: argparse.Namespace) -> None:
     try:
         runs = sb.table("scraper_runs").select("*").order("started_at", desc=True).limit(5).execute()
         if runs.data:
-            print(f"\n=== RECENT RUNS ===")
+            print("\n=== RECENT RUNS ===")
             for r in runs.data:
                 print(f"  #{r['id']} [{r['status']}] {r['source_id']} — "
                       f"processed:{r['jobs_processed']} ok:{r['jobs_succeeded']} fail:{r['jobs_failed']} "

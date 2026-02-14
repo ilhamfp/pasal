@@ -9,7 +9,6 @@ If a PDF already exists locally with the same hash, skips re-download.
 import asyncio
 import hashlib
 import re
-import ssl
 import sys
 import time
 from datetime import datetime, timezone
@@ -19,7 +18,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS
+from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_REQUESTS, create_permissive_ssl_context
 from crawler.db import get_sb
 from crawler.state import claim_pending_jobs, update_status
 from loader.load_to_supabase import (
@@ -29,8 +28,8 @@ from loader.load_to_supabase import (
     load_nodes_recursive,
     load_work,
 )
-from parser.extract_pymupdf import extract_text_pymupdf
 from parser.classify_pdf import classify_pdf_quality
+from parser.extract_pymupdf import extract_text_pymupdf
 from parser.ocr_correct import correct_ocr_errors
 from parser.parse_structure import parse_structure
 
@@ -56,6 +55,9 @@ async def _extract_pdf_url_from_detail_page(
 
     Returns (pdf_url, error_reason) — error_reason is set when extraction fails.
     """
+    def _absolute(href: str) -> str:
+        return href if href.startswith("http") else f"https://peraturan.go.id{href}"
+
     try:
         resp = await client.get(detail_url, headers={
             **DEFAULT_HEADERS,
@@ -72,20 +74,16 @@ async def _extract_pdf_url_from_detail_page(
             td = row.find("td")
             if not th or not td:
                 continue
-            key = th.get_text(strip=True).lower()
-            if "dokumen" in key:
+            if "dokumen" in th.get_text(strip=True).lower():
                 pdf_link = td.find("a", href=re.compile(r"\.pdf", re.IGNORECASE))
                 if pdf_link:
-                    href = pdf_link["href"]
-                    url = href if href.startswith("http") else f"https://peraturan.go.id{href}"
-                    return url, None
+                    return _absolute(pdf_link["href"]), None
 
         # Strategy 2: any <a> tag with .pdf or /files/ in href
         for link in soup.find_all("a", href=True):
             href = link["href"]
             if href.endswith(".pdf") or "/files/" in href:
-                url = href if href.startswith("http") else f"https://peraturan.go.id{href}"
-                return url, None
+                return _absolute(href), None
 
         return None, "page loaded but no PDF link in HTML"
 
@@ -102,23 +100,9 @@ def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
             pdf_bytes,
             {"content-type": "application/pdf", "upsert": "true"},
         )
-        url = db.storage.from_(STORAGE_BUCKET).get_public_url(storage_path)
-        return url
+        return db.storage.from_(STORAGE_BUCKET).get_public_url(storage_path)
     except Exception as e:
-        # Don't fail the whole job if storage upload fails
         print(f"    Storage upload failed: {e}")
-        return None
-
-
-def _storage_exists(db, slug: str) -> str | None:
-    """Check if PDF already exists in Supabase Storage. Returns public URL or None."""
-    storage_path = f"{slug}.pdf"
-    try:
-        # Try to get file info — will raise if not found
-        db.storage.from_(STORAGE_BUCKET).list(path="", options={"search": storage_path, "limit": 1})
-        url = db.storage.from_(STORAGE_BUCKET).get_public_url(storage_path)
-        return url
-    except Exception:
         return None
 
 
@@ -208,6 +192,79 @@ def _extract_and_load(sb, job: dict, pdf_path: Path) -> tuple[int, int, int]:
     return work_id, len(pasal_nodes), chunk_count
 
 
+async def _download_pdf(
+    client: httpx.AsyncClient,
+    detail_url: str,
+    stored_pdf_url: str | None,
+    dest: Path,
+) -> str:
+    """Download a PDF by resolving its URL from the detail page.
+
+    Tries the detail page first to find the real PDF URL, then falls
+    back to the stored URL. Writes the PDF to dest.
+
+    Returns the confirmed working PDF URL.
+    Raises ValueError if no valid PDF can be downloaded.
+    """
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    attempt_errors: list[str] = []
+
+    # Resolve the real PDF URL from the detail page.
+    # peraturan.go.id uses unpredictable filenames, so guessing from slugs fails.
+    print(f"    Fetching detail page: {detail_url}")
+    real_pdf_url, extract_err = await _extract_pdf_url_from_detail_page(client, detail_url)
+    if real_pdf_url:
+        print(f"    PDF URL from detail page: {real_pdf_url}")
+    else:
+        msg = f"detail_page({detail_url}): {extract_err}"
+        print(f"    {msg}")
+        attempt_errors.append(msg)
+
+    # Build candidate list: detail page URL first, then stored URL as fallback
+    candidates = [url for url in [real_pdf_url, stored_pdf_url] if url]
+    # Deduplicate while preserving order
+    candidates = list(dict.fromkeys(candidates))
+
+    if not candidates:
+        raise ValueError(
+            f"No PDF URL found | detail_page: {detail_url} | stored: {stored_pdf_url}"
+        )
+
+    await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
+
+    for attempt_url in candidates:
+        try:
+            resp = await client.get(attempt_url, headers=DEFAULT_HEADERS)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            msg = f"{attempt_url}: HTTP {e.response.status_code}"
+            print(f"    {msg}")
+            attempt_errors.append(msg)
+            continue
+
+        content_type = resp.headers.get("content-type", "")
+        if "pdf" not in content_type and "octet-stream" not in content_type:
+            msg = f"{attempt_url}: not a PDF (content-type: {content_type})"
+            print(f"    {msg}")
+            attempt_errors.append(msg)
+            continue
+
+        if len(resp.content) < 1000:
+            msg = f"{attempt_url}: too small ({len(resp.content)} bytes)"
+            print(f"    {msg}")
+            attempt_errors.append(msg)
+            continue
+
+        dest.write_bytes(resp.content)
+        print(f"    Downloaded {len(resp.content):,} bytes from {attempt_url}")
+        return attempt_url
+
+    raise ValueError(
+        f"PDF download failed | tried: {candidates} | errors: {attempt_errors}"
+    )
+
+
 async def process_jobs(
     source_id: str | None = None,
     batch_size: int = 20,
@@ -233,130 +290,59 @@ async def process_jobs(
     sb = init_supabase()
     db = get_sb()
 
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    transport = httpx.AsyncHTTPTransport(retries=3, verify=ctx)
+    ssl_ctx = create_permissive_ssl_context()
+    transport = httpx.AsyncHTTPTransport(retries=3, verify=ssl_ctx)
 
     async with httpx.AsyncClient(timeout=60, transport=transport, follow_redirects=True) as client:
         for job in jobs:
-            elapsed = time.time() - start_time
-            if elapsed > max_runtime:
+            if time.time() - start_time > max_runtime:
                 print(f"  Runtime limit reached ({max_runtime}s), stopping")
                 break
 
             job_id = job["id"]
-            stored_pdf_url = job.get("pdf_url")
             slug = job.get("url", "").split("/")[-1] or f"job_{job_id}"
             detail_url = job.get("url", f"https://peraturan.go.id/id/{slug}")
+            pdf_path = PDF_DIR / f"{slug}.pdf"
 
             print(f"\n  [{stats['processed']+1}/{len(jobs)}] Processing {slug}...")
 
             try:
-                # Link to run
                 if run_id:
                     db.table("crawl_jobs").update({"run_id": run_id}).eq("id", job_id).execute()
 
-                pdf_path = PDF_DIR / f"{slug}.pdf"
                 now = datetime.now(timezone.utc).isoformat()
 
                 # 1. Download PDF (or use cached copy)
                 if pdf_path.exists() and pdf_path.stat().st_size >= 1000:
-                    local_hash = _sha256(pdf_path)
                     existing_hash = job.get("pdf_hash")
-                    if existing_hash and existing_hash == local_hash:
+                    local_hash = _sha256(pdf_path)
+                    if existing_hash == local_hash:
                         print(f"    Using cached PDF (hash match: {local_hash[:12]}...)")
                     else:
                         print(f"    PDF exists locally, computing hash...")
                 else:
-                    pdf_path.parent.mkdir(parents=True, exist_ok=True)
-
-                    # Resolve the real PDF URL from the detail page.
-                    # peraturan.go.id uses unpredictable PDF filenames (e.g. ps4-2022.pdf
-                    # for perpres-no-4-tahun-2022), so guessing from slugs doesn't work.
-                    pdf_url = None
-                    tried_urls: list[str] = []
-                    attempt_errors: list[str] = []
-
-                    print(f"    Fetching detail page: {detail_url}")
-                    real_pdf_url, extract_err = await _extract_pdf_url_from_detail_page(client, detail_url)
-                    if real_pdf_url:
-                        print(f"    PDF URL from detail page: {real_pdf_url}")
-                        pdf_url = real_pdf_url
-                    else:
-                        msg = f"detail_page({detail_url}): {extract_err}"
-                        print(f"    {msg}")
-                        attempt_errors.append(msg)
-
-                    # Build candidate list: detail page URL first, then stored URL as fallback
-                    candidates = []
-                    if pdf_url:
-                        candidates.append(pdf_url)
-                    if stored_pdf_url and stored_pdf_url not in candidates:
-                        candidates.append(stored_pdf_url)
-
-                    if not candidates:
-                        raise ValueError(
-                            f"No PDF URL found | detail_page: {detail_url} | stored: {stored_pdf_url}"
-                        )
-
-                    # Rate-limit: pause before downloading after fetching the detail page
-                    await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
-
-                    pdf_content: bytes | None = None
-                    for attempt_url in candidates:
-                        tried_urls.append(attempt_url)
-                        try:
-                            resp = await client.get(attempt_url, headers=DEFAULT_HEADERS)
-                            resp.raise_for_status()
-                            content_type = resp.headers.get("content-type", "")
-                            if "pdf" not in content_type and "octet-stream" not in content_type:
-                                msg = f"{attempt_url}: not a PDF (content-type: {content_type})"
-                                print(f"    {msg}")
-                                attempt_errors.append(msg)
-                                continue
-                            if len(resp.content) < 1000:
-                                msg = f"{attempt_url}: too small ({len(resp.content)} bytes)"
-                                print(f"    {msg}")
-                                attempt_errors.append(msg)
-                                continue
-                            pdf_content = resp.content
-                            pdf_url = attempt_url
-                            break
-                        except httpx.HTTPStatusError as e:
-                            msg = f"{attempt_url}: HTTP {e.response.status_code}"
-                            print(f"    {msg}")
-                            attempt_errors.append(msg)
-                            continue
-
-                    if pdf_content is None:
-                        raise ValueError(
-                            f"PDF download failed | tried: {tried_urls} | errors: {attempt_errors}"
-                        )
-
-                    pdf_path.write_bytes(pdf_content)
+                    confirmed_url = await _download_pdf(
+                        client, detail_url, job.get("pdf_url"), pdf_path,
+                    )
                     local_hash = _sha256(pdf_path)
-                    print(f"    Downloaded {pdf_path.stat().st_size:,} bytes from {pdf_url}")
 
-                    # Persist the confirmed working PDF URL + attempt log
                     db.table("crawl_jobs").update({
-                        "pdf_url": pdf_url,
+                        "pdf_url": confirmed_url,
                         "updated_at": now,
                     }).eq("id", job_id).execute()
 
                 # Store PDF metadata
                 local_hash = _sha256(pdf_path)
-                pdf_size = pdf_path.stat().st_size
                 db.table("crawl_jobs").update({
                     "status": "downloaded",
                     "pdf_hash": local_hash,
-                    "pdf_size": pdf_size,
+                    "pdf_size": pdf_path.stat().st_size,
                     "pdf_downloaded_at": now,
                     "pdf_local_path": str(pdf_path),
                     "updated_at": now,
                 }).eq("id", job_id).execute()
 
-                # 1b. Upload PDF to Supabase Storage for persistence
+                # 1b. Upload PDF to Supabase Storage
                 storage_url = _upload_to_storage(db, slug, pdf_path.read_bytes())
                 if storage_url:
                     print(f"    Uploaded to storage: {slug}.pdf")

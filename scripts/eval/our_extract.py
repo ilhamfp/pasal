@@ -1,6 +1,6 @@
-"""Adapter that wraps our existing regex parser output into the shared LawExtraction format.
+"""Adapter that wraps our PyMuPDF parser output into the shared LawExtraction format.
 
-No new parsing logic — just reshapes the tree from parse_law.py into the flat
+Reshapes the tree from parse_structure.py into the flat
 BabNode/PasalNode/AyatNode structure used for comparison.
 """
 
@@ -12,14 +12,8 @@ from pathlib import Path
 # Add scripts/ to path so we can import parser module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from parser.parse_law import (
-    count_pasals,
-    extract_metadata_from_filename,
-    extract_metadata_from_text,
-    extract_text_from_pdf,
-    LAW_METADATA,
-    parse_into_nodes,
-)
+from parser.extract_pymupdf import extract_text_pymupdf
+from parser.parse_structure import count_pasals, parse_structure
 
 from .models import AyatNode, BabNode, LawExtraction, PasalNode
 
@@ -45,42 +39,20 @@ def _extract_pasals_from_children(children: list[dict]) -> list[PasalNode]:
                 )
             )
         elif node["type"] in ("bagian", "paragraf"):
-            # Recurse into container nodes
             pasals.extend(_extract_pasals_from_children(node.get("children", [])))
     return pasals
 
 
 def extract_with_our_parser(pdf_path: Path) -> LawExtraction:
-    """Run our regex parser on a PDF and return a LawExtraction.
-
-    Args:
-        pdf_path: Path to the PDF file.
-
-    Returns:
-        LawExtraction with the structured data from our parser.
-    """
-    slug = pdf_path.stem
-
-    # Extract text
-    text = extract_text_from_pdf(pdf_path)
+    """Run our PyMuPDF parser on a PDF and return a LawExtraction."""
+    text, _ = extract_text_pymupdf(pdf_path)
     if not text or len(text) < 100:
-        print(f"  Warning: very short text from {slug} ({len(text)} chars)")
+        print(f"  Warning: very short text from {pdf_path.stem} ({len(text)} chars)")
         return LawExtraction()
 
-    # Resolve metadata
-    meta = LAW_METADATA.get(slug)
-    if not meta:
-        meta = extract_metadata_from_filename(slug)
-    if not meta:
-        meta = extract_metadata_from_text(text)
-    if not meta:
-        meta = {"type": "", "number": "", "year": 0, "title_id": ""}
-
-    # Parse nodes
-    nodes = parse_into_nodes(text)
+    nodes = parse_structure(text)
     total_pasals = count_pasals(nodes)
 
-    # Convert to LawExtraction
     babs: list[BabNode] = []
     pasals_outside_bab: list[PasalNode] = []
 
@@ -107,13 +79,8 @@ def extract_with_our_parser(pdf_path: Path) -> LawExtraction:
                     ayat=ayat_list,
                 )
             )
-        # Skip penjelasan_umum, penjelasan_pasal — not part of comparison
 
     return LawExtraction(
-        title=meta.get("title_id", ""),
-        type=meta.get("type", ""),
-        number=meta.get("number", ""),
-        year=meta.get("year", 0),
         babs=babs,
         pasals_outside_bab=pasals_outside_bab,
         total_pasal_count=total_pasals,
