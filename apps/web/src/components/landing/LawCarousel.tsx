@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { m } from "framer-motion";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
@@ -22,6 +22,77 @@ export type LawData = {
 const CLONES = 2;
 const INSTANT = { duration: 0 };
 const SPRING = { type: "spring", stiffness: 170, damping: 26 } as const;
+
+const CarouselCard = memo(function CarouselCard({
+  law,
+  isActive,
+  shouldAnimate,
+  onClick,
+}: {
+  law: LawData;
+  isActive: boolean;
+  shouldAnimate: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <m.div
+      className="w-[340px] max-w-[80vw] shrink-0"
+      animate={{
+        scale: isActive ? 1 : 0.9,
+        opacity: isActive ? 1 : 0.45,
+      }}
+      transition={
+        shouldAnimate
+          ? { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
+          : INSTANT
+      }
+    >
+      <Link
+        href={`/peraturan/${law.regType.toLowerCase()}/${law.slug}`}
+        onClick={(e) => {
+          if (!isActive) {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className={`flex h-full flex-col rounded-lg border bg-card p-5 transition-colors ${
+          isActive
+            ? "border-primary/30"
+            : "hover:border-primary/20"
+        }`}
+      >
+        <div className="mb-2 flex items-center gap-2">
+          <Badge variant="secondary">{law.regType}</Badge>
+          <Badge
+            className={STATUS_COLORS[law.status] || ""}
+            variant="outline"
+          >
+            {STATUS_LABELS[law.status] || law.status}
+          </Badge>
+        </div>
+        <h3 className="font-heading text-lg line-clamp-2">
+          {law.titleId}
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {law.regType} No. {law.number} Tahun {law.year}
+        </p>
+        <p className="mt-2 font-heading text-sm italic text-muted-foreground">
+          &ldquo;{law.tagline}&rdquo;
+        </p>
+        {law.snippet && (
+          <div className="mt-3 border-t pt-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              Pasal {law.pasalNumber}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-foreground/70">
+              {law.snippet}
+            </p>
+          </div>
+        )}
+      </Link>
+    </m.div>
+  );
+});
 
 export default function LawCarousel({ laws }: { laws: LawData[] }) {
   const n = laws.length;
@@ -113,76 +184,23 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
       onMouseLeave={() => setIsPaused(false)}
     >
       <div ref={containerRef} className="overflow-hidden">
-        <motion.div
+        <m.div
           ref={trackRef}
           className="flex gap-5"
           animate={{ x: trackX }}
           transition={shouldAnimate ? SPRING : INSTANT}
           onAnimationComplete={handleAnimComplete}
         >
-          {extended.map((law, i) => {
-            const isActive = i === extIndex;
-            return (
-              <motion.div
-                key={`${law.id}-${i}`}
-                className="w-[340px] max-w-[80vw] shrink-0"
-                animate={{
-                  scale: isActive ? 1 : 0.9,
-                  opacity: isActive ? 1 : 0.45,
-                }}
-                transition={
-                  shouldAnimate
-                    ? { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
-                    : INSTANT
-                }
-              >
-                <Link
-                  href={`/peraturan/${law.regType.toLowerCase()}/${law.slug}`}
-                  onClick={(e) => {
-                    if (!isActive) {
-                      e.preventDefault();
-                      setExtIndex(i);
-                    }
-                  }}
-                  className={`flex h-full flex-col rounded-lg border bg-card p-5 transition-colors ${
-                    isActive
-                      ? "border-primary/30"
-                      : "hover:border-primary/20"
-                  }`}
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <Badge variant="secondary">{law.regType}</Badge>
-                    <Badge
-                      className={STATUS_COLORS[law.status] || ""}
-                      variant="outline"
-                    >
-                      {STATUS_LABELS[law.status] || law.status}
-                    </Badge>
-                  </div>
-                  <h3 className="font-heading text-lg line-clamp-2">
-                    {law.titleId}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {law.regType} No. {law.number} Tahun {law.year}
-                  </p>
-                  <p className="mt-2 font-heading text-sm italic text-muted-foreground">
-                    &ldquo;{law.tagline}&rdquo;
-                  </p>
-                  {law.snippet && (
-                    <div className="mt-3 border-t pt-3">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Pasal {law.pasalNumber}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-foreground/70">
-                        {law.snippet}
-                      </p>
-                    </div>
-                  )}
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+          {extended.map((law, i) => (
+            <CarouselCard
+              key={`${law.id}-${i}`}
+              law={law}
+              isActive={i === extIndex}
+              shouldAnimate={shouldAnimate}
+              onClick={() => setExtIndex(i)}
+            />
+          ))}
+        </m.div>
       </div>
 
       {/* Indicator dots with progress fill */}

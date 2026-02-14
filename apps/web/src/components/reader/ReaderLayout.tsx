@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
+import { m, AnimatePresence } from "framer-motion";
 import { ExternalLink, FileText, X } from "lucide-react";
-import PdfViewer from "./PdfViewer";
+
+const PdfViewer = dynamic(() => import("./PdfViewer"), { ssr: false });
 
 interface ReaderLayoutProps {
   toc: React.ReactNode;
@@ -12,7 +14,6 @@ interface ReaderLayoutProps {
   sidebar: React.ReactNode;
   sourcePdfUrl: string | null;
   slug: string;
-  supabaseUrl: string;
 }
 
 export default function ReaderLayout({
@@ -21,7 +22,6 @@ export default function ReaderLayout({
   sidebar,
   sourcePdfUrl,
   slug,
-  supabaseUrl,
 }: ReaderLayoutProps) {
   const [showPdf, setShowPdf] = useState(false);
   const [activePdfPage, setActivePdfPage] = useState(1);
@@ -105,7 +105,7 @@ export default function ReaderLayout({
         {/* Right column: context sidebar OR PDF */}
         <AnimatePresence mode="wait" initial={false}>
           {showPdf ? (
-            <motion.aside
+            <m.aside
               key="pdf-panel"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -137,14 +137,13 @@ export default function ReaderLayout({
               </div>
               <PdfViewer
                 slug={slug}
-                supabaseUrl={supabaseUrl}
                 sourcePdfUrl={sourcePdfUrl}
                 page={activePdfPage}
                 onPageChange={setActivePdfPage}
               />
-            </motion.aside>
+            </m.aside>
           ) : (
-            <motion.aside
+            <m.aside
               key="sidebar"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -153,7 +152,7 @@ export default function ReaderLayout({
               className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
             >
               {sidebar}
-            </motion.aside>
+            </m.aside>
           )}
         </AnimatePresence>
       </div>

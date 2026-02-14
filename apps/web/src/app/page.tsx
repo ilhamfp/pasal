@@ -1,6 +1,7 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR: 1 hour
 
 import { Suspense } from "react";
+import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import Header from "@/components/Header";
@@ -9,8 +10,9 @@ import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
 import CuratedLaws from "@/components/landing/CuratedLaws";
 import BrowseSection from "@/components/landing/BrowseSection";
-import TrustBlock from "@/components/landing/TrustBlock";
-import RevealOnScroll from "@/components/landing/RevealOnScroll";
+
+const TrustBlock = nextDynamic(() => import("@/components/landing/TrustBlock"));
+const RevealOnScroll = nextDynamic(() => import("@/components/landing/RevealOnScroll"));
 
 const websiteLd = {
   "@context": "https://schema.org",

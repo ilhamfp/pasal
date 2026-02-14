@@ -1,3 +1,4 @@
+import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,26 @@ import PasalBlock from "@/components/reader/PasalBlock";
 
 export const revalidate = 86400; // ISR: 24 hours
 
+const getWorkBySlug = cache(async (typeCode: string, lawNumber: string, lawYear: number) => {
+  const supabase = await createClient();
+  const { data: regType } = await supabase
+    .from("regulation_types")
+    .select("id, code")
+    .eq("code", typeCode)
+    .single();
+  if (!regType) return null;
+
+  const { data: work } = await supabase
+    .from("works")
+    .select("id, title_id, number, year, status, subject_tags, content_verified, source_url, frbr_uri, slug, source_pdf_url")
+    .eq("regulation_type_id", regType.id)
+    .eq("number", lawNumber)
+    .eq("year", lawYear)
+    .single();
+
+  return work ? { regType, work } : null;
+});
+
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
 }
@@ -24,23 +45,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const parsed = parseSlug(slug);
   if (!parsed) return {};
 
-  const supabase = await createClient();
-  const { data: regType } = await supabase
-    .from("regulation_types")
-    .select("id, code")
-    .eq("code", type.toUpperCase())
-    .single();
-  if (!regType) return {};
+  const result = await getWorkBySlug(type.toUpperCase(), parsed.lawNumber, parsed.lawYear);
+  if (!result) return {};
 
-  const { data: work } = await supabase
-    .from("works")
-    .select("title_id, number, year, status, subject_tags")
-    .eq("regulation_type_id", regType.id)
-    .eq("number", parsed.lawNumber)
-    .eq("year", parsed.lawYear)
-    .single();
-  if (!work) return {};
-
+  const { work } = result;
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   const title = `${work.title_id} — ${typeLabel} No. ${work.number} Tahun ${work.year}`;
   const description = `Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year} tentang ${work.title_id}. Status: ${STATUS_LABELS[work.status] || work.status}.`;
@@ -99,51 +107,37 @@ function resolveRelationships(
   return resolved;
 }
 
-export default async function LawDetailPage({ params }: PageProps) {
-  const { type, slug } = await params;
+async function LawReaderSection({
+  workId,
+  work,
+  type,
+  slug,
+  pathname,
+}: {
+  workId: number;
+  work: { year: number; number: string; title_id: string; frbr_uri: string; status: string; content_verified: boolean; source_url: string | null; source_pdf_url: string | null; slug: string | null };
+  type: string;
+  slug: string;
+  pathname: string;
+}) {
   const supabase = await createClient();
-
-  // Parse slug: "uu-13-2003" -> number=13, year=2003
-  const parsed = parseSlug(slug);
-  if (!parsed) notFound();
-  const { lawNumber, lawYear } = parsed;
-
-  // Get regulation type ID
-  const { data: regType } = await supabase
-    .from("regulation_types")
-    .select("id, code")
-    .eq("code", type.toUpperCase())
-    .single();
-
-  if (!regType) notFound();
-
-  // Get the work
-  const { data: work } = await supabase
-    .from("works")
-    .select("*")
-    .eq("regulation_type_id", regType.id)
-    .eq("number", lawNumber)
-    .eq("year", lawYear)
-    .single();
-
-  if (!work) notFound();
 
   // Fetch nodes and relationships in parallel
   const [{ data: nodes }, { data: relationships }] = await Promise.all([
     supabase
       .from("document_nodes")
-      .select("*")
-      .eq("work_id", work.id)
+      .select("id, node_type, number, heading, parent_id, sort_order, content_text, pdf_page_start, pdf_page_end")
+      .eq("work_id", workId)
       .order("sort_order"),
     supabase
       .from("work_relationships")
       .select("*, relationship_types(code, name_id, name_en)")
-      .or(`source_work_id.eq.${work.id},target_work_id.eq.${work.id}`),
+      .or(`source_work_id.eq.${workId},target_work_id.eq.${workId}`),
   ]);
 
   // Get related work info
   const relatedWorkIds = (relationships || [])
-    .map((r) => (r.source_work_id === work.id ? r.target_work_id : r.source_work_id))
+    .map((r) => (r.source_work_id === workId ? r.target_work_id : r.source_work_id))
     .filter(Boolean);
 
   let relatedWorks: Record<number, RelatedWork> = {};
@@ -155,39 +149,13 @@ export default async function LawDetailPage({ params }: PageProps) {
     relatedWorks = Object.fromEntries((rw || []).map((w) => [w.id, w]));
   }
 
-  const resolvedRels = resolveRelationships(relationships || [], work.id, relatedWorks);
+  const resolvedRels = resolveRelationships(relationships || [], workId, relatedWorks);
 
   // Build tree structure
   const allNodes = nodes || [];
   const babNodes = allNodes.filter((n) => n.node_type === "bab");
   const pasalNodes = allNodes.filter((n) => n.node_type === "pasal");
 
-  const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
-  const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
-
-  const breadcrumbLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
-      { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
-      { "@type": "ListItem", position: 3, name: `${type.toUpperCase()} ${work.number}/${work.year}` },
-    ],
-  };
-
-  const legislationLd = {
-    "@context": "https://schema.org",
-    "@type": "Legislation",
-    name: work.title_id,
-    legislationIdentifier: work.frbr_uri,
-    legislationType: typeLabel,
-    legislationDate: `${work.year}`,
-    legislationLegalForce: LEGAL_FORCE_MAP[work.status] || "InForce",
-    inLanguage: "id",
-    url: pageUrl,
-  };
-
-  // Main content area
   const mainContent = (
     <>
       {babNodes.length > 0 ? (
@@ -215,14 +183,14 @@ export default async function LawDetailPage({ params }: PageProps) {
               )}
 
               {allBabPasals.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} />
+                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} />
               ))}
             </section>
           );
         })
       ) : (
         pasalNodes.map((pasal) => (
-          <PasalBlock key={pasal.id} pasal={pasal} />
+          <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} />
         ))
       )}
 
@@ -234,6 +202,123 @@ export default async function LawDetailPage({ params }: PageProps) {
       )}
     </>
   );
+
+  return (
+    <ReaderLayout
+      toc={<TableOfContents babs={babNodes} pasals={pasalNodes} />}
+      content={mainContent}
+      sidebar={
+        <div className="space-y-4">
+          <div className="rounded-lg border p-4">
+            <h3 className="font-heading text-sm mb-2">Status</h3>
+            <div className="flex flex-wrap gap-2">
+              <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                {STATUS_LABELS[work.status] || work.status}
+              </Badge>
+              {work.content_verified ? (
+                <Badge className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20" variant="outline">
+                  ✓ Terverifikasi
+                </Badge>
+              ) : (
+                <Badge className="bg-status-diubah-bg text-status-diubah border-status-diubah/20" variant="outline">
+                  ⚠ Belum Diverifikasi
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <AmendmentTimeline
+            currentWork={work}
+            relationships={resolvedRels}
+            regTypeCode={type.toUpperCase()}
+          />
+
+          {work.source_url && (
+            <div className="rounded-lg border p-4">
+              <h3 className="font-heading text-sm mb-2">Sumber</h3>
+              <a
+                href={work.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:text-primary/80 break-all"
+              >
+                peraturan.go.id
+              </a>
+            </div>
+          )}
+        </div>
+      }
+      sourcePdfUrl={work.source_pdf_url ?? null}
+      slug={work.slug || slug}
+    />
+  );
+}
+
+function ReaderSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[220px_1fr_280px]">
+      <aside>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-4 rounded bg-muted animate-pulse" />
+          ))}
+        </div>
+      </aside>
+      <main className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-5 w-24 rounded bg-muted animate-pulse" />
+            <div className="h-4 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+          </div>
+        ))}
+      </main>
+      <aside className="hidden lg:block space-y-4">
+        <div className="h-20 rounded-lg bg-muted animate-pulse" />
+        <div className="h-32 rounded-lg bg-muted animate-pulse" />
+      </aside>
+    </div>
+  );
+}
+
+export default async function LawDetailPage({ params }: PageProps) {
+  const { type, slug } = await params;
+
+  // Parse slug: "uu-13-2003" -> number=13, year=2003
+  const parsed = parseSlug(slug);
+  if (!parsed) notFound();
+  const { lawNumber, lawYear } = parsed;
+
+  // Use cached function (shared with generateMetadata — second call hits cache)
+  const result = await getWorkBySlug(type.toUpperCase(), lawNumber, lawYear);
+  if (!result) notFound();
+  const { work } = result;
+
+  const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
+  const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
+  const pathname = `/peraturan/${type.toLowerCase()}/${slug}`;
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+      { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
+      { "@type": "ListItem", position: 3, name: `${type.toUpperCase()} ${work.number}/${work.year}` },
+    ],
+  };
+
+  const legislationLd = {
+    "@context": "https://schema.org",
+    "@type": "Legislation",
+    name: work.title_id,
+    legislationIdentifier: work.frbr_uri,
+    legislationType: typeLabel,
+    legislationDate: `${work.year}`,
+    legislationLegalForce: LEGAL_FORCE_MAP[work.status] || "InForce",
+    inLanguage: "id",
+    url: pageUrl,
+  };
 
   return (
     <div className="min-h-screen">
@@ -254,54 +339,15 @@ export default async function LawDetailPage({ params }: PageProps) {
 
         <DisclaimerBanner className="mb-6" />
 
-        <ReaderLayout
-          toc={<TableOfContents babs={babNodes} pasals={pasalNodes} />}
-          content={mainContent}
-          sidebar={
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4">
-                <h3 className="font-heading text-sm mb-2">Status</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-                    {STATUS_LABELS[work.status] || work.status}
-                  </Badge>
-                  {work.content_verified ? (
-                    <Badge className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20" variant="outline">
-                      ✓ Terverifikasi
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-status-diubah-bg text-status-diubah border-status-diubah/20" variant="outline">
-                      ⚠ Belum Diverifikasi
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <AmendmentTimeline
-                currentWork={work}
-                relationships={resolvedRels}
-                regTypeCode={type.toUpperCase()}
-              />
-
-              {work.source_url && (
-                <div className="rounded-lg border p-4">
-                  <h3 className="font-heading text-sm mb-2">Sumber</h3>
-                  <a
-                    href={work.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:text-primary/80 break-all"
-                  >
-                    peraturan.go.id
-                  </a>
-                </div>
-              )}
-            </div>
-          }
-          sourcePdfUrl={work.source_pdf_url ?? null}
-          slug={work.slug || slug}
-          supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
-        />
+        <Suspense fallback={<ReaderSkeleton />}>
+          <LawReaderSection
+            workId={work.id}
+            work={work}
+            type={type}
+            slug={slug}
+            pathname={pathname}
+          />
+        </Suspense>
       </div>
     </div>
   );

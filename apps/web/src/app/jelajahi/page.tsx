@@ -10,31 +10,24 @@ export const metadata: Metadata = {
   description: "Telusuri database hukum Indonesia berdasarkan jenis peraturan.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR: 1 hour
 
 export default async function JelajahiPage() {
   const supabase = await createClient();
 
+  // Single query with inline count — replaces N+1 pattern
   const { data: types } = await supabase
     .from("regulation_types")
-    .select("id, code, name_id, hierarchy_level")
+    .select("id, code, name_id, hierarchy_level, works(count)")
     .order("hierarchy_level");
 
-  const typesWithCounts = (
-    await Promise.all(
-      (types || []).map(async (t) => {
-        const { count } = await supabase
-          .from("works")
-          .select("id", { count: "exact", head: true })
-          .eq("regulation_type_id", t.id);
-        return {
-          ...t,
-          count: count || 0,
-          label: TYPE_LABELS[t.code] || t.name_id,
-        };
-      }),
-    )
-  ).filter((t) => t.count > 0);
+  const typesWithCounts = (types || [])
+    .map((t) => ({
+      ...t,
+      count: (t.works as unknown as { count: number }[])?.[0]?.count ?? 0,
+      label: TYPE_LABELS[t.code] || t.name_id,
+    }))
+    .filter((t) => t.count > 0);
 
   return (
     <div className="min-h-screen">

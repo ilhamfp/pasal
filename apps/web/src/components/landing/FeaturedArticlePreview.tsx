@@ -18,26 +18,26 @@ export default async function FeaturedArticlePreview() {
 
   if (!work) return null;
 
-  // Fetch Pasal 1
-  const { data: pasal } = await supabase
-    .from("document_nodes")
-    .select("number, content_text")
-    .eq("work_id", work.id)
-    .eq("node_type", "pasal")
-    .eq("number", "1")
-    .limit(1)
-    .single();
+  // Fetch Pasal 1 and ayat children in parallel (both depend only on work.id)
+  const [{ data: pasal }, { data: ayats }] = await Promise.all([
+    supabase
+      .from("document_nodes")
+      .select("number, content_text")
+      .eq("work_id", work.id)
+      .eq("node_type", "pasal")
+      .eq("number", "1")
+      .limit(1)
+      .single(),
+    supabase
+      .from("document_nodes")
+      .select("number, content_text")
+      .eq("work_id", work.id)
+      .eq("node_type", "ayat")
+      .order("sort_order")
+      .limit(3),
+  ]);
 
   if (!pasal) return null;
-
-  // Fetch ayat children
-  const { data: ayats } = await supabase
-    .from("document_nodes")
-    .select("number, content_text")
-    .eq("work_id", work.id)
-    .eq("node_type", "ayat")
-    .order("sort_order")
-    .limit(3);
 
   const regCode = getRegTypeCode(work.regulation_types) || "UU";
   const slug = `${regCode.toLowerCase()}-${work.number}-${work.year}`;

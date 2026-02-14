@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR: 1 hour
 
 const PAGE_SIZE = 20;
 

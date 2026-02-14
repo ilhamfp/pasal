@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import PasalLogo from "@/components/PasalLogo";
 import CopyButton from "@/components/CopyButton";
 import { Pencil } from "lucide-react";
@@ -17,10 +14,10 @@ interface PasalNode {
 
 interface PasalBlockProps {
   pasal: PasalNode;
+  pathname: string;
 }
 
-export default function PasalBlock({ pasal }: PasalBlockProps) {
-  const pathname = usePathname();
+export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
   const content = pasal.content_text || "";
   const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
   const koreksiHref = `${pathname}/koreksi/${pasal.id}`;

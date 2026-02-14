@@ -5,13 +5,13 @@ import { ChevronLeft, ChevronRight, ExternalLink, FileText } from "lucide-react"
 
 interface PdfViewerProps {
   slug: string;
-  supabaseUrl: string;
   sourcePdfUrl?: string | null;
   page: number;
   onPageChange: (page: number) => void;
 }
 
-export default function PdfViewer({ slug, supabaseUrl, sourcePdfUrl, page, onPageChange }: PdfViewerProps) {
+export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: PdfViewerProps) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
