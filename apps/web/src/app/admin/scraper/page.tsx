@@ -39,10 +39,18 @@ interface RunRow {
 async function DashboardContent() {
   const supabase = await createClient();
 
-  // Run all queries in parallel to avoid sequential round-trips
-  const [countResults, worksResult, chunksResult, runsResult, typeBreakdownResult, worksTypeResult, regTypesResult] =
+  // First fetch regulation types (small table, ~11 rows) so we can do targeted counts
+  const { data: regTypes } = await supabase
+    .from("regulation_types")
+    .select("id, code")
+    .order("hierarchy_level");
+
+  const regTypeList = regTypes || [];
+
+  // Run all queries in parallel — use head-only counts instead of fetching rows
+  const [countResults, worksResult, chunksResult, runsResult, crawlTypeResults, worksTypeResults] =
     await Promise.all([
-      // Job counts by status — 6 queries in parallel
+      // Job counts by status — 6 head-only counts
       Promise.all(
         STATUS_ORDER.map((status) =>
           supabase
@@ -51,22 +59,34 @@ async function DashboardContent() {
             .eq("status", status)
         )
       ),
-      // Works total
+      // Works total (head-only)
       supabase.from("works").select("id", { count: "exact", head: true }),
-      // Chunks total
+      // Chunks total (head-only)
       supabase.from("legal_chunks").select("id", { count: "exact", head: true }),
-      // Recent runs
+      // Recent runs (10 rows)
       supabase
         .from("scraper_runs")
         .select("*")
         .order("started_at", { ascending: false })
         .limit(10),
-      // Crawl jobs type breakdown
-      supabase.from("crawl_jobs").select("regulation_type").limit(10000),
-      // Works type breakdown (actual loaded regulations)
-      supabase.from("works").select("regulation_type_id"),
-      // Regulation types (for mapping ID → code)
-      supabase.from("regulation_types").select("id, code").order("hierarchy_level"),
+      // Crawl jobs count per regulation type — head-only counts, no row fetching
+      Promise.all(
+        regTypeList.map((rt) =>
+          supabase
+            .from("crawl_jobs")
+            .select("id", { count: "exact", head: true })
+            .eq("regulation_type", rt.code)
+        )
+      ),
+      // Works count per regulation type — head-only counts, no row fetching
+      Promise.all(
+        regTypeList.map((rt) =>
+          supabase
+            .from("works")
+            .select("id", { count: "exact", head: true })
+            .eq("regulation_type_id", rt.id)
+        )
+      ),
     ]);
 
   const jobCounts: Record<string, number> = {};
@@ -79,32 +99,14 @@ async function DashboardContent() {
   const chunksCount = chunksResult.count;
   const runs = runsResult.data;
 
-  // Crawl jobs per type
-  const crawlTypeCounts: Record<string, number> = {};
-  for (const row of typeBreakdownResult.data || []) {
-    const t = row.regulation_type || "unknown";
-    crawlTypeCounts[t] = (crawlTypeCounts[t] || 0) + 1;
-  }
-
-  // Works per type (actual loaded regulations)
-  const regTypeMap: Record<number, string> = {};
-  for (const rt of regTypesResult.data || []) {
-    regTypeMap[rt.id] = rt.code;
-  }
-  const worksTypeCounts: Record<string, number> = {};
-  for (const w of worksTypeResult.data || []) {
-    const code = regTypeMap[w.regulation_type_id] || "unknown";
-    worksTypeCounts[code] = (worksTypeCounts[code] || 0) + 1;
-  }
-
-  // Merge both into a unified set of types
-  const allTypeKeys = new Set([...Object.keys(crawlTypeCounts), ...Object.keys(worksTypeCounts)]);
-  const mergedTypes = [...allTypeKeys]
-    .map((code) => ({
-      code,
-      crawlCount: crawlTypeCounts[code] || 0,
-      worksCount: worksTypeCounts[code] || 0,
+  // Build merged type breakdown from parallel count results
+  const mergedTypes = regTypeList
+    .map((rt, i) => ({
+      code: rt.code,
+      crawlCount: crawlTypeResults[i].count || 0,
+      worksCount: worksTypeResults[i].count || 0,
     }))
+    .filter((t) => t.crawlCount > 0 || t.worksCount > 0)
     .sort((a, b) => b.worksCount - a.worksCount || b.crawlCount - a.crawlCount);
 
   return (
