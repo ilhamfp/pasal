@@ -10,7 +10,8 @@ import re
 _OCR_PATTERNS: list[tuple[re.Pattern, str]] = [
     # Letter-digit confusion
     (re.compile(r'(?<=Pasal\s)[lI](\d+)', re.MULTILINE), r'1\1'),  # Pasal l3 -> Pasal 13
-    (re.compile(r'(\d+)O(?=\s|$)'), lambda m: m.group(1) + '0'),  # 9O -> 90
+    (re.compile(r'(\d)O(?=\s|$|\n)'), lambda m: m.group(1) + '0'),  # 1O -> 10, 9O -> 90
+    (re.compile(r'(?<=Pasal\s)(\d+)O\b'), lambda m: m.group(1) + '0'),  # Pasal 1O -> Pasal 10
     (re.compile(r'(?<=\s)l(?=\d{2,})'), '1'),  # l23 -> 123
     (re.compile(r'(?<=\d)l(?=\d)'), '1'),  # 2l3 -> 213
 

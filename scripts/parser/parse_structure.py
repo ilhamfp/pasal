@@ -1,31 +1,31 @@
-"""Regex state machine parser for Indonesian legal document structure.
+"""Text-first parser for Indonesian legal document structure.
 
-Parses text into hierarchical structure:
-BAB -> Bagian -> Paragraf -> Pasal -> Ayat
+Philosophy: capture ALL text first, then add structural metadata.
+No text is ever dropped. If we can identify a section as BAB, Pasal, or Ayat,
+we tag it. If we can't, we still keep the text as a generic content node.
 
-Improved version of parse_law.py's parse_into_nodes(), with:
-- Proper state machine
-- Better Penjelasan handling
-- Flat regulation support (no BAB)
-- Output compatible with document_nodes schema
+Parses into hierarchy: preamble -> BAB -> Bagian -> Paragraf -> Pasal -> Ayat
+Also handles PENJELASAN (Elucidation) sections.
+
+Output compatible with document_nodes schema:
+{type, number, heading, content, children, sort_order}
 """
 import re
 
-# Structural patterns
+# ── Structural marker patterns ──────────────────────────────────────────────
 BAB_RE = re.compile(r'^BAB\s+([IVXLCDM]+)\s*$', re.MULTILINE)
 BAGIAN_RE = re.compile(
     r'^Bagian\s+(Kesatu|Kedua|Ketiga|Keempat|Kelima|Keenam|Ketujuh|Kedelapan|Kesembilan|Kesepuluh'
     r'|Kesebelas|Kedua\s*Belas|Ketiga\s*Belas|Keempat\s*Belas|Kelima\s*Belas|Keenam\s*Belas'
     r'|Ketujuh\s*Belas|Kedelapan\s*Belas|Kesembilan\s*Belas|Kedua\s*Puluh'
     r'|Ke-\d+)',
-    re.MULTILINE | re.IGNORECASE
+    re.MULTILINE | re.IGNORECASE,
 )
 PARAGRAF_RE = re.compile(r'^Paragraf\s+(\d+)\s*$', re.MULTILINE)
 PASAL_RE = re.compile(r'^Pasal\s+(\d+[A-Z]?)\s*$', re.MULTILINE)
-AYAT_RE = re.compile(r'^\((\d+)\)\s+', re.MULTILINE)
 PENJELASAN_RE = re.compile(r'^PENJELASAN\s*$', re.MULTILINE)
 
-# Structural boundary pattern
+# Combined boundary pattern for detecting section breaks
 BOUNDARY_RE = re.compile(
     r'^(BAB\s+[IVXLCDM]+|Pasal\s+\d+[A-Z]?|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN)\s*$',
     re.MULTILINE | re.IGNORECASE,
@@ -57,8 +57,70 @@ def _parse_ayat(content: str) -> list[dict]:
     return ayat_children
 
 
+def _find_markers(text: str) -> list[tuple[str, str, int, int]]:
+    """Find all structural markers and their positions in the text.
+
+    Returns list of (type, number, line_start, line_end) sorted by position.
+    line_start is the start of the marker line, line_end is the end.
+    """
+    markers = []
+
+    for m in BAB_RE.finditer(text):
+        markers.append(("bab", m.group(1), m.start(), m.end()))
+
+    for m in BAGIAN_RE.finditer(text):
+        markers.append(("bagian", m.group(1), m.start(), m.end()))
+
+    for m in PARAGRAF_RE.finditer(text):
+        markers.append(("paragraf", m.group(1), m.start(), m.end()))
+
+    for m in PASAL_RE.finditer(text):
+        markers.append(("pasal", m.group(1), m.start(), m.end()))
+
+    markers.sort(key=lambda x: x[2])
+    return markers
+
+
+def _extract_heading(text: str) -> tuple[str, str]:
+    """Extract heading from the beginning of a section's content.
+
+    For BAB/Bagian/Paragraf, the heading is the first non-empty line(s)
+    before the next structural marker.
+
+    Returns (heading, remaining_content).
+    """
+    lines = text.split('\n')
+    heading_lines = []
+    content_start = 0
+
+    for j, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            if heading_lines:
+                content_start = j + 1
+                break
+            continue
+        # Stop at structural markers
+        if BOUNDARY_RE.match(stripped):
+            content_start = j
+            break
+        heading_lines.append(stripped)
+        content_start = j + 1
+        # Headings are typically 1-3 lines
+        if len(heading_lines) >= 3:
+            break
+
+    heading = ' '.join(heading_lines)
+    remaining = '\n'.join(lines[content_start:]).strip()
+    return heading, remaining
+
+
 def parse_structure(text: str) -> list[dict]:
     """Parse law text into hierarchical node structure.
+
+    TEXT-FIRST: every character of input text ends up in exactly one node.
+    Structural markers (BAB, Pasal, etc.) add metadata to sections.
+    Text that doesn't match any structure becomes 'preamble' or 'content' nodes.
 
     Returns list of nodes matching document_nodes schema:
     {type, number, heading, content, children, sort_order}
@@ -67,62 +129,56 @@ def parse_structure(text: str) -> list[dict]:
     penjelasan_match = PENJELASAN_RE.search(text)
     body_text = text[:penjelasan_match.start()] if penjelasan_match else text
 
-    nodes = []
-    current_bab = None
-    current_bagian = None
+    # Find all structural markers
+    markers = _find_markers(body_text)
+
+    nodes: list[dict] = []
     sort_order = 0
 
-    lines = body_text.split('\n')
-    i = 0
+    # ── Capture preamble (text before first marker) ──────────────────────
+    first_marker_pos = markers[0][2] if markers else len(body_text)
+    preamble = body_text[:first_marker_pos].strip()
+    if preamble:
+        nodes.append({
+            "type": "preamble",
+            "number": "",
+            "heading": "",
+            "content": preamble,
+            "children": [],
+            "sort_order": sort_order,
+        })
+        sort_order += 1
 
-    while i < len(lines):
-        line = lines[i].strip()
+    # ── Process markers: create nodes for each section ───────────────────
+    current_bab = None
+    current_bagian = None
 
-        # Detect BAB
-        bab_match = re.match(r'^BAB\s+([IVXLCDM]+)\s*$', line)
-        if bab_match:
-            bab_num = bab_match.group(1)
-            heading = ""
-            j = i + 1
-            while j < len(lines) and not lines[j].strip():
-                j += 1
-            if j < len(lines):
-                heading = lines[j].strip()
-                k = j + 1
-                while k < len(lines) and lines[k].strip() and not re.match(r'^(BAB|Bagian|Pasal|Paragraf)\s', lines[k].strip()):
-                    heading += " " + lines[k].strip()
-                    k += 1
-                i = k - 1
+    for i, (mtype, number, mstart, mend) in enumerate(markers):
+        # Content: from end of this marker line to start of next marker
+        next_start = markers[i + 1][2] if i + 1 < len(markers) else len(body_text)
+        raw_content = body_text[mend:next_start].strip()
 
+        if mtype == "bab":
+            heading, leftover = _extract_heading(raw_content)
             current_bab = {
                 "type": "bab",
-                "number": bab_num,
+                "number": number,
                 "heading": heading,
+                "content": leftover,
                 "children": [],
                 "sort_order": sort_order,
             }
             nodes.append(current_bab)
             current_bagian = None
             sort_order += 1
-            i += 1
-            continue
 
-        # Detect Bagian
-        bagian_match = BAGIAN_RE.match(line)
-        if bagian_match:
-            bagian_name = bagian_match.group(1)
-            heading = ""
-            j = i + 1
-            while j < len(lines) and not lines[j].strip():
-                j += 1
-            if j < len(lines):
-                heading = lines[j].strip()
-                i = j
-
+        elif mtype == "bagian":
+            heading, leftover = _extract_heading(raw_content)
             current_bagian = {
                 "type": "bagian",
-                "number": bagian_name,
+                "number": number,
                 "heading": heading,
+                "content": leftover,
                 "children": [],
                 "sort_order": sort_order,
             }
@@ -131,25 +187,14 @@ def parse_structure(text: str) -> list[dict]:
             else:
                 nodes.append(current_bagian)
             sort_order += 1
-            i += 1
-            continue
 
-        # Detect Paragraf
-        paragraf_match = re.match(r'^Paragraf\s+(\d+)\s*$', line)
-        if paragraf_match:
-            para_num = paragraf_match.group(1)
-            heading = ""
-            j = i + 1
-            while j < len(lines) and not lines[j].strip():
-                j += 1
-            if j < len(lines) and not re.match(r'^(BAB|Bagian|Pasal|Paragraf)\s', lines[j].strip()):
-                heading = lines[j].strip()
-                i = j
-
+        elif mtype == "paragraf":
+            heading, leftover = _extract_heading(raw_content)
             paragraf_node = {
                 "type": "paragraf",
-                "number": para_num,
+                "number": number,
                 "heading": heading,
+                "content": leftover,
                 "children": [],
                 "sort_order": sort_order,
             }
@@ -159,52 +204,40 @@ def parse_structure(text: str) -> list[dict]:
                 current_bab["children"].append(paragraf_node)
             else:
                 nodes.append(paragraf_node)
+            # Paragraf acts as the new "current_bagian" for subsequent pasals
             current_bagian = paragraf_node
             sort_order += 1
-            i += 1
-            continue
 
-        # Detect Pasal
-        pasal_match = re.match(r'^Pasal\s+(\d+[A-Z]?)\s*$', line)
-        if pasal_match:
-            pasal_num = pasal_match.group(1)
-            content_lines = []
-            j = i + 1
-            while j < len(lines):
-                next_line = lines[j].strip()
-                if re.match(
-                    r'^(BAB\s+[IVXLCDM]+|Pasal\s+\d+[A-Z]?|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN)\s*$',
-                    next_line, re.IGNORECASE
-                ):
-                    break
-                content_lines.append(lines[j])
-                j += 1
-
-            content = '\n'.join(content_lines).strip()
-            ayat_children = _parse_ayat(content)
-
+        elif mtype == "pasal":
+            ayat_children = _parse_ayat(raw_content)
             pasal_node = {
                 "type": "pasal",
-                "number": pasal_num,
-                "content": content,
+                "number": number,
+                "content": raw_content,
                 "children": ayat_children,
                 "sort_order": sort_order,
             }
-
             if current_bagian:
                 current_bagian["children"].append(pasal_node)
             elif current_bab:
                 current_bab["children"].append(pasal_node)
             else:
                 nodes.append(pasal_node)
-
             sort_order += 1
-            i = j
-            continue
 
-        i += 1
+    # ── No markers found: capture entire body as content ─────────────────
+    if not markers and not preamble:
+        nodes.append({
+            "type": "content",
+            "number": "",
+            "heading": "",
+            "content": body_text.strip(),
+            "children": [],
+            "sort_order": sort_order,
+        })
+        sort_order += 1
 
-    # Parse penjelasan
+    # ── Parse penjelasan ─────────────────────────────────────────────────
     if penjelasan_match:
         penjelasan_text = text[penjelasan_match.start():]
         penjelasan_nodes = parse_penjelasan(penjelasan_text)
@@ -214,17 +247,50 @@ def parse_structure(text: str) -> list[dict]:
 
 
 def parse_penjelasan(text: str) -> list[dict]:
-    """Parse PENJELASAN section into nodes."""
+    """Parse PENJELASAN section into nodes.
+
+    Captures ALL penjelasan text — doesn't drop anything.
+    """
     nodes = []
     sort_base = 90000
 
     umum_match = re.search(r'I\.\s*UMUM', text)
     pasal_demi_match = re.search(r'II\.\s*PASAL\s+DEMI\s+PASAL', text)
 
+    # If no structured sub-sections found, capture the whole thing
+    if not umum_match and not pasal_demi_match:
+        content = text[len("PENJELASAN"):].strip() if text.upper().startswith("PENJELASAN") else text.strip()
+        if content:
+            nodes.append({
+                "type": "penjelasan_umum",
+                "number": "",
+                "heading": "Penjelasan",
+                "content": content,
+                "children": [],
+                "sort_order": sort_base,
+            })
+        return nodes
+
+    # Text between PENJELASAN header and "I. UMUM" (if any)
+    if umum_match:
+        pre_umum = text[:umum_match.start()].strip()
+        # Remove the "PENJELASAN" header itself
+        pre_umum = re.sub(r'^PENJELASAN\s*', '', pre_umum).strip()
+        # Capture preamble text before "I. UMUM" if substantial
+        if pre_umum and len(pre_umum) > 20:
+            nodes.append({
+                "type": "penjelasan_umum",
+                "number": "",
+                "heading": "Penjelasan — Pendahuluan",
+                "content": pre_umum,
+                "children": [],
+                "sort_order": sort_base - 1,
+            })
+
     if umum_match:
         umum_end = pasal_demi_match.start() if pasal_demi_match else len(text)
         umum_text = text[umum_match.end():umum_end].strip()
-        if umum_text and len(umum_text) > 20:
+        if umum_text:
             nodes.append({
                 "type": "penjelasan_umum",
                 "number": "",
@@ -237,6 +303,19 @@ def parse_penjelasan(text: str) -> list[dict]:
     if pasal_demi_match:
         pasal_text = text[pasal_demi_match.end():]
         splits = re.split(r'(Pasal\s+\d+[A-Z]?)\s*\n', pasal_text)
+
+        # Capture any text before the first "Pasal X" in the section
+        pre_pasal = splits[0].strip() if splits else ""
+        if pre_pasal and len(pre_pasal) > 20:
+            nodes.append({
+                "type": "penjelasan_umum",
+                "number": "",
+                "heading": "Penjelasan Pasal Demi Pasal — Pendahuluan",
+                "content": pre_pasal,
+                "children": [],
+                "sort_order": sort_base + 1,
+            })
+
         i = 1
         while i < len(splits) - 1:
             header = splits[i].strip()
@@ -250,7 +329,7 @@ def parse_penjelasan(text: str) -> list[dict]:
                     "heading": f"Penjelasan Pasal {num}",
                     "content": content,
                     "children": [],
-                    "sort_order": sort_base + int(num.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ") or "0"),
+                    "sort_order": sort_base + 2 + int(num.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ") or "0"),
                 })
             i += 2
 
