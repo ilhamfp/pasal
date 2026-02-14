@@ -97,12 +97,19 @@ def load_nodes_recursive(
     path_prefix: str = "",
     depth: int = 0,
     sort_offset: int = 0,
+    _counter: list[int] | None = None,
 ) -> list[dict]:
     """Recursively insert document nodes. Returns list of inserted pasal nodes for chunking."""
     pasal_nodes = []
 
+    # Use a shared DFS counter to avoid exponential sort_order growth.
+    # The old scheme (sort_offset * 100 per level) overflows bigint at 5+ levels.
+    if _counter is None:
+        _counter = [sort_offset]
+
     for i, node in enumerate(nodes):
-        sort_order = sort_offset + i
+        _counter[0] += 1
+        sort_order = _counter[0]
         node_type = node["type"]
         number = node.get("number", "")
         heading = node.get("heading", "")
@@ -147,7 +154,7 @@ def load_nodes_recursive(
                         parent_id=inserted_id,
                         path_prefix=path,
                         depth=depth + 1,
-                        sort_offset=sort_order * 100,
+                        _counter=_counter,
                     )
                     pasal_nodes.extend(child_pasals)
         except Exception as e:

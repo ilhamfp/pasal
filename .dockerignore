@@ -1,0 +1,13 @@
+data/
+apps/
+packages/
+.git/
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.md
+old-docs/
+scripts/eval/
