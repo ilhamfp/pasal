@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -175,69 +174,66 @@ export default async function ScraperJobsPage({
   const page = parseInt(params.page || "1", 10);
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="container mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-heading">Crawl Jobs</h1>
-            <p className="text-muted-foreground mt-1">
-              Daftar semua pekerjaan scraping
-            </p>
-          </div>
-          <Link href="/admin/scraper">
-            <Button variant="outline" size="sm">
-              &larr; Dashboard
-            </Button>
-          </Link>
+    <>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-heading">Crawl Jobs</h1>
+          <p className="text-muted-foreground mt-1">
+            Daftar semua pekerjaan scraping
+          </p>
         </div>
+        <Link href="/admin/scraper">
+          <Button variant="outline" size="sm">
+            &larr; Dashboard
+          </Button>
+        </Link>
+      </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="py-4">
-            <div className="flex flex-wrap gap-2">
-              <Link href="/admin/scraper/jobs">
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="py-4">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/scraper/jobs">
+              <Badge
+                variant={!status ? "default" : "outline"}
+                className={!status ? "bg-primary text-primary-foreground" : "cursor-pointer"}
+              >
+                Semua
+              </Badge>
+            </Link>
+            {STATUSES.map((s) => (
+              <Link key={s} href={`/admin/scraper/jobs?status=${s}${type ? `&type=${type}` : ""}`}>
                 <Badge
-                  variant={!status ? "default" : "outline"}
-                  className={!status ? "bg-primary text-primary-foreground" : "cursor-pointer"}
+                  variant={status === s ? "default" : "outline"}
+                  className={
+                    status === s
+                      ? "bg-primary text-primary-foreground"
+                      : `cursor-pointer ${STATUS_STYLE[s]}`
+                  }
                 >
-                  Semua
+                  {s}
                 </Badge>
               </Link>
-              {STATUSES.map((s) => (
-                <Link key={s} href={`/admin/scraper/jobs?status=${s}${type ? `&type=${type}` : ""}`}>
-                  <Badge
-                    variant={status === s ? "default" : "outline"}
-                    className={
-                      status === s
-                        ? "bg-primary text-primary-foreground"
-                        : `cursor-pointer ${STATUS_STYLE[s]}`
-                    }
-                  >
-                    {s}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <Suspense
-              fallback={
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-10 rounded bg-muted animate-pulse" />
-                  ))}
-                </div>
-              }
-            >
-              <JobsList status={status} type={type} page={page} />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+      <Card>
+        <CardContent className="pt-6">
+          <Suspense
+            fallback={
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-10 rounded bg-muted animate-pulse" />
+                ))}
+              </div>
+            }
+          >
+            <JobsList status={status} type={type} page={page} />
+          </Suspense>
+        </CardContent>
+      </Card>
+    </>
   );
 }
