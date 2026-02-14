@@ -25,7 +25,14 @@ RUN mkdir -p /app/data/raw/pdfs
 #   WORKER_SLEEP=3                (seconds between batches)
 #   WORKER_DISCOVER=true|false    (set false for process-only workers)
 #   WORKER_DISCOVER_INTERVAL=5    (discover every N batches)
-#   WORKER_TYPES=uu,pp,perpres,perppu  (types to discover)
+#   WORKER_TYPES=uu,pp,...        (default: all 12 central gov types)
+#   WORKER_DISCOVERY_FIRST=true   (first iteration: full discovery, skip processing)
+#   WORKER_FRESHNESS_HOURS=24     (skip types discovered within N hours)
+#
+# Deploy in Southeast Asia region for lowest latency to peraturan.go.id.
+# Recommended: 20 workers
+#   Worker 1:    WORKER_DISCOVER=true  WORKER_DISCOVERY_FIRST=true
+#   Worker 2-20: WORKER_DISCOVER=false
 #
 # Job claiming is atomic (FOR UPDATE SKIP LOCKED) — workers never duplicate work.
 COPY scripts/worker/entrypoint.sh /app/entrypoint.sh

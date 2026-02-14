@@ -2,6 +2,9 @@
 
 Crawls paginated listing pages like /uu?page=1, /pp?page=1, etc.
 Extracts regulation metadata and upserts into crawl_jobs table.
+
+Supports all 12 central government regulation types and smart caching
+via discovery_progress table to skip recently-crawled types.
 """
 import asyncio
 import re
@@ -13,23 +16,36 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from crawler.config import DEFAULT_HEADERS, DELAY_BETWEEN_PAGES, create_permissive_ssl_context
-from crawler.state import upsert_job
+from crawler.state import is_discovery_fresh, upsert_discovery_progress, upsert_job
 
 BASE_URL = "https://peraturan.go.id"
 
-# Regulation types to crawl, with their URL path and type code
+# All central government regulation types on peraturan.go.id
 REG_TYPES = {
     "uu": {"code": "UU", "path": "/uu"},
     "pp": {"code": "PP", "path": "/pp"},
     "perpres": {"code": "PERPRES", "path": "/perpres"},
+    "perppu": {"code": "PERPPU", "path": "/perppu"},
+    "keppres": {"code": "KEPPRES", "path": "/keppres"},
+    "inpres": {"code": "INPRES", "path": "/inpres"},
+    "penpres": {"code": "PENPRES", "path": "/penpres"},
+    "uudrt": {"code": "UUDRT", "path": "/uudrt"},
+    "tapmpr": {"code": "TAP_MPR", "path": "/tapmpr"},
     "permen": {"code": "PERMEN", "path": "/permen"},
     "perban": {"code": "PERBAN", "path": "/perban"},
     "perda": {"code": "PERDA", "path": "/perda"},
 }
 
-# Parse slug pattern: uu-no-13-tahun-2003
+# Standard slug pattern: uu-no-13-tahun-2003
 SLUG_RE = re.compile(
-    r"(uu|pp|perpres|perppu|permen|perban|perda)-no-(\d+[a-z]?)-tahun-(\d{4})",
+    r"(uu|pp|perpres|perppu|keppres|inpres|penpres|uudrt|permen|perban|perda)-no-(\d+[a-z]?)-tahun-(\d{4})",
+    re.IGNORECASE,
+)
+
+# TAP MPR has a different slug format: tap-mpr-no-iv-mpr-1999-tahun-2004
+# Uses Roman numerals instead of digits for the number
+TAP_MPR_RE = re.compile(
+    r"tap-mpr-no-([ivxlcdm]+(?:-mpr-\d{4})?)-tahun-(\d{4})",
     re.IGNORECASE,
 )
 
@@ -39,6 +55,11 @@ TYPE_NAMES = {
     "PP": "Peraturan Pemerintah",
     "PERPRES": "Peraturan Presiden",
     "PERPPU": "Peraturan Pemerintah Pengganti Undang-Undang",
+    "KEPPRES": "Keputusan Presiden",
+    "INPRES": "Instruksi Presiden",
+    "PENPRES": "Penetapan Presiden",
+    "UUDRT": "Undang-Undang Darurat",
+    "TAP_MPR": "Ketetapan Majelis Permusyawaratan Rakyat",
     "PERMEN": "Peraturan Menteri",
     "PERBAN": "Peraturan Badan",
     "PERDA": "Peraturan Daerah",
@@ -47,6 +68,16 @@ TYPE_NAMES = {
 
 def _parse_slug(slug: str) -> dict | None:
     """Extract type, number, year from a URL slug."""
+    # Try TAP MPR first (special format)
+    m = TAP_MPR_RE.search(slug)
+    if m:
+        return {
+            "type": "TAP_MPR",
+            "number": m.group(1).upper(),
+            "year": int(m.group(2)),
+        }
+
+    # Standard format
     m = SLUG_RE.search(slug)
     if not m:
         return None
@@ -130,6 +161,8 @@ async def discover_regulations(
     reg_types: list[str] | None = None,
     max_pages_per_type: int | None = None,
     dry_run: bool = False,
+    freshness_hours: float = 24.0,
+    ignore_freshness: bool = False,
 ) -> dict:
     """Crawl listing pages and seed crawl_jobs.
 
@@ -137,12 +170,20 @@ async def discover_regulations(
         reg_types: List of type codes to crawl (e.g. ["uu", "pp"]). None = all.
         max_pages_per_type: Max pages to crawl per type. None = all.
         dry_run: If True, don't write to DB.
+        freshness_hours: Skip types discovered within this many hours.
+        ignore_freshness: If True, always crawl regardless of freshness.
 
     Returns:
         Stats dict with discovered/upserted counts.
     """
     types_to_crawl = reg_types or list(REG_TYPES.keys())
-    stats = {"types_crawled": 0, "pages_crawled": 0, "discovered": 0, "upserted": 0}
+    stats = {
+        "types_crawled": 0,
+        "types_skipped_fresh": 0,
+        "pages_crawled": 0,
+        "discovered": 0,
+        "upserted": 0,
+    }
 
     ssl_ctx = create_permissive_ssl_context()
     transport = httpx.AsyncHTTPTransport(retries=3, verify=ssl_ctx)
@@ -159,10 +200,26 @@ async def discover_regulations(
 
             reg_info = REG_TYPES[type_key]
             path = reg_info["path"]
+            source_id = "peraturan_go_id"
+
+            # Smart caching: skip recently-crawled types
+            if not ignore_freshness and not dry_run:
+                fresh, cached = is_discovery_fresh(source_id, reg_info["code"], freshness_hours)
+                if fresh:
+                    cached_total = cached.get("total_regulations", "?") if cached else "?"
+                    print(f"\n--- {type_key.upper()} FRESH (last crawled <{freshness_hours}h ago, {cached_total} regs) — skipping ---")
+                    stats["types_skipped_fresh"] += 1
+                    continue
+
             print(f"\n--- Discovering {type_key.upper()} from {path} ---")
 
             # Fetch first page to get total count
-            resp = await client.get(f"{BASE_URL}{path}?page=1")
+            try:
+                resp = await client.get(f"{BASE_URL}{path}?page=1")
+            except Exception as e:
+                print(f"  ERROR fetching {path}: {e}")
+                continue
+
             if resp.status_code != 200:
                 print(f"  ERROR: HTTP {resp.status_code} for {path}")
                 continue
@@ -172,6 +229,24 @@ async def discover_regulations(
             total_pages = (total + 19) // 20 if total else 1
             if max_pages_per_type:
                 total_pages = min(total_pages, max_pages_per_type)
+
+            # Quick-skip: if total unchanged and all pages were crawled before, just refresh timestamp
+            if not ignore_freshness and not dry_run and total is not None:
+                _, cached = is_discovery_fresh(source_id, reg_info["code"], freshness_hours=999999)
+                if (cached
+                        and cached.get("total_regulations") == total
+                        and cached.get("pages_crawled", 0) >= ((total + 19) // 20)
+                        and max_pages_per_type is None):
+                    print(f"  Total unchanged ({total}), all pages crawled previously — refreshing timestamp")
+                    upsert_discovery_progress({
+                        "source_id": source_id,
+                        "regulation_type": reg_info["code"],
+                        "total_regulations": total,
+                        "pages_crawled": cached["pages_crawled"],
+                        "total_pages": cached["total_pages"],
+                    })
+                    stats["types_skipped_fresh"] += 1
+                    continue
 
             print(f"  Total: {total or '?'} regulations, crawling {total_pages} pages")
 
@@ -183,6 +258,7 @@ async def discover_regulations(
                     upsert_job(reg)
                     stats["upserted"] += 1
             stats["pages_crawled"] += 1
+            pages_done = 1
 
             # Process remaining pages
             for page in range(2, total_pages + 1):
@@ -201,6 +277,7 @@ async def discover_regulations(
                             upsert_job(reg)
                             stats["upserted"] += 1
                     stats["pages_crawled"] += 1
+                    pages_done += 1
 
                     if page % 10 == 0:
                         print(f"  Page {page}/{total_pages}: {stats['discovered']} found so far")
@@ -210,5 +287,15 @@ async def discover_regulations(
                     continue
 
             stats["types_crawled"] += 1
+
+            # Save discovery progress
+            if not dry_run:
+                upsert_discovery_progress({
+                    "source_id": source_id,
+                    "regulation_type": reg_info["code"],
+                    "total_regulations": total,
+                    "pages_crawled": pages_done,
+                    "total_pages": total_pages,
+                })
 
     return stats

@@ -30,7 +30,7 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from worker.discover import discover_regulations
+from worker.discover import REG_TYPES, discover_regulations
 from worker.process import EXTRACTION_VERSION, _create_run, _update_run, process_jobs, reprocess_jobs
 from crawler.db import get_sb
 
@@ -41,20 +41,26 @@ def cmd_discover(args: argparse.Namespace) -> None:
     """Discover regulations from listing pages."""
     types = args.types.split(",") if args.types else None
     max_pages = args.max_pages
+    freshness = getattr(args, "freshness_hours", 24.0)
+    ignore_fresh = getattr(args, "ignore_freshness", False)
 
     print("=== DISCOVER ===")
     print(f"Types: {types or 'all'}")
     print(f"Max pages per type: {max_pages or 'all'}")
+    print(f"Freshness: {freshness}h (ignore={ignore_fresh})")
     print(f"Dry run: {args.dry_run}")
 
     stats = asyncio.run(discover_regulations(
         reg_types=types,
         max_pages_per_type=max_pages,
         dry_run=args.dry_run,
+        freshness_hours=freshness,
+        ignore_freshness=ignore_fresh,
     ))
 
     print("\n=== DISCOVER RESULTS ===")
     print(f"Types crawled: {stats['types_crawled']}")
+    print(f"Types skipped (fresh): {stats['types_skipped_fresh']}")
     print(f"Pages crawled: {stats['pages_crawled']}")
     print(f"Regulations discovered: {stats['discovered']}")
     print(f"Jobs upserted: {stats['upserted']}")
@@ -154,17 +160,25 @@ def cmd_continuous(args: argparse.Namespace) -> None:
     Designed for Railway as a long-running service (not a cron job).
     Multiple workers can run concurrently — job claiming is atomic via
     the claim_jobs() SQL function (FOR UPDATE SKIP LOCKED).
+
+    With --discovery-first, the first iteration runs discovery for ALL types
+    (ignoring freshness) and skips processing. Subsequent iterations run normally.
     """
     import time
 
-    types = args.types.split(",") if args.types else ["uu", "pp", "perpres", "perppu"]
+    all_types = list(REG_TYPES.keys())
+    types = args.types.split(",") if args.types else all_types
     batch_size = args.batch_size
     sleep_between = args.sleep  # seconds between batches
     do_discover = args.discover
+    discovery_first = getattr(args, "discovery_first", False)
+    freshness_hours = getattr(args, "freshness_hours", 24.0)
 
     print("=== CONTINUOUS MODE ===")
     print(f"Discovery types: {types}")
     print(f"Discovery enabled: {do_discover}")
+    print(f"Discovery-first mode: {discovery_first}")
+    print(f"Freshness threshold: {freshness_hours}h")
     print(f"Batch size: {batch_size}")
     print(f"Sleep between batches: {sleep_between}s")
     if do_discover:
@@ -178,6 +192,24 @@ def cmd_continuous(args: argparse.Namespace) -> None:
     while True:
         batch_count += 1
 
+        # --discovery-first: first iteration is discovery-only (ignore freshness), skip processing
+        if discovery_first and batch_count == 1 and do_discover:
+            print(f"\n--- Batch {batch_count}: DISCOVERY-FIRST (all {len(types)} types, ignoring freshness) ---")
+            try:
+                discover_stats = asyncio.run(discover_regulations(
+                    reg_types=types,
+                    max_pages_per_type=args.max_pages,
+                    ignore_freshness=True,
+                ))
+                print(f"  Discovered {discover_stats['discovered']} regulations "
+                      f"({discover_stats['types_crawled']} types crawled, "
+                      f"{discover_stats['types_skipped_fresh']} skipped)")
+            except Exception as e:
+                print(f"  Discovery failed: {e}")
+            print(f"  Discovery-first complete. Sleeping {sleep_between}s before starting processing...")
+            time.sleep(sleep_between)
+            continue
+
         # Periodically discover new regulations (only if this worker has discovery enabled)
         if do_discover and (batch_count == 1 or batch_count % args.discover_interval == 0):
             print(f"\n--- Batch {batch_count}: DISCOVERING ---")
@@ -185,8 +217,10 @@ def cmd_continuous(args: argparse.Namespace) -> None:
                 discover_stats = asyncio.run(discover_regulations(
                     reg_types=types,
                     max_pages_per_type=args.max_pages,
+                    freshness_hours=freshness_hours,
                 ))
-                print(f"  Discovered {discover_stats['discovered']} regulations")
+                print(f"  Discovered {discover_stats['discovered']} regulations "
+                      f"({discover_stats['types_skipped_fresh']} types skipped as fresh)")
             except Exception as e:
                 print(f"  Discovery failed: {e}")
 
@@ -301,8 +335,12 @@ def main() -> None:
 
     # discover
     p_discover = sub.add_parser("discover", help="Discover regulations from listing pages")
-    p_discover.add_argument("--types", help="Comma-separated types: uu,pp,perpres,permen,perban,perda")
+    p_discover.add_argument("--types", help="Comma-separated types (default: all 12 types)")
     p_discover.add_argument("--max-pages", type=int, help="Max pages per type")
+    p_discover.add_argument("--freshness-hours", type=float, default=24.0,
+                            help="Skip types discovered within this many hours (default: 24)")
+    p_discover.add_argument("--ignore-freshness", action="store_true",
+                            help="Always crawl regardless of freshness cache")
     p_discover.add_argument("--dry-run", action="store_true")
 
     # process
@@ -325,7 +363,7 @@ def main() -> None:
 
     # continuous
     p_cont = sub.add_parser("continuous", help="Run continuously (long-running service)")
-    p_cont.add_argument("--types", help="Comma-separated types for discovery (default: uu,pp,perpres,perppu)")
+    p_cont.add_argument("--types", help="Comma-separated types for discovery (default: all 12 types)")
     p_cont.add_argument("--max-pages", type=int, help="Max pages per type for discovery (default: all pages)")
     p_cont.add_argument("--batch-size", type=int, default=100, help="Jobs per batch (default: 100)")
     p_cont.add_argument("--max-runtime", type=int, default=3600, help="Max runtime per batch in seconds")
@@ -333,6 +371,11 @@ def main() -> None:
     p_cont.add_argument("--discover-interval", type=int, default=5, help="Discover every N batches (default: 5)")
     p_cont.add_argument("--discover", action=argparse.BooleanOptionalAction, default=True,
                          help="Enable/disable discovery (default: enabled). Use --no-discover for process-only workers.")
+    p_cont.add_argument("--discovery-first", action="store_true",
+                         help="First iteration: discover ALL types (ignore freshness), skip processing. "
+                              "Subsequent iterations run normally.")
+    p_cont.add_argument("--freshness-hours", type=float, default=24.0,
+                         help="Skip types discovered within this many hours (default: 24)")
 
     # retry-failed
     p_retry = sub.add_parser("retry-failed", help="Reset failed jobs to pending for retry")

@@ -1,5 +1,5 @@
 """Crawl job state management via Supabase."""
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .db import get_sb
 
@@ -65,3 +65,49 @@ def is_url_visited(source_id: str, url: str) -> bool:
         .execute()
     )
     return bool(result.data)
+
+
+# --- Discovery progress helpers ---
+
+
+def get_discovery_progress(source_id: str, regulation_type: str) -> dict | None:
+    """Fetch cached discovery progress for a source + type pair."""
+    sb = get_sb()
+    result = (
+        sb.table("discovery_progress")
+        .select("*")
+        .eq("source_id", source_id)
+        .eq("regulation_type", regulation_type)
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
+
+
+def upsert_discovery_progress(progress: dict) -> None:
+    """Insert or update discovery progress for a source + type pair."""
+    sb = get_sb()
+    progress["updated_at"] = datetime.now(timezone.utc).isoformat()
+    progress["last_discovered_at"] = datetime.now(timezone.utc).isoformat()
+    sb.table("discovery_progress").upsert(
+        progress, on_conflict="source_id,regulation_type"
+    ).execute()
+
+
+def is_discovery_fresh(
+    source_id: str,
+    regulation_type: str,
+    freshness_hours: float = 24.0,
+) -> tuple[bool, dict | None]:
+    """Check if discovery for this type was done recently enough to skip.
+
+    Returns (is_fresh, cached_row). is_fresh is True if last_discovered_at
+    is within freshness_hours of now.
+    """
+    row = get_discovery_progress(source_id, regulation_type)
+    if not row:
+        return False, None
+
+    last = datetime.fromisoformat(row["last_discovered_at"].replace("Z", "+00:00"))
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=freshness_hours)
+    return last > cutoff, row
