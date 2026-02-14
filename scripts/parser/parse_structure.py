@@ -22,14 +22,49 @@ BAGIAN_RE = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 PARAGRAF_RE = re.compile(r'^Paragraf\s+(\d+)\s*$', re.MULTILINE)
-PASAL_RE = re.compile(r'^Pasal\s+(\d+[A-Z]?)\s*$', re.MULTILINE)
-PENJELASAN_RE = re.compile(r'^PENJELASAN\s*$', re.MULTILINE)
+PASAL_RE = re.compile(r'^Pasal[ \t]+(\d+[A-Z]?)\s*$', re.MULTILINE)
+PENJELASAN_RE = re.compile(r'^\s*PENJELASAN\s*$', re.MULTILINE)
 
 # Combined boundary pattern for detecting section breaks
 BOUNDARY_RE = re.compile(
-    r'^(BAB\s+[IVXLCDM]+|Pasal\s+\d+[A-Z]?|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN)\s*$',
+    r'^(BAB\s+[IVXLCDM]+|Pasal[ \t]+\d+[A-Z]?|Bagian\s+\w+|Paragraf\s+\d+|PENJELASAN)\s*$',
     re.MULTILINE | re.IGNORECASE,
 )
+
+# ── Roman numeral Pasal fix (OCR artifact) ──────────────────────────────────
+_ROMAN_PASAL_RE = re.compile(r'^(Pasal)[ \t]+([IVXLCDM]+)\s*$', re.MULTILINE)
+_ROMAN_MAP = {
+    'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5',
+    'VI': '6', 'VII': '7', 'VIII': '8', 'IX': '9', 'X': '10',
+    'XI': '11', 'XII': '12', 'XIII': '13', 'XIV': '14', 'XV': '15',
+}
+_AMENDMENT_RE = re.compile(
+    r'Perubahan\s+(?:Atas|Kedua|Ketiga|Keempat)',
+    re.IGNORECASE,
+)
+
+
+def _is_amendment_law(text: str) -> bool:
+    """Check if text is an amendment law (which legitimately uses Roman Pasal numbers)."""
+    return bool(_AMENDMENT_RE.search(text[:2000]))
+
+
+def _fix_roman_pasals(text: str) -> str:
+    """Convert OCR-artifact Roman Pasals to Arabic digits.
+
+    Amendment laws legitimately use Roman numeral Pasal numbers, so skip those.
+    """
+    if _is_amendment_law(text):
+        return text
+
+    def _replacer(m: re.Match) -> str:
+        roman = m.group(2)
+        arabic = _ROMAN_MAP.get(roman)
+        if arabic is not None:
+            return f"{m.group(1)} {arabic}"
+        return m.group(0)  # Unknown roman numeral, leave as-is
+
+    return _ROMAN_PASAL_RE.sub(_replacer, text)
 
 
 def _parse_ayat(content: str) -> list[dict]:
@@ -125,8 +160,24 @@ def parse_structure(text: str) -> list[dict]:
     Returns list of nodes matching document_nodes schema:
     {type, number, heading, content, children, sort_order}
     """
+    # Pre-process: fix Roman numeral Pasals (OCR artifact)
+    text = _fix_roman_pasals(text)
+
     # Split off penjelasan
     penjelasan_match = PENJELASAN_RE.search(text)
+
+    # Fallback: detect penjelasan by section markers in latter half of text
+    if not penjelasan_match:
+        half = len(text) // 2
+        fb = re.search(r'^(?:I\.\s*UMUM|II?\.\s*PASAL\s+DEMI\s+PASAL)', text[half:], re.MULTILINE)
+        if fb:
+            # Walk back to find a reasonable split point (blank line before the marker)
+            abs_pos = half + fb.start()
+            # Find the last blank line before this position
+            preceding = text[:abs_pos]
+            last_blank = preceding.rfind('\n\n')
+            split_pos = last_blank if last_blank > half - 200 else abs_pos
+            penjelasan_match = type('Match', (), {'start': lambda self, _p=split_pos: _p})()
     body_text = text[:penjelasan_match.start()] if penjelasan_match else text
 
     # Find all structural markers

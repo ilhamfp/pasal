@@ -138,9 +138,8 @@ def process_pdf(pdf_path: str | Path, metadata: dict | None = None) -> dict | No
         print(f"  Junk PDF (access denied page), skipping")
         return None
 
-    # 4. OCR correction (for scanned PDFs)
-    if quality in ("scanned_clean", "image_only"):
-        text = correct_ocr_errors(text)
+    # 4. OCR correction (all PDFs — even born_digital has font-encoding artifacts)
+    text = correct_ocr_errors(text)
 
     # 5. Parse structure
     nodes = parse_structure(text)

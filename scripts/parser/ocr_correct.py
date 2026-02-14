@@ -9,6 +9,7 @@ import re
 # Common OCR substitutions in Indonesian legal text
 _OCR_PATTERNS: list[tuple[re.Pattern, str]] = [
     # Letter-digit confusion
+    (re.compile(r'^(Pasal)[ \t]+l\s*$', re.MULTILINE), r'\1 1'),  # Standalone Pasal l -> Pasal 1
     (re.compile(r'(?<=Pasal\s)[lI](\d+)', re.MULTILINE), r'1\1'),  # Pasal l3 -> Pasal 13
     (re.compile(r'(\d)O(?=\s|$|\n)'), lambda m: m.group(1) + '0'),  # 1O -> 10, 9O -> 90
     (re.compile(r'(?<=Pasal\s)(\d+)O\b'), lambda m: m.group(1) + '0'),  # Pasal 1O -> Pasal 10
@@ -16,6 +17,7 @@ _OCR_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r'(?<=\d)l(?=\d)'), '1'),  # 2l3 -> 213
 
     # Common word-level OCR errors in Indonesian legal text
+    (re.compile(r'\bFRESIDEN\b', re.IGNORECASE), 'PRESIDEN'),     # P->F OCR confusion
     (re.compile(r'\bPRES[!I1]DEN\b', re.IGNORECASE), 'PRESIDEN'),
     (re.compile(r'\bREPUB[!I1]IK\b', re.IGNORECASE), 'REPUBLIK'),
     (re.compile(r'\bINDONES[!I1]A\b', re.IGNORECASE), 'INDONESIA'),

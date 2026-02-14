@@ -41,7 +41,8 @@ STORAGE_BUCKET = "regulation-pdfs"
 # v1: original parser (sort_order * 100 per level — overflows bigint)
 # v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
 # v3: text-first parser — captures all text, preambles, OCR corrections
-EXTRACTION_VERSION = 3
+# v4: OCR on all PDFs, Roman Pasal fix, FRESIDEN/header stripping, PENJELASAN fallback
+EXTRACTION_VERSION = 4
 
 
 async def _extract_pdf_url_from_detail_page(
@@ -190,8 +191,8 @@ def _extract_and_load(sb, job: dict, pdf_path: Path) -> tuple[int, int, int]:
         raise ValueError(f"PDF text too short ({len(text)} chars)")
 
     quality, _ = classify_pdf_quality(pdf_path)
-    if quality in ("scanned_clean", "image_only"):
-        text = correct_ocr_errors(text)
+    # OCR correction for all PDFs — even born_digital has font-encoding artifacts
+    text = correct_ocr_errors(text)
 
     nodes = parse_structure(text)
     law = _build_law_dict(job, text, nodes)

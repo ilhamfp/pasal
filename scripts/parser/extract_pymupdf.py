@@ -7,16 +7,19 @@ from pathlib import Path
 
 _PAGE_HEADER_RE = re.compile(
     r'^(?:SALINAN\s*\n)?'
-    r'PRESIDEN\s*\n'
-    r'\s*REPU\w+\s+INDONESIA\s*\n'
+    r'(?:[FP]RE\s*S\s*I\s*DEN|PRES\s+IDEN)\s*\n'      # PRESIDEN, FRESIDEN, PRES IDEN
+    r'\s*(?:RE|NE|RF)\w+\s+(?:IN|TN)\w+\s*\n'           # REPUBLIK INDONESIA + OCR variants
     r'(?:\s*-\s*\d+\s*-?\s*\n)?',
     re.MULTILINE | re.IGNORECASE,
 )
 _PAGE_FOOTER_RE = re.compile(
     r'(?:^Halaman\s+\d+\s+dari\s+\d+\s*$'
-    r'|^SK\s+No\s+\d+[A-Z]?\s*$'
+    r'|^SK\s+No\s*[\d\'\s]+[A-Z]?\s*$'
     r'|^;?\*?[a-zA-Z]*(?:trE|EtrN)\s*$'
-    r'|^(?:iIi|REFUBLIK|REPUEUK)\s+INDONESIA\s*$)',
+    r'|^(?:iIi|REFUBLIK|REPUEUK)\s+INDONESIA\s*$'
+    r'|^(?:[FP]RE\s*S\s*I\s*DEN|PRES\s+IDEN)\s*$'       # standalone FRESIDEN/PRESIDEN line
+    r'|^\s*(?:RE|NE|RF)\w+\s+(?:IN|TN)\w+\s*$'           # standalone REPUBLIK INDONESIA variants
+    r'|^\s*-\s*\d+\s*-\s*$)',                              # standalone page numbers like - 3 -
     re.MULTILINE | re.IGNORECASE,
 )
 
