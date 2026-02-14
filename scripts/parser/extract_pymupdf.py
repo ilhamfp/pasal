@@ -19,9 +19,74 @@ _PAGE_FOOTER_RE = re.compile(
     r'|^(?:iIi|REFUBLIK|REPUEUK)\s+INDONESIA\s*$'
     r'|^(?:[FP]RE\s*S\s*I\s*DEN|PRES\s+IDEN)\s*$'       # standalone FRESIDEN/PRESIDEN line
     r'|^\s*(?:RE|NE|RF)\w+\s+(?:IN|TN)\w+\s*$'           # standalone REPUBLIK INDONESIA variants
-    r'|^\s*-\s*\d+\s*-\s*$)',                              # standalone page numbers like - 3 -
+    r'|^\s*-\s*\d+\s*-\s*$'                               # standalone page numbers like - 3 -
+    r'|^\s*SALINAN\s*$'                                    # PERDA watermark/copy stamp
+    r'|^\s*(?:www\.)?peraturan\.go\.id\s*$'                # peraturan.go.id watermark
+    r'|^\s*(?:www\.)?djpp\.depkumham\.go\.id\s*$'          # old DJPP watermark (UU 2011-2014)
+    r'|^\s*ditjen\s+Peraturan\s+Perundang-undangan\s*$'   # old ministry dept watermark
+    r'|^\s*file:///\S+\s*$'                                # local file path from PDF printing
+    r'|^\s*\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM)?\s*$'  # print timestamp
+    r'|^\s*\d+\s+of\s+\d+\s*$)',                           # "3 of 32" page counter
     re.MULTILINE | re.IGNORECASE,
 )
+
+
+def _strip_page_header(text: str, page_num: int) -> str:
+    """Strip page headers from a single page's text (before concatenation).
+
+    More reliable than post-concatenation regex because we know position
+    context: first few lines are headers. Handles:
+    - PERMEN/PERBAN: '-2-' or '- 2 -' (top of pages 2+)
+    - PERDA: bare '2' (top of pages 2+)
+    - PERDA: 'SALINAN' watermark at page boundaries
+    - UU: '2022, No.4' gazette headers
+    """
+    if page_num == 0:
+        # Page 1: only strip SALINAN if present as first substantial line
+        lines = text.split('\n')
+        cleaned = []
+        for i, line in enumerate(lines):
+            if i < 3 and line.strip() == 'SALINAN':
+                continue
+            cleaned.append(line)
+        return '\n'.join(cleaned)
+
+    # Pages 2+: strip leading page numbers (any format) and SALINAN
+    # Only strip from the first ~5 lines to avoid false positives
+    lines = text.split('\n')
+    cleaned: list[str] = []
+    header_zone = True
+    for i, line in enumerate(lines):
+        if header_zone and i < 5:
+            stripped = line.strip()
+            # Skip blank lines in header zone
+            if not stripped:
+                cleaned.append(line)
+                continue
+            # Skip page number lines: "- 2 -", "-2-", "2"
+            if re.match(r'^-?\s*\d{1,4}\s*-?$', stripped):
+                continue
+            # Skip gazette headers: "2022, No.4"
+            if re.match(r'^\d{4},\s*No\.\s*\d+', stripped):
+                continue
+            # Skip SALINAN watermark
+            if stripped == 'SALINAN':
+                continue
+            # Skip website/watermark lines
+            if stripped in ('www.peraturan.go.id', 'peraturan.go.id',
+                            'www.djpp.depkumham.go.id'):
+                continue
+            if stripped.lower().startswith('ditjen peraturan'):
+                continue
+            if stripped.startswith('file:///'):
+                continue
+            if re.match(r'^\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}', stripped):
+                continue
+            if re.match(r'^\d+\s+of\s+\d+$', stripped, re.IGNORECASE):
+                continue
+            header_zone = False
+        cleaned.append(line)
+    return '\n'.join(cleaned)
 
 
 def _clean_pdf_text(text: str) -> str:
@@ -79,6 +144,7 @@ def extract_text_pymupdf(pdf_path: str | Path) -> tuple[str, dict]:
             text = page.get_text("text")
 
             if text and len(text.strip()) > 20:
+                text = _strip_page_header(text, page_num)
                 pages.append(text)
             else:
                 stats["empty_pages"] += 1

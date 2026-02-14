@@ -36,6 +36,72 @@ from parser.parse_structure import parse_structure
 PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
 STORAGE_BUCKET = "regulation-pdfs"
 
+# ---- Metadata extraction from detail pages ----
+
+_METADATA_LABEL_MAP = {
+    "pemrakarsa": "pemrakarsa",
+    "tempat penetapan": "tempat_penetapan",
+    "ditetapkan tanggal": "tanggal_penetapan",
+    "pejabat yang menetapkan": "pejabat_penetap",
+    "status": "status",
+    "nomor pengundangan": "nomor_pengundangan",
+    "nomor tambahan": "nomor_tambahan",
+    "tanggal pengundangan": "tanggal_pengundangan",
+    "pejabat pengundangan": "pejabat_pengundangan",
+    "tentang": "tentang",
+}
+
+_INDO_MONTHS = {
+    "januari": 1, "februari": 2, "maret": 3, "april": 4,
+    "mei": 5, "juni": 6, "juli": 7, "agustus": 8,
+    "september": 9, "oktober": 10, "november": 11, "desember": 12,
+}
+
+_STATUS_MAP = {
+    "berlaku": "berlaku", "dicabut": "dicabut",
+    "diubah": "diubah", "tidak berlaku": "tidak_berlaku",
+}
+
+
+def _parse_indo_date(text: str) -> str | None:
+    """Parse '13 Januari 2026' → '2026-01-13'."""
+    parts = text.strip().split()
+    if len(parts) < 3:
+        return None
+    try:
+        day = int(parts[0])
+        month = _INDO_MONTHS.get(parts[1].lower())
+        year = int(parts[2])
+        if month and 1 <= day <= 31 and 1900 <= year <= 2100:
+            return f"{year:04d}-{month:02d}-{day:02d}"
+    except (ValueError, IndexError):
+        pass
+    return None
+
+
+def _extract_metadata_from_soup(soup: BeautifulSoup) -> dict:
+    """Extract metadata from detail page HTML table."""
+    metadata: dict[str, str | None] = {}
+    for row in soup.find_all("tr"):
+        th = row.find("th")
+        td = row.find("td")
+        if not th or not td:
+            continue
+        label = th.get_text(strip=True).lower()
+        value = td.get_text(strip=True)
+        if not value:
+            continue
+        for key_prefix, column in _METADATA_LABEL_MAP.items():
+            if key_prefix in label:
+                if column in ("tanggal_penetapan", "tanggal_pengundangan"):
+                    metadata[column] = _parse_indo_date(value)
+                elif column == "status":
+                    metadata[column] = _STATUS_MAP.get(value.lower(), "berlaku")
+                else:
+                    metadata[column] = value
+                break
+    return metadata
+
 # Bump this when the parser changes significantly to trigger re-extraction.
 # v1: original parser (sort_order * 100 per level — overflows bigint)
 # v2: DFS counter sort_order (1, 2, 3, …) — no overflow possible
@@ -46,14 +112,14 @@ EXTRACTION_VERSION = 4
 
 async def _extract_pdf_url_from_detail_page(
     client: httpx.AsyncClient, detail_url: str
-) -> tuple[str | None, str | None]:
-    """Fetch a regulation detail page and extract the real PDF URL.
+) -> tuple[str | None, dict, str | None]:
+    """Fetch a regulation detail page and extract the real PDF URL + metadata.
 
     peraturan.go.id uses unpredictable PDF filenames (e.g. ps4-2022.pdf
     for perpres-no-4-tahun-2022), so we must scrape the detail page
     to find the actual download link.
 
-    Returns (pdf_url, error_reason) — error_reason is set when extraction fails.
+    Returns (pdf_url, metadata_dict, error_reason).
     """
     def _absolute(href: str) -> str:
         return href if href.startswith("http") else f"https://peraturan.go.id{href}"
@@ -64,9 +130,12 @@ async def _extract_pdf_url_from_detail_page(
             "Accept": "text/html,application/xhtml+xml,*/*",
         })
         if resp.status_code != 200:
-            return None, f"HTTP {resp.status_code}"
+            return None, {}, f"HTTP {resp.status_code}"
 
         soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Extract metadata from the detail page table
+        metadata = _extract_metadata_from_soup(soup)
 
         # Strategy 1: look for "Dokumen Peraturan" row in metadata table
         for row in soup.find_all("tr"):
@@ -77,18 +146,18 @@ async def _extract_pdf_url_from_detail_page(
             if "dokumen" in th.get_text(strip=True).lower():
                 pdf_link = td.find("a", href=re.compile(r"\.pdf", re.IGNORECASE))
                 if pdf_link:
-                    return _absolute(pdf_link["href"]), None
+                    return _absolute(pdf_link["href"]), metadata, None
 
         # Strategy 2: any <a> tag with .pdf or /files/ in href
         for link in soup.find_all("a", href=True):
             href = link["href"]
             if href.endswith(".pdf") or "/files/" in href:
-                return _absolute(href), None
+                return _absolute(href), metadata, None
 
-        return None, "page loaded but no PDF link in HTML"
+        return None, metadata, "page loaded but no PDF link in HTML"
 
     except Exception as e:
-        return None, f"network error: {e}"
+        return None, {}, f"network error: {e}"
 
 
 def _upload_to_storage(db, slug: str, pdf_bytes: bytes) -> str | None:
@@ -141,7 +210,7 @@ def _update_run(run_id: int, stats: dict, status: str = "completed", error: str 
     sb.table("scraper_runs").update(update).eq("id", run_id).execute()
 
 
-def _build_law_dict(job: dict, text: str, nodes: list) -> dict:
+def _build_law_dict(job: dict, text: str, nodes: list, detail_metadata: dict | None = None) -> dict:
     """Build the law dict expected by load_to_supabase from job metadata."""
     reg_type = job.get("regulation_type", "UU")
     number = job.get("number", "")
@@ -149,13 +218,18 @@ def _build_law_dict(job: dict, text: str, nodes: list) -> dict:
     title = job.get("title", f"{reg_type} {number}/{year}")
     frbr_uri = job.get("frbr_uri", f"/akn/id/act/{reg_type.lower()}/{year}/{number}")
 
+    # Use status from detail page metadata if available, else default
+    status = "berlaku"
+    if detail_metadata and detail_metadata.get("status"):
+        status = detail_metadata["status"]
+
     return {
         "frbr_uri": frbr_uri,
         "type": reg_type,
         "number": number,
         "year": year,
         "title_id": title,
-        "status": "berlaku",
+        "status": status,
         "source_url": job.get("url"),
         "source_pdf_url": job.get("pdf_url"),
         "full_text": text,
@@ -163,7 +237,9 @@ def _build_law_dict(job: dict, text: str, nodes: list) -> dict:
     }
 
 
-def _extract_and_load(sb, job: dict, pdf_path: Path) -> tuple[int, int, int]:
+def _extract_and_load(
+    sb, job: dict, pdf_path: Path, detail_metadata: dict | None = None,
+) -> tuple[int, int, int]:
     """Extract text from PDF, parse, and load to Supabase.
 
     Uses the text-first parser pipeline: extract → classify → OCR correct → parse.
@@ -179,7 +255,7 @@ def _extract_and_load(sb, job: dict, pdf_path: Path) -> tuple[int, int, int]:
     text = correct_ocr_errors(text)
 
     nodes = parse_structure(text)
-    law = _build_law_dict(job, text, nodes)
+    law = _build_law_dict(job, text, nodes, detail_metadata=detail_metadata)
 
     work_id = load_work(sb, law)
     if not work_id:
@@ -197,13 +273,13 @@ async def _download_pdf(
     detail_url: str,
     stored_pdf_url: str | None,
     dest: Path,
-) -> str:
+) -> tuple[str, dict]:
     """Download a PDF by resolving its URL from the detail page.
 
     Tries the detail page first to find the real PDF URL, then falls
     back to the stored URL. Writes the PDF to dest.
 
-    Returns the confirmed working PDF URL.
+    Returns (confirmed_pdf_url, detail_metadata).
     Raises ValueError if no valid PDF can be downloaded.
     """
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -213,7 +289,7 @@ async def _download_pdf(
     # Resolve the real PDF URL from the detail page.
     # peraturan.go.id uses unpredictable filenames, so guessing from slugs fails.
     print(f"    Fetching detail page: {detail_url}")
-    real_pdf_url, extract_err = await _extract_pdf_url_from_detail_page(client, detail_url)
+    real_pdf_url, detail_metadata, extract_err = await _extract_pdf_url_from_detail_page(client, detail_url)
     if real_pdf_url:
         print(f"    PDF URL from detail page: {real_pdf_url}")
     else:
@@ -258,7 +334,7 @@ async def _download_pdf(
 
         dest.write_bytes(resp.content)
         print(f"    Downloaded {len(resp.content):,} bytes from {attempt_url}")
-        return attempt_url
+        return attempt_url, detail_metadata
 
     raise ValueError(
         f"PDF download failed | tried: {candidates} | errors: {attempt_errors}"
@@ -313,6 +389,7 @@ async def process_jobs(
                 now = datetime.now(timezone.utc).isoformat()
 
                 # 1. Download PDF (or use cached copy)
+                detail_metadata: dict = {}
                 if pdf_path.exists() and pdf_path.stat().st_size >= 1000:
                     existing_hash = job.get("pdf_hash")
                     local_hash = _sha256(pdf_path)
@@ -320,8 +397,12 @@ async def process_jobs(
                         print(f"    Using cached PDF (hash match: {local_hash[:12]}...)")
                     else:
                         print(f"    PDF exists locally, computing hash...")
+                    # Still fetch metadata from detail page for cached PDFs
+                    _, detail_metadata, _ = await _extract_pdf_url_from_detail_page(
+                        client, detail_url,
+                    )
                 else:
-                    confirmed_url = await _download_pdf(
+                    confirmed_url, detail_metadata = await _download_pdf(
                         client, detail_url, job.get("pdf_url"), pdf_path,
                     )
                     local_hash = _sha256(pdf_path)
@@ -348,7 +429,21 @@ async def process_jobs(
                     print(f"    Uploaded to storage: {slug}.pdf")
 
                 # 2. Extract, parse, load
-                work_id, pasal_count, chunk_count = _extract_and_load(sb, job, pdf_path)
+                work_id, pasal_count, chunk_count = _extract_and_load(
+                    sb, job, pdf_path, detail_metadata=detail_metadata,
+                )
+
+                # 2b. Update works with detail page metadata
+                if detail_metadata and work_id:
+                    update_fields = {k: v for k, v in detail_metadata.items() if v is not None}
+                    if slug:
+                        update_fields["slug"] = slug
+                    if update_fields:
+                        try:
+                            db.table("works").update(update_fields).eq("id", work_id).execute()
+                            print(f"    Metadata: {', '.join(update_fields.keys())}")
+                        except Exception as e:
+                            print(f"    Warning: metadata update failed: {e}")
 
                 # 3. Mark as loaded with extraction version + storage URL
                 loaded_update: dict = {
