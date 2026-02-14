@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Instrument_Serif, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import PasalLogo from "@/components/PasalLogo";
+import MotionProvider from "@/components/MotionProvider";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -96,10 +97,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
+      <head>
+        <meta name="theme-color" content="#F8F5F0" />
+      </head>
       <body
         className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} antialiased font-sans`}
       >
-        {children}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        >
+          Langsung ke konten utama
+        </a>
+        <MotionProvider>
+          <main id="main-content">{children}</main>
+        </MotionProvider>
         <footer className="border-t mt-16 py-8 px-4">
           <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
@@ -107,7 +119,7 @@ export default function RootLayout({
                 <Link key={href} href={href} className={footerLinkClass}>{label}</Link>
               ))}
               <a href="https://github.com/ilhamfp/pasal" target="_blank" rel="noopener noreferrer"
-                 className={footerLinkClass}>GitHub</a>
+                 className={footerLinkClass}>GitHub<span className="sr-only"> (buka tab baru)</span></a>
             </div>
             <div className="mt-6 flex flex-col items-center gap-3 text-xs text-muted-foreground">
               <PasalLogo size={24} className="text-muted-foreground/60" />
@@ -115,10 +127,10 @@ export default function RootLayout({
                 <p>
                   Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
                   <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer"
-                     className="underline text-primary hover:text-primary/80">peraturan.go.id</a>{" "}
+                     className="underline text-primary hover:text-primary/80">peraturan.go.id<span className="sr-only"> (buka tab baru)</span></a>{" "}
                   untuk kepastian hukum.
                 </p>
-                <p>&copy; {new Date().getFullYear()} Pasal.id — Platform Hukum Indonesia Terbuka</p>
+                <p suppressHydrationWarning>&copy; {new Date().getFullYear()} Pasal.id — Platform Hukum Indonesia Terbuka</p>
               </div>
             </div>
           </div>

@@ -7,26 +7,26 @@ import RevealOnScroll from "./RevealOnScroll";
 export default async function BrowseSection() {
   const supabase = await createClient();
 
-  const { data: types } = await supabase
-    .from("regulation_types")
-    .select("id, code, name_id, hierarchy_level")
-    .order("hierarchy_level");
+  const [{ data: types }, { data: allWorks }] = await Promise.all([
+    supabase
+      .from("regulation_types")
+      .select("id, code, name_id, hierarchy_level")
+      .order("hierarchy_level"),
+    supabase.from("works").select("regulation_type_id"),
+  ]);
 
-  const typesWithCounts = (
-    await Promise.all(
-      (types || []).map(async (t) => {
-        const { count } = await supabase
-          .from("works")
-          .select("id", { count: "exact", head: true })
-          .eq("regulation_type_id", t.id);
-        return {
-          ...t,
-          count: count || 0,
-          label: TYPE_LABELS[t.code] || t.name_id,
-        };
-      }),
-    )
-  )
+  // Count works per type client-side instead of N+1 queries
+  const countsByType = new Map<number, number>();
+  for (const w of allWorks || []) {
+    countsByType.set(w.regulation_type_id, (countsByType.get(w.regulation_type_id) || 0) + 1);
+  }
+
+  const typesWithCounts = (types || [])
+    .map((t) => ({
+      ...t,
+      count: countsByType.get(t.id) || 0,
+      label: TYPE_LABELS[t.code] || t.name_id,
+    }))
     .filter((t) => t.count > 0)
     .slice(0, 6); // Show top 6 on landing page
 
@@ -51,7 +51,7 @@ export default async function BrowseSection() {
                 className="rounded-lg border bg-card p-5 hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <FileText className="h-5 w-5 text-primary/60" />
+                  <FileText className="h-5 w-5 text-primary/60" aria-hidden="true" />
                   <span className="font-heading text-xl text-primary">
                     {type.count.toLocaleString("id-ID")}
                   </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import PasalLogo from "@/components/PasalLogo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
@@ -8,34 +8,34 @@ import SearchSuggestions from "./SearchSuggestions";
 
 export default function HeroSection() {
   return (
-    <motion.section
+    <m.section
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="flex flex-col items-center justify-center px-4 pb-24 pt-28 sm:pb-32 sm:pt-36"
     >
       <div className="flex flex-col items-center gap-6 text-center">
-        <motion.div variants={fadeUp}>
+        <m.div variants={fadeUp}>
           <PasalLogo size={64} className="text-foreground" />
-        </motion.div>
-        <motion.h1
+        </m.div>
+        <m.h1
           variants={fadeUp}
-          className="font-heading text-5xl leading-[1.1] tracking-tight sm:text-7xl"
+          className="font-heading text-5xl leading-[1.1] tracking-tight text-balance sm:text-7xl"
         >
           Temukan pasal yang Anda butuhkan
-        </motion.h1>
-        <motion.p variants={fadeUp} className="text-muted-foreground">
+        </m.h1>
+        <m.p variants={fadeUp} className="text-muted-foreground">
           <em className="font-heading text-2xl sm:text-3xl">
             Hukum Indonesia, terbuka untuk semua
           </em>
-        </motion.p>
-        <motion.div variants={fadeUp} className="mt-2 w-full max-w-2xl">
+        </m.p>
+        <m.div variants={fadeUp} className="mt-2 w-full max-w-2xl">
           <SearchBar autoFocus />
-        </motion.div>
-        <motion.div variants={fadeUp}>
+        </m.div>
+        <m.div variants={fadeUp}>
           <SearchSuggestions />
-        </motion.div>
+        </m.div>
       </div>
-    </motion.section>
+    </m.section>
   );
 }

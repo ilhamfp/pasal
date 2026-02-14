@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +25,7 @@ export default function SearchBar({
   }
 
   return (
-    <motion.form
+    <m.form
       onSubmit={handleSubmit}
       className="flex w-full max-w-2xl gap-2"
       animate={{ scale: isFocused ? 1.02 : 1 }}
@@ -33,7 +33,9 @@ export default function SearchBar({
     >
       <Input
         type="search"
-        placeholder='Cari hukum Indonesia... (cth: "ketenagakerjaan", "perkawinan")'
+        name="q"
+        aria-label="Cari hukum Indonesia"
+        placeholder={'Cari hukum Indonesia\u2026 (cth: "ketenagakerjaan", "perkawinan")'}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="h-12 text-base"
@@ -44,6 +46,6 @@ export default function SearchBar({
       <Button type="submit" size="lg" className="h-12 px-6">
         Cari
       </Button>
-    </motion.form>
+    </m.form>
   );
 }

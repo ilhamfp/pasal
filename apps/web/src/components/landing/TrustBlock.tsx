@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { EASE_OUT } from "@/lib/motion";
 import PasalLogo from "@/components/PasalLogo";
 
@@ -52,40 +52,40 @@ export default function TrustBlock() {
   return (
     <section ref={ref} className="border-t py-16 sm:py-20">
       <div className="mx-auto max-w-2xl px-4">
-        <motion.h2
+        <m.h2
           initial={{ opacity: 0, y: 16 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, ease: EASE_OUT }}
           className="font-heading text-center text-3xl tracking-tight sm:text-4xl"
         >
           Sumber &amp; Transparansi
-        </motion.h2>
+        </m.h2>
 
-        <motion.div
+        <m.div
           variants={container}
           initial="hidden"
           animate={isInView ? "show" : "hidden"}
           className="mt-10 space-y-6"
         >
           {ITEMS.map((item) => (
-            <motion.div
+            <m.div
               key={item.title}
               variants={slideIn}
               className="flex gap-4"
             >
-              <motion.span
+              <m.span
                 variants={dotPop}
                 className="mt-0.5 shrink-0 text-primary"
               >
                 <PasalLogo size={18} />
-              </motion.span>
+              </m.span>
               <div>
                 <p className="font-medium">{item.title}</p>
                 <p className="mt-1 text-muted-foreground">{item.detail}</p>
               </div>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );
