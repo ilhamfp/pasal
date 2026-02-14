@@ -131,6 +131,16 @@ export default function KoreksiEditor({
     }
   }, [hasChanges, currentContent, suggestedContent, reason, email, workId, nodeId, nodeType, nodeNumber, getMetadata]);
 
+  // Hooks must be called before any early return (Rules of Hooks)
+  const diffOps = useMemo(
+    () => viewMode === "diff" ? computeDiff(currentContent, suggestedContent) : [],
+    [viewMode, currentContent, suggestedContent],
+  );
+  const stats = useMemo(
+    () => viewMode === "diff" ? diffStats(diffOps) : null,
+    [viewMode, diffOps],
+  );
+
   if (status === "success") {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -155,15 +165,6 @@ export default function KoreksiEditor({
       </div>
     );
   }
-
-  const diffOps = useMemo(
-    () => viewMode === "diff" ? computeDiff(currentContent, suggestedContent) : [],
-    [viewMode, currentContent, suggestedContent],
-  );
-  const stats = useMemo(
-    () => viewMode === "diff" ? diffStats(diffOps) : null,
-    [viewMode, diffOps],
-  );
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -397,6 +398,7 @@ export default function KoreksiEditor({
               type="text"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              maxLength={2000}
               className="w-full rounded-lg border bg-card px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-1 outline-none"
               placeholder="Contoh: Typo pada ayat (2), huruf besar salah"
             />
