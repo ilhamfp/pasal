@@ -298,25 +298,26 @@ def render_page_images(sb, pdf_path: Path, slug: str) -> int:
 
     bucket = sb.storage.from_("regulation-pdfs")
     doc = pymupdf.open(str(pdf_path))
-    count = 0
+    try:
+        count = 0
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            pix = page.get_pixmap(dpi=150)
+            png_bytes = pix.tobytes("png")
 
-    for page_num in range(len(doc)):
-        page = doc[page_num]
-        pix = page.get_pixmap(dpi=150)
-        png_bytes = pix.tobytes("png")
+            storage_path = f"{slug}/page-{page_num + 1}.png"
+            try:
+                bucket.upload(
+                    storage_path, png_bytes,
+                    {"content-type": "image/png", "upsert": "true"},
+                )
+                count += 1
+            except Exception as e:
+                print(f"  Page image upload error ({storage_path}): {e}")
 
-        storage_path = f"{slug}/page-{page_num + 1}.png"
-        try:
-            bucket.upload(
-                storage_path, png_bytes,
-                {"content-type": "image/png", "upsert": "true"},
-            )
-            count += 1
-        except Exception as e:
-            print(f"  Page image upload error ({storage_path}): {e}")
-
-    doc.close()
-    return count
+        return count
+    finally:
+        doc.close()
 
 
 def cleanup_work_data(sb, work_id: int) -> None:
