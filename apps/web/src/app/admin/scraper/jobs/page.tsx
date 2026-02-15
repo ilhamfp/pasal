@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-auth";
+import { formatRegRef } from "@/lib/legal-status";
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
@@ -118,7 +119,7 @@ async function JobsList({ status, type, page }: { status?: string; type?: string
                     <span className="font-mono text-xs">{job.regulation_type || "—"}</span>
                   </td>
                   <td className="py-2 pr-3 font-mono text-xs">
-                    {job.number && job.year ? `${job.number}/${job.year}` : "—"}
+                    {job.number && job.year ? formatRegRef(job.regulation_type || "", job.number, job.year, { label: "compact" }) : "—"}
                   </td>
                   <td className="py-2 pr-3 max-w-xs truncate text-xs" title={job.title || ""}>
                     {job.title || "—"}

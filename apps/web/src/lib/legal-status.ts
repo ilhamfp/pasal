@@ -37,6 +37,32 @@ export const TYPE_LABELS: Record<string, string> = {
   UUDS: "Undang-Undang Dasar Sementara",
 };
 
+/** Types where "Nomor X" doesn't apply (constitutions, TAP MPR, etc.) */
+const NO_NOMOR_TYPES = new Set(["UUD", "UUDS"]);
+
+/**
+ * Format a regulation reference. Omits "Nomor {number}" for types without
+ * regulation numbers (UUD, UUDS).
+ *
+ * label variants:
+ *  - "compact": "UU 13/2003"  or "UUD 1945"
+ *  - "short":   "UU Nomor 13 Tahun 2003" or "UUD Tahun 1945"
+ *  - "long":    "Undang-Undang Nomor 13 Tahun 2003" or "Undang-Undang Dasar Tahun 1945"
+ */
+export function formatRegRef(
+  type: string,
+  number: string | null | undefined,
+  year: number,
+  { label = "short" }: { label?: "compact" | "short" | "long" } = {}
+): string {
+  const typeStr = label === "long" ? (TYPE_LABELS[type.toUpperCase()] || type.toUpperCase()) : type.toUpperCase();
+  const noNomor = NO_NOMOR_TYPES.has(type.toUpperCase()) || !number;
+  if (label === "compact") {
+    return noNomor ? `${typeStr} ${year}` : `${typeStr} ${number}/${year}`;
+  }
+  return noNomor ? `${typeStr} Tahun ${year}` : `${typeStr} Nomor ${number} Tahun ${year}`;
+}
+
 export const LEGAL_FORCE_MAP: Record<string, string> = {
   berlaku: "InForce",
   diubah: "InForce",

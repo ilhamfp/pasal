@@ -87,7 +87,7 @@
     "clearFilters": "Clear filters"
   },
   "reader": {
-    "readFullText": "Read the full text of {type} Number {number} of {year} regarding {title}.",
+    "readFullText": "Read the full text of {ref} regarding {title}.",
     "number": "Number",
     "year": "Year",
     "viewInReader": "View in Reader",

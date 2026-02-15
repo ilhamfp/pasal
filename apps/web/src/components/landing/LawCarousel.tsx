@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { m } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, STATUS_LABELS, formatRegRef } from "@/lib/legal-status";
 
 export type LawData = {
   id: string;
@@ -74,7 +74,7 @@ const CarouselCard = memo(function CarouselCard({
           {law.titleId}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          {law.regType} No. {law.number} Tahun {law.year}
+          {formatRegRef(law.regType, law.number, law.year)}
         </p>
         <p className="mt-2 font-heading text-sm italic text-muted-foreground">
           &ldquo;{law.tagline}&rdquo;

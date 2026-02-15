@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { workPath } from "@/lib/work-url";
+import { formatRegRef } from "@/lib/legal-status";
 
 interface TimelineNode {
   year: number;
@@ -100,14 +101,14 @@ export default function AmendmentTimeline({
               <p className="text-xs text-muted-foreground">{node.year}</p>
               {node.isCurrent ? (
                 <p className="text-sm font-medium">
-                  {node.type} {node.number}/{node.year}
+                  {formatRegRef(node.type, node.number, node.year, { label: "compact" })}
                 </p>
               ) : (
                 <Link
                   href={node.href}
                   className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                 >
-                  {node.type} {node.number}/{node.year}
+                  {formatRegRef(node.type, node.number, node.year, { label: "compact" })}
                 </Link>
               )}
               <p className="text-xs text-muted-foreground mt-0.5">

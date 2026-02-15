@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, STATUS_LABELS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import AdminActions from "./AdminActions";
 
@@ -92,7 +92,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
       {/* Title */}
       <div className="mb-8">
         <h1 className="text-3xl font-heading mb-2">
-          {regType.code} No. {work.number} Tahun {work.year}
+          {formatRegRef(regType.code, work.number, work.year)}
         </h1>
         <p className="text-muted-foreground">{work.title_id}</p>
         {work.status && (
@@ -121,7 +121,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Nomor/Tahun</dt>
-                  <dd className="font-mono">{work.number}/{work.year}</dd>
+                  <dd className="font-mono">{formatRegRef(regType.code, work.number, work.year, { label: "compact" })}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">FRBR URI</dt>

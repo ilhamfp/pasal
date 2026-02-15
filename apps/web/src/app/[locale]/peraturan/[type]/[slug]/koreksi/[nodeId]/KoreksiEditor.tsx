@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { computeDiff, diffStats, type DiffOp, type DiffStats } from "@/components/suggestions/diff-utils";
 import { useCorrectionTimer } from "@/components/suggestions/use-correction-timer";
+import { formatRegRef } from "@/lib/legal-status";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -548,7 +549,7 @@ export default function KoreksiEditor({
               {t("pageTitle", { number: nodeNumber })}
             </h1>
             <p className="text-xs text-muted-foreground truncate">
-              {regType} No. {lawNumber} Tahun {lawYear} | {lawTitle}
+              {formatRegRef(regType, lawNumber, lawYear)} | {lawTitle}
             </p>
           </div>
         </div>

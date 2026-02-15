@@ -1,6 +1,6 @@
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, STATUS_LABELS, formatRegRef } from "@/lib/legal-status";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { workPath } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
@@ -60,7 +60,7 @@ export default async function FeaturedArticlePreview() {
               {STATUS_LABELS[work.status] || work.status}
             </Badge>
             <span className="font-mono text-xs text-muted-foreground">
-              {regCode} No. {work.number} Tahun {work.year}
+              {formatRegRef(regCode, work.number, work.year)}
             </span>
           </div>
 

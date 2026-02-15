@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import { STATUS_COLORS, TYPE_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { workPath } from "@/lib/work-url";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
@@ -184,7 +184,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="font-heading text-base mb-1 truncate">
-                    {typeCode} No. {work.number} Tahun {work.year}
+                    {formatRegRef(typeCode, work.number, work.year)}
                   </h2>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {work.title_id}

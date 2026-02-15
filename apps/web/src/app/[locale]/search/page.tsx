@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import type { ChunkResult } from "@/lib/group-search-results";
 import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
-import { STATUS_COLORS } from "@/lib/legal-status";
+import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 import { workSlug, workPath } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
 import { getAlternates } from "@/lib/i18n-metadata";
@@ -201,7 +201,7 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="secondary">{regType}</Badge>
                     <CardTitle className="text-base">
-                      {regType} {work.number}/{work.year}
+                      {formatRegRef(regType, work.number, work.year, { label: "compact" })}
                     </CardTitle>
                     <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
                       {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
@@ -324,7 +324,7 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="secondary">{regType}</Badge>
                     <h2 className="font-heading text-base truncate">
-                      {regType} No. {work.number} Tahun {work.year}
+                      {formatRegRef(regType, work.number, work.year)}
                     </h2>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">

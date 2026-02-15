@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { TYPE_LABELS } from "@/lib/legal-status";
+import { formatRegRef } from "@/lib/legal-status";
 
 interface CitationButtonProps {
   type: string;
@@ -21,8 +21,7 @@ interface CitationButtonProps {
 export default function CitationButton({ type, number, year, title, url }: CitationButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const formalType = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
-  const citation = `${formalType} Nomor ${number} Tahun ${year} tentang ${title}\nTersedia di: ${url}`;
+  const citation = `${formatRegRef(type, number, year, { label: "long" })} tentang ${title}\nTersedia di: ${url}`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(citation);

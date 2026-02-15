@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/routing";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import { TOPICS } from "@/data/topics";
+import { formatRegRef } from "@/lib/legal-status";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -67,7 +68,7 @@ export default async function TopicsPage({ params }: PageProps) {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {t("questionsCount", { count: topic.questions.length })} •{" "}
-                        {topic.relatedLaws.map((l) => `${l.type} ${l.number}/${l.year}`).join(", ")}
+                        {topic.relatedLaws.map((l) => formatRegRef(l.type, l.number, l.year, { label: "compact" })).join(", ")}
                       </p>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { formatRegRef } from "@/lib/legal-status";
 
 export const runtime = "edge";
 
@@ -77,7 +78,7 @@ function lawTemplate({
               fontFamily: "Instrument Sans",
             }}
           >
-            {type} {number}/{year}
+            {formatRegRef(type, number, Number(year), { label: "compact" })}
           </span>
           <span
             style={{

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, STATUS_LABELS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
 
 const PAGE_SIZE = 30;
@@ -247,7 +247,7 @@ async function RegulationList({
                           href={`/admin/peraturan/${work.id}`}
                           className="font-mono text-xs text-primary hover:underline"
                         >
-                          {work.number}/{work.year}
+                          {formatRegRef(typeCode, work.number, work.year, { label: "compact" })}
                         </Link>
                       </td>
                       <td

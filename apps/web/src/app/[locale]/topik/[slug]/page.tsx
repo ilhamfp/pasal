@@ -10,6 +10,7 @@ import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { getTopicBySlug, TOPICS } from "@/data/topics";
 import { workSlug as makeWorkSlug } from "@/lib/work-url";
+import { formatRegRef } from "@/lib/legal-status";
 import { getAlternates } from "@/lib/i18n-metadata";
 
 export function generateStaticParams() {
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations({ locale: locale as Locale, namespace: "topics" });
 
   const lawList = topic.relatedLaws
-    .map((l) => `${l.type} ${l.number}/${l.year}`)
+    .map((l) => formatRegRef(l.type, l.number, l.year, { label: "compact" }))
     .join(", ");
 
   return {
@@ -96,7 +97,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
                   href={`/peraturan/${law.type.toLowerCase()}/${lawSlug}`}
                 >
                   <Badge variant="secondary" className="hover:bg-primary/10 transition-colors cursor-pointer">
-                    {law.type} {law.number}/{law.year}: {law.title}
+                    {formatRegRef(law.type, law.number, law.year, { label: "compact" })}: {law.title}
                   </Badge>
                 </Link>
               );

@@ -87,7 +87,7 @@
     "clearFilters": "Hapus filter"
   },
   "reader": {
-    "readFullText": "Baca teks lengkap {type} Nomor {number} Tahun {year} tentang {title}.",
+    "readFullText": "Baca teks lengkap {ref} tentang {title}.",
     "number": "Nomor",
     "year": "Tahun",
     "viewInReader": "Lihat di Reader",

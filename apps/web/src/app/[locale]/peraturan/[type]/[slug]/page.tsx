@@ -5,7 +5,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
+import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
@@ -77,11 +77,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // TYPE_LABELS stay in Indonesian — they are official legal nomenclature
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
-  const title = `${work.title_id} | ${typeLabel} No. ${work.number} Tahun ${work.year}`;
+  const title = `${work.title_id} | ${formatRegRef(type, work.number, work.year, { label: "long" })}`;
+  const regRef = formatRegRef(type, work.number, work.year, { label: "long" });
   const description = t("readFullText", {
-    type: typeLabel,
-    number: work.number,
-    year: work.year,
+    ref: regRef,
     title: work.title_id,
   }) + ` Status: ${statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}.`;
   const path = `/peraturan/${type.toLowerCase()}/${slug}`;
@@ -336,7 +335,7 @@ async function LawReaderSection({
             <h3 className="font-heading text-sm mb-3">Bagikan</h3>
             <ShareButton
               url={pageUrl}
-              title={`${type.toUpperCase()} ${work.number}/${work.year} — ${work.title_id}`}
+              title={`${formatRegRef(type, work.number, work.year)} — ${work.title_id}`}
             />
           </div>
 
@@ -400,7 +399,7 @@ export default async function LawDetailPage({ params }: PageProps) {
     itemListElement: [
       { "@type": "ListItem", position: 1, name: t("breadcrumbHome"), item: "https://pasal.id" },
       { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
-      { "@type": "ListItem", position: 3, name: `${type.toUpperCase()} ${work.number}/${work.year}` },
+      { "@type": "ListItem", position: 3, name: formatRegRef(type, work.number, work.year) },
     ],
   };
 
@@ -441,14 +440,14 @@ export default async function LawDetailPage({ params }: PageProps) {
               />
               <ShareButton
                 url={pageUrl}
-                title={`${type.toUpperCase()} ${work.number}/${work.year} — ${work.title_id}`}
-                description={`Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year}.`}
+                title={`${formatRegRef(type, work.number, work.year)} — ${work.title_id}`}
+                description={`Baca teks lengkap ${formatRegRef(type, work.number, work.year, { label: "long" })}.`}
               />
             </div>
           </div>
           <h1 className="font-heading text-2xl mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
-            {type.toUpperCase()} Nomor {work.number} Tahun {work.year}
+            {formatRegRef(type, work.number, work.year)}
           </p>
         </div>
 
