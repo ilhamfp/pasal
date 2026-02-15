@@ -9,14 +9,14 @@ import CopyButton from "@/components/CopyButton";
 import MCPDemo from "@/components/connect/MCPDemo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp/";
-const INSTALL_CMD = `claude mcp add pasal-id --transport http --url ${MCP_URL}`;
+const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp";
+const INSTALL_CMD = `claude mcp add --transport http pasal-id ${MCP_URL}`;
 
 const CLAUDE_DESKTOP_CONFIG = `{
   "mcpServers": {
     "pasal-id": {
       "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-proxy", "https://pasal-mcp-server-production.up.railway.app/mcp/"]
+      "args": ["-y", "@anthropic-ai/mcp-proxy", "https://pasal-mcp-server-production.up.railway.app/mcp"]
     }
   }
 }`;

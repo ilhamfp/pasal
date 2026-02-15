@@ -36,7 +36,7 @@ Pasal.id transforms Indonesia's legal corpus into structured, searchable data â€
 ### Connect Claude in one command
 
 ```bash
-claude mcp add pasal-id --transport http --url https://pasal-mcp-server-production.up.railway.app/mcp/
+claude mcp add --transport http pasal-id https://pasal-mcp-server-production.up.railway.app/mcp
 ```
 
 Then ask Claude:

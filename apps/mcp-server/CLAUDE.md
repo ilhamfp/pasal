@@ -71,3 +71,4 @@ Prefers anon key (read-only via RLS) over service role key. The server only read
 - **Amendment relationship codes are hardcoded:** `{"mengubah", "diubah_oleh", "mencabut", "dicabut_oleh"}`. Any new relationship types in the DB won't auto-classify.
 - **No Pydantic models for responses.** Tool return values are plain dicts/lists (pydantic is a FastMCP dependency, not used directly). FastMCP handles JSON serialization.
 - **Tests mock Supabase at import time.** The mock patches `supabase.create_client` before `server.py` is imported. A `_reset()` fixture clears caches and rate limiters between tests.
+- **No trailing slash on `/mcp` endpoint.** `/mcp/` triggers a Starlette 307 redirect that downgrades HTTPS→HTTP (Railway terminates TLS upstream), which breaks Claude Code's HTTP transport and triggers failed OAuth discovery.

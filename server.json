@@ -4,7 +4,7 @@
   "description": "Search and access Indonesian legislation with structured data and real citations.",
   "version": "1.0.0",
   "transport": "http",
-  "url": "https://pasal-mcp-server-production.up.railway.app/mcp/",
+  "url": "https://pasal-mcp-server-production.up.railway.app/mcp",
   "tools": [
     { "name": "search_laws", "description": "Full-text search across Indonesian legislation" },
     { "name": "get_pasal", "description": "Retrieve a specific article from a specific law" },

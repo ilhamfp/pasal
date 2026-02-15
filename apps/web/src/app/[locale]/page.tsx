@@ -145,8 +145,8 @@ export default async function HomePage({
                   {devT("mcpTitle")}
                 </p>
                 <code className="block break-all rounded bg-black/30 px-3 py-2 font-mono text-sm text-[#96C3B1]">
-                  claude mcp add pasal-id --transport http --url
-                  https://pasal-mcp-server-production.up.railway.app/mcp/
+                  claude mcp add --transport http pasal-id
+                  https://pasal-mcp-server-production.up.railway.app/mcp
                 </code>
                 <p className="mt-3 text-sm text-[#958D88]">
                   {devT("mcpGuide")}
