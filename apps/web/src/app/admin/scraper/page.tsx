@@ -49,7 +49,7 @@ async function DashboardContent() {
   const regTypeList = regTypes || [];
 
   // Run all queries in parallel — use head-only counts instead of fetching rows
-  const [countResults, worksResult, chunksResult, runsResult, crawlTypeResults, worksTypeResults] =
+  const [countResults, worksResult, pasalResult, ayatResult, otherNodesResult, runsResult, crawlTypeResults, worksTypeResults] =
     await Promise.all([
       // Job counts by status — 6 head-only counts
       Promise.all(
@@ -62,11 +62,21 @@ async function DashboardContent() {
       ),
       // Works total (head-only)
       supabase.from("works").select("id", { count: "exact", head: true }),
-      // Searchable nodes total (head-only)
+      // Pasal count (head-only)
       supabase
         .from("document_nodes")
         .select("id", { count: "exact", head: true })
-        .in("node_type", ["pasal","ayat","preamble","content","aturan","penjelasan_umum","penjelasan_pasal"]),
+        .eq("node_type", "pasal"),
+      // Ayat count (head-only)
+      supabase
+        .from("document_nodes")
+        .select("id", { count: "exact", head: true })
+        .eq("node_type", "ayat"),
+      // Other searchable nodes (preamble, content, aturan, penjelasan)
+      supabase
+        .from("document_nodes")
+        .select("id", { count: "exact", head: true })
+        .in("node_type", ["preamble", "content", "aturan", "penjelasan_umum", "penjelasan_pasal"]),
       // Recent runs (10 rows)
       supabase
         .from("scraper_runs")
@@ -100,7 +110,9 @@ async function DashboardContent() {
   const totalJobs = Object.values(jobCounts).reduce((a, b) => a + b, 0);
 
   const worksCount = worksResult.count;
-  const searchableNodesCount = chunksResult.count;
+  const pasalCount = pasalResult.count;
+  const ayatCount = ayatResult.count;
+  const otherNodesCount = otherNodesResult.count;
   const runs = runsResult.data;
 
   // Build merged type breakdown from parallel count results
@@ -167,12 +179,38 @@ async function DashboardContent() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-sans text-muted-foreground">
-              Pasal &amp; Ayat
+              Pasal
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-heading">
-              {(searchableNodesCount || 0).toLocaleString()}
+              {(pasalCount || 0).toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-sans text-muted-foreground">
+              Ayat
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-heading">
+              {(ayatCount || 0).toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-sans text-muted-foreground">
+              Node Lainnya
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-heading">
+              {(otherNodesCount || 0).toLocaleString()}
             </p>
           </CardContent>
         </Card>
