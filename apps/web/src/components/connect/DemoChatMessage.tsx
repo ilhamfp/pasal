@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { EASE_OUT } from "@/lib/motion";
+import { parseInlineLinks } from "@/lib/mcp-demo/parse-links";
 import DemoTypingEffect from "./DemoTypingEffect";
 
 type Props = {
@@ -43,7 +44,7 @@ export default function DemoChatMessage({ role, text, revealedWords, isActive }:
           /* Render newlines as paragraphs for completed assistant messages */
           <div className="space-y-2">
             {text.split("\n\n").map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
+              <p key={i}>{parseInlineLinks(paragraph)}</p>
             ))}
           </div>
         )}

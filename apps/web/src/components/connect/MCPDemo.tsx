@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, useInView } from "framer-motion";
+import { Pause, Play } from "lucide-react";
 import { EASE_OUT } from "@/lib/motion";
 import { DEMO_SCRIPT } from "@/lib/mcp-demo/script";
 import { useAnimation } from "@/lib/mcp-demo/use-animation";
@@ -14,7 +15,12 @@ export default function MCPDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: false, margin: "-100px" });
-  const { state, start, stop } = useAnimation(DEMO_SCRIPT);
+  const { state, start, pause, resume } = useAnimation(DEMO_SCRIPT);
+
+  /** Whether the user has manually paused the demo. */
+  const [userPaused, setUserPaused] = useState(false);
+  /** Whether the demo has started at least once (to distinguish initial load from resume). */
+  const hasStartedRef = useRef(false);
 
   // Track reduced-motion preference
   const [prefersReduced, setPrefersReduced] = useState(false);
@@ -26,15 +32,34 @@ export default function MCPDemo() {
     return () => mql.removeEventListener("change", handler);
   }, []);
 
-  // Start/stop based on viewport visibility
+  // Start/stop based on viewport visibility, respecting user pause
   useEffect(() => {
     if (prefersReduced) return;
+
     if (isInView) {
-      start();
+      if (userPaused) return; // User explicitly paused — don't auto-resume
+      if (hasStartedRef.current) {
+        resume();
+      } else {
+        hasStartedRef.current = true;
+        start();
+      }
     } else {
-      stop();
+      if (!userPaused) {
+        pause();
+      }
     }
-  }, [isInView, prefersReduced, start, stop]);
+  }, [isInView, prefersReduced, userPaused, start, pause, resume]);
+
+  const togglePause = useCallback(() => {
+    if (state.isPlaying) {
+      setUserPaused(true);
+      pause();
+    } else {
+      setUserPaused(false);
+      resume();
+    }
+  }, [state.isPlaying, pause, resume]);
 
   // Auto-scroll to bottom as new steps appear
   useEffect(() => {
@@ -83,9 +108,18 @@ export default function MCPDemo() {
               Claude — Pasal.id MCP
             </span>
           </div>
-          {state.isPlaying && (
-            <span className="h-2 w-2 rounded-full bg-status-berlaku animate-pulse" aria-hidden="true" />
-          )}
+          <div className="flex items-center gap-2">
+            {state.isPlaying && (
+              <span className="h-2 w-2 rounded-full bg-status-berlaku animate-pulse" aria-hidden="true" />
+            )}
+            <button
+              onClick={togglePause}
+              className="text-muted-foreground hover:text-primary transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 p-0.5"
+              aria-label={state.isPlaying ? "Jeda demo" : "Lanjutkan demo"}
+            >
+              {state.isPlaying ? <Pause size={14} /> : <Play size={14} />}
+            </button>
+          </div>
         </div>
 
         {/* Chat area */}
