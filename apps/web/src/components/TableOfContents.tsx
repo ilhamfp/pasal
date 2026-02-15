@@ -75,8 +75,8 @@ function TocContent({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
-              {bab.heading && bab.node_type !== "aturan" && (
+              {bab.node_type === "aturan" ? bab.number : bab.node_type === "lampiran" ? "LAMPIRAN" : `BAB ${bab.number}`}
+              {bab.heading && bab.node_type !== "aturan" && bab.node_type !== "lampiran" && (
                 <span className="block text-xs font-normal truncate">
                   {bab.heading}
                 </span>

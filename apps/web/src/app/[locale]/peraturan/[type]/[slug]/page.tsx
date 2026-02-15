@@ -216,7 +216,7 @@ async function LawReaderSection({
         .from("document_nodes")
         .select("id, node_type, number, heading, parent_id, sort_order")
         .eq("work_id", workId)
-        .in("node_type", ["bab", "aturan", "bagian", "paragraf"])
+        .in("node_type", ["bab", "aturan", "bagian", "paragraf", "lampiran"])
         .order("sort_order"),
       supabase
         .from("document_nodes")
@@ -249,7 +249,7 @@ async function LawReaderSection({
         .order("id"),
     ]);
     const allNodes = nodes || [];
-    structuralNodes = allNodes.filter((n) => n.node_type === "bab" || n.node_type === "aturan");
+    structuralNodes = allNodes.filter((n) => n.node_type === "bab" || n.node_type === "aturan" || n.node_type === "lampiran");
     pasalNodes = allNodes.filter((n) => n.node_type === "pasal");
     relationships = rels;
   }
@@ -295,11 +295,11 @@ async function LawReaderSection({
             <section key={bab.id} id={`bab-${bab.number}`} className="mb-12 scroll-mt-20">
               <div className="group flex justify-center items-center gap-2 mb-1">
                 <h2 className="font-heading text-xl">
-                  {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
+                  {bab.node_type === "aturan" ? bab.number : bab.node_type === "lampiran" ? "LAMPIRAN" : `BAB ${bab.number}`}
                 </h2>
                 <SectionLinkButton url={`${pageUrl}#bab-${bab.number}`} />
               </div>
-              {bab.heading && bab.node_type !== "aturan" && (
+              {bab.heading && bab.node_type !== "aturan" && bab.node_type !== "lampiran" && (
                 <p className="text-center text-base font-heading text-muted-foreground mb-6">
                   {bab.heading}
                 </p>

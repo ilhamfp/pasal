@@ -24,6 +24,7 @@ BAGIAN_RE = re.compile(
 PARAGRAF_RE = re.compile(r'^Paragraf\s+(\d+)\s*$', re.MULTILINE)
 PASAL_RE = re.compile(r'^Pasal[ \t]+(\d+[A-Z]?)\s*$', re.MULTILINE)
 PENJELASAN_RE = re.compile(r'^\s*PENJELASAN\s*$', re.MULTILINE)
+LAMPIRAN_RE = re.compile(r'^\s*LAMPIRAN\s*$', re.MULTILINE)
 
 # UUD 1945 special sections: ATURAN PERALIHAN and ATURAN TAMBAHAN
 # These act as top-level sections (like BAB) but without BAB numbering.
@@ -278,45 +279,26 @@ def _extract_heading(text: str) -> tuple[str, str]:
     return heading, remaining
 
 
-def parse_structure(text: str) -> list[dict]:
-    """Parse law text into hierarchical node structure.
+def _parse_body_text(text: str, sort_offset: int = 0) -> tuple[list[dict], int]:
+    """Parse law body text into hierarchical node structure.
 
-    TEXT-FIRST: every character of input text ends up in exactly one node.
-    Structural markers (BAB, Pasal, etc.) add metadata to sections.
-    Text that doesn't match any structure becomes 'preamble' or 'content' nodes.
+    Shared between parse_structure() (main body) and parse_penjelasan() (LAMPIRAN).
 
-    Returns list of nodes matching document_nodes schema:
-    {type, number, heading, content, children, sort_order}
+    Args:
+        text: The body text to parse (already preprocessed).
+        sort_offset: Starting sort_order value.
+
+    Returns:
+        (nodes, next_sort_order) — the parsed node tree and the next available sort_order.
     """
-    # Pre-process: fix Roman numeral Pasals (OCR artifact)
-    text = _fix_roman_pasals(text)
-
-    # Split off penjelasan
-    penjelasan_match = PENJELASAN_RE.search(text)
-
-    # Fallback: detect penjelasan by section markers in latter half of text
-    if not penjelasan_match:
-        half = len(text) // 2
-        fb = re.search(r'^(?:I\.\s*UMUM|II?\.\s*PASAL\s+DEMI\s+PASAL)', text[half:], re.MULTILINE)
-        if fb:
-            # Walk back to find a reasonable split point (blank line before the marker)
-            abs_pos = half + fb.start()
-            # Find the last blank line before this position
-            preceding = text[:abs_pos]
-            last_blank = preceding.rfind('\n\n')
-            split_pos = last_blank if last_blank > half - 200 else abs_pos
-            penjelasan_match = type('Match', (), {'start': lambda self, _p=split_pos: _p})()
-    body_text = text[:penjelasan_match.start()] if penjelasan_match else text
-
-    # Find all structural markers
-    markers = _find_markers(body_text)
+    markers = _find_markers(text)
 
     nodes: list[dict] = []
-    sort_order = 0
+    sort_order = sort_offset
 
     # ── Capture preamble (text before first marker) ──────────────────────
-    first_marker_pos = markers[0][2] if markers else len(body_text)
-    preamble = body_text[:first_marker_pos].strip()
+    first_marker_pos = markers[0][2] if markers else len(text)
+    preamble = text[:first_marker_pos].strip()
     if preamble:
         nodes.append({
             "type": "preamble",
@@ -333,9 +315,8 @@ def parse_structure(text: str) -> list[dict]:
     current_bagian = None
 
     for i, (mtype, number, mstart, mend) in enumerate(markers):
-        # Content: from end of this marker line to start of next marker
-        next_start = markers[i + 1][2] if i + 1 < len(markers) else len(body_text)
-        raw_content = body_text[mend:next_start].strip()
+        next_start = markers[i + 1][2] if i + 1 < len(markers) else len(text)
+        raw_content = text[mend:next_start].strip()
 
         if mtype == "bab":
             heading, leftover = _extract_heading(raw_content)
@@ -352,12 +333,11 @@ def parse_structure(text: str) -> list[dict]:
             sort_order += 1
 
         elif mtype == "aturan":
-            # ATURAN PERALIHAN / ATURAN TAMBAHAN — top-level like BAB
             rejoined = _rejoin_content_lines(raw_content)
             ayat_children = _parse_ayat(rejoined)
             current_bab = {
                 "type": "aturan",
-                "number": number,  # "ATURAN PERALIHAN" or "ATURAN TAMBAHAN"
+                "number": number,
                 "heading": number,
                 "content": rejoined,
                 "children": ayat_children,
@@ -399,7 +379,6 @@ def parse_structure(text: str) -> list[dict]:
                 current_bab["children"].append(paragraf_node)
             else:
                 nodes.append(paragraf_node)
-            # Paragraf acts as the new "current_bagian" for subsequent pasals
             current_bagian = paragraf_node
             sort_order += 1
 
@@ -427,25 +406,67 @@ def parse_structure(text: str) -> list[dict]:
             "type": "content",
             "number": "",
             "heading": "",
-            "content": _rejoin_content_lines(body_text.strip()),
+            "content": _rejoin_content_lines(text.strip()),
             "children": [],
             "sort_order": sort_order,
         })
         sort_order += 1
 
+    return nodes, sort_order
+
+
+def parse_structure(text: str) -> list[dict]:
+    """Parse law text into hierarchical node structure.
+
+    TEXT-FIRST: every character of input text ends up in exactly one node.
+    Structural markers (BAB, Pasal, etc.) add metadata to sections.
+    Text that doesn't match any structure becomes 'preamble' or 'content' nodes.
+
+    Returns list of nodes matching document_nodes schema:
+    {type, number, heading, content, children, sort_order}
+    """
+    # Pre-process: fix Roman numeral Pasals (OCR artifact)
+    text = _fix_roman_pasals(text)
+
+    # Split off penjelasan
+    penjelasan_match = PENJELASAN_RE.search(text)
+
+    # Fallback: detect penjelasan by section markers in latter half of text
+    if not penjelasan_match:
+        half = len(text) // 2
+        fb = re.search(r'^(?:I\.\s*UMUM|II?\.\s*PASAL\s+DEMI\s+PASAL)', text[half:], re.MULTILINE)
+        if fb:
+            # Walk back to find a reasonable split point (blank line before the marker)
+            abs_pos = half + fb.start()
+            # Find the last blank line before this position
+            preceding = text[:abs_pos]
+            last_blank = preceding.rfind('\n\n')
+            split_pos = last_blank if last_blank > half - 200 else abs_pos
+            penjelasan_match = type('Match', (), {'start': lambda self, _p=split_pos: _p})()
+    body_text = text[:penjelasan_match.start()] if penjelasan_match else text
+
+    nodes, body_sort_end = _parse_body_text(body_text)
+
     # ── Parse penjelasan ─────────────────────────────────────────────────
     if penjelasan_match:
         penjelasan_text = text[penjelasan_match.start():]
-        penjelasan_nodes = parse_penjelasan(penjelasan_text)
+        penjelasan_nodes = parse_penjelasan(penjelasan_text, body_sort_end=body_sort_end)
         nodes.extend(penjelasan_nodes)
 
     return nodes
 
 
-def parse_penjelasan(text: str) -> list[dict]:
+def parse_penjelasan(text: str, body_sort_end: int = 0) -> list[dict]:
     """Parse PENJELASAN section into nodes.
 
     Captures ALL penjelasan text — doesn't drop anything.
+    Detects LAMPIRAN (attachment) sections embedded within the penjelasan and
+    parses them as structured law text (BAB/Pasal/Ayat hierarchy).
+
+    Args:
+        text: The penjelasan text (starting from PENJELASAN marker).
+        body_sort_end: The sort_order after the main body, used to place
+            LAMPIRAN nodes between body and penjelasan nodes.
     """
     nodes = []
     sort_base = 90000
@@ -486,15 +507,71 @@ def parse_penjelasan(text: str) -> list[dict]:
     if umum_match:
         umum_end = pasal_demi_match.start() if pasal_demi_match else len(text)
         umum_text = text[umum_match.end():umum_end].strip()
-        if umum_text:
-            nodes.append({
-                "type": "penjelasan_umum",
-                "number": "",
-                "heading": "Penjelasan Umum",
-                "content": umum_text,
-                "children": [],
-                "sort_order": sort_base,
-            })
+
+        # ── LAMPIRAN detection ───────────────────────────────────────
+        # Ratification laws (e.g. UU 6/2023) embed the full attached law
+        # inside the penjelasan umum section as a LAMPIRAN. Detect and
+        # parse it as structured body text.
+        lampiran_match = LAMPIRAN_RE.search(umum_text)
+        if lampiran_match:
+            actual_umum = umum_text[:lampiran_match.start()].strip()
+            lampiran_text = umum_text[lampiran_match.end():].strip()
+
+            # Store the real penjelasan umum (before LAMPIRAN)
+            if actual_umum:
+                nodes.append({
+                    "type": "penjelasan_umum",
+                    "number": "",
+                    "heading": "Penjelasan Umum",
+                    "content": actual_umum,
+                    "children": [],
+                    "sort_order": sort_base,
+                })
+
+            # The LAMPIRAN may contain its own PENJELASAN (for the attached law)
+            inner_penjelasan = PENJELASAN_RE.search(lampiran_text)
+            if inner_penjelasan:
+                lampiran_body = lampiran_text[:inner_penjelasan.start()]
+                lampiran_penjelasan_text = lampiran_text[inner_penjelasan.start():]
+            else:
+                lampiran_body = lampiran_text
+                lampiran_penjelasan_text = None
+
+            # Parse lampiran body as structured law text
+            lampiran_sort_start = body_sort_end + 1
+            body_nodes, lampiran_sort_end = _parse_body_text(
+                _fix_roman_pasals(lampiran_body), sort_offset=lampiran_sort_start,
+            )
+
+            # Wrap in a "lampiran" container node
+            if body_nodes:
+                lampiran_node = {
+                    "type": "lampiran",
+                    "number": "",
+                    "heading": "LAMPIRAN",
+                    "content": "",
+                    "children": body_nodes,
+                    "sort_order": lampiran_sort_start,
+                }
+                nodes.append(lampiran_node)
+
+            # Parse inner penjelasan recursively (for the attached law's penjelasan)
+            if lampiran_penjelasan_text:
+                inner_nodes = parse_penjelasan(
+                    lampiran_penjelasan_text, body_sort_end=lampiran_sort_end,
+                )
+                nodes.extend(inner_nodes)
+        else:
+            # No LAMPIRAN — normal penjelasan umum
+            if umum_text:
+                nodes.append({
+                    "type": "penjelasan_umum",
+                    "number": "",
+                    "heading": "Penjelasan Umum",
+                    "content": umum_text,
+                    "children": [],
+                    "sort_order": sort_base,
+                })
 
     if pasal_demi_match:
         pasal_text = text[pasal_demi_match.end():]

@@ -60,7 +60,7 @@ crawl_jobs [status: loaded]
 
 ## Extraction Version
 
-Current: **v5** (stored in `crawl_jobs.extraction_version`). Bump `EXTRACTION_VERSION` in `worker/process.py` when changing parser logic. `reprocess` command will re-extract outdated jobs.
+Current: **v6** (stored in `crawl_jobs.extraction_version`). Bump `EXTRACTION_VERSION` in `worker/process.py` when changing parser logic. `reprocess` command will re-extract outdated jobs.
 
 ## Key Patterns
 

@@ -131,7 +131,9 @@ def _extract_metadata_from_soup(soup: BeautifulSoup) -> dict:
 # v4: OCR on all PDFs, Roman Pasal fix, FRESIDEN/header stripping, PENJELASAN fallback
 # v5: noise stripping (djpp, peraturan.go.id, file:///, timestamps), line rejoining,
 #     metadata extraction from detail pages, type code mapping safety
-EXTRACTION_VERSION = 5
+# v6: LAMPIRAN parsing — ratification laws (e.g. UU 6/2023) now parse the attached
+#     law's full BAB/Pasal/Ayat structure from the LAMPIRAN section
+EXTRACTION_VERSION = 6
 
 
 async def _extract_pdf_url_from_detail_page(

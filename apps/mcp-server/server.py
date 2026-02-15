@@ -25,9 +25,8 @@ logging.basicConfig(
 logger = logging.getLogger("pasal.mcp")
 
 DISCLAIMER = (
-    "Informasi ini bukan nasihat hukum. Selalu verifikasi dengan sumber resmi "
-    "di peraturan.go.id. Database Pasal.id saat ini mencakup sebagian kecil "
-    "peraturan Indonesia."
+    "Informasi ini bukan nasihat hukum. Selalu verifikasi dengan sumber resmi. "
+    "Database Pasal.id saat ini mencakup sebagian kecil peraturan Indonesia."
 )
 
 STATUS_EXPLANATIONS: dict[str, str] = {
