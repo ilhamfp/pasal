@@ -158,7 +158,8 @@ async function LawReaderSection({
     supabase
       .from("work_relationships")
       .select("*, relationship_types(code, name_id, name_en)")
-      .or(`source_work_id.eq.${workId},target_work_id.eq.${workId}`),
+      .or(`source_work_id.eq.${workId},target_work_id.eq.${workId}`)
+      .order("id"),
   ]);
 
   // Get related work info

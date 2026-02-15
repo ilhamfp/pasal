@@ -20,6 +20,26 @@ function TocContent({
   pasals: TocNode[];
   onNavigate?: () => void;
 }) {
+  // When there are no BABs, show pasals directly
+  if (babs.length === 0) {
+    if (pasals.length === 0) return null;
+    return (
+      <ul className="space-y-1 text-sm">
+        {pasals.map((pasal) => (
+          <li key={pasal.id}>
+            <a
+              href={`#pasal-${pasal.number}`}
+              onClick={onNavigate}
+              className="block py-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Pasal {pasal.number}
+            </a>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <ul className="space-y-1 text-sm">
       {babs.map((bab) => {

@@ -114,8 +114,8 @@ export default function AmendmentTimeline({
         ))}
 
         {/* Status indicator */}
-        <div className="relative pb-0">
-          <div className="absolute -left-6 top-1 h-[18px] w-[18px] rounded-full border-2 border-primary bg-primary/20" />
+        <div className="relative flex items-center min-h-[18px] pt-5">
+          <div className="absolute -left-6 h-[18px] w-[18px] rounded-full border-2 border-primary bg-primary/20" />
           <p className="text-xs font-medium text-primary">
             Status: {TIMELINE_STATUS_LABELS[currentWork.status] || currentWork.status}
           </p>

@@ -61,23 +61,23 @@ export default function ReaderLayout({
 
   return (
     <div>
-      {/* PDF toggle toolbar */}
-      <div className="flex items-center justify-end gap-3 mb-6">
-        {/* Desktop toggle */}
-        <button
-          onClick={() => setShowPdf(!showPdf)}
-          className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-            showPdf
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-card hover:border-primary/30"
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          {showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
-        </button>
+      {/* PDF toggle toolbar — only shown when a source PDF exists */}
+      {sourcePdfUrl && (
+        <div className="flex items-center justify-end gap-3 mb-6">
+          {/* Desktop toggle */}
+          <button
+            onClick={() => setShowPdf(!showPdf)}
+            className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+              showPdf
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card hover:border-primary/30"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            {showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
+          </button>
 
-        {/* Mobile: link to original PDF */}
-        {sourcePdfUrl && (
+          {/* Mobile: link to original PDF */}
           <a
             href={sourcePdfUrl}
             target="_blank"
@@ -87,8 +87,8 @@ export default function ReaderLayout({
             <FileText className="h-4 w-4" />
             Buka PDF Asli
           </a>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 3-column grid: TOC | content | sidebar/PDF */}
       <div
