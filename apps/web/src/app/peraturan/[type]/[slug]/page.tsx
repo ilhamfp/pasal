@@ -180,7 +180,7 @@ async function LawReaderSection({
 
   // Build tree structure
   const allNodes = nodes || [];
-  const babNodes = allNodes.filter((n) => n.node_type === "bab");
+  const babNodes = allNodes.filter((n) => n.node_type === "bab" || n.node_type === "aturan");
   const pasalNodes = allNodes.filter((n) => n.node_type === "pasal");
 
   const mainContent = (
@@ -201,9 +201,9 @@ async function LawReaderSection({
           return (
             <section key={bab.id} id={`bab-${bab.number}`} className="mb-12">
               <h2 className="font-heading text-lg text-center mb-1">
-                BAB {bab.number}
+                {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
               </h2>
-              {bab.heading && (
+              {bab.heading && bab.node_type !== "aturan" && (
                 <p className="text-center text-sm font-heading text-muted-foreground mb-6">
                   {bab.heading}
                 </p>

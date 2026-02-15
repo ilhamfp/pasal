@@ -52,8 +52,8 @@ function TocContent({
               onClick={onNavigate}
               className="block py-1 text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              BAB {bab.number}
-              {bab.heading && (
+              {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
+              {bab.heading && bab.node_type !== "aturan" && (
                 <span className="block text-xs font-normal truncate">
                   {bab.heading}
                 </span>
