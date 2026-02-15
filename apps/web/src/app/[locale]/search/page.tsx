@@ -179,7 +179,7 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
       <p className="text-sm text-muted-foreground">
         {t("showingResults", { total: totalResults, query })}
         {totalPages > 1 && (
-          <> &middot; {t("pageInfo", { current: currentPage, total: totalPages })}</>
+          <> · {t("pageInfo", { current: currentPage, total: totalPages })}</>
         )}
       </p>
 
@@ -196,7 +196,7 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
 
           return (
             <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
-              <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+              <Card className="hover:border-primary/50 motion-safe:transition-colors cursor-pointer">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="secondary">{regType}</Badge>
@@ -306,7 +306,7 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
       <p className="text-sm text-muted-foreground">
         {t("showingResultsBrowse", { count: (count || 0).toLocaleString("id-ID") })}
         {totalPages > 1 && (
-          <> &middot; {t("pageInfo", { current: currentPage, total: totalPages })}</>
+          <> · {t("pageInfo", { current: currentPage, total: totalPages })}</>
         )}
       </p>
 
@@ -317,7 +317,7 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
             <Link
               key={work.id}
               href={workPath(work, regType)}
-              className="block rounded-lg border bg-card p-4 hover:border-primary/30 transition-colors"
+              className="block rounded-lg border bg-card p-4 hover:border-primary/30 motion-safe:transition-colors"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -340,7 +340,7 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
                       {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                     </Badge>
                   )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 </div>
               </div>
             </Link>
@@ -377,9 +377,9 @@ function Pagination({
         <Link
           href={pageUrl(currentPage - 1)}
           aria-label={t("previousPage")}
-          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
+          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </Link>
       )}
 
@@ -397,7 +397,7 @@ function Pagination({
             key={page}
             href={pageUrl(page)}
             aria-current={page === currentPage ? "page" : undefined}
-            className={`rounded-lg border px-3 py-2 text-sm ${
+            className={`rounded-lg border px-3 py-2 text-sm motion-safe:transition-colors ${
               page === currentPage
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card hover:border-primary/30"
@@ -412,9 +412,9 @@ function Pagination({
         <Link
           href={pageUrl(currentPage + 1)}
           aria-label={t("nextPage")}
-          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
+          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       )}
     </nav>
