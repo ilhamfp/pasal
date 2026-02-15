@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin-auth";
@@ -8,8 +9,16 @@ export async function POST(request: NextRequest) {
 
   const authHeader = request.headers.get("x-admin-key");
   const adminKey = process.env.ADMIN_API_KEY;
-  if (adminKey && authHeader === adminKey) {
-    isAuthed = true;
+  if (adminKey && authHeader) {
+    try {
+      const a = Buffer.from(authHeader);
+      const b = Buffer.from(adminKey);
+      if (a.length === b.length && timingSafeEqual(a, b)) {
+        isAuthed = true;
+      }
+    } catch {
+      // length mismatch or encoding error — reject
+    }
   }
 
   if (!isAuthed) {

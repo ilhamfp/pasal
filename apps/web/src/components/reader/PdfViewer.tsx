@@ -63,6 +63,7 @@ export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: Pd
             <iframe
               src={sourcePdfUrl}
               title="PDF Viewer"
+              sandbox="allow-same-origin"
               className="w-full h-[80vh] border-0"
             />
           ) : (

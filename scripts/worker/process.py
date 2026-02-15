@@ -34,8 +34,21 @@ from parser.extract_pymupdf import extract_text_pymupdf
 from parser.ocr_correct import correct_ocr_errors
 from parser.parse_structure import parse_structure
 
+_FILE_PATH_RE = re.compile(r"(?:/[\w.-]+){2,}")  # strip absolute file paths from errors
+
 PDF_DIR = Path(__file__).parent.parent.parent / "data" / "raw" / "pdfs"
 STORAGE_BUCKET = "regulation-pdfs"
+MAX_PDF_SIZE = 100 * 1024 * 1024  # 100 MB
+
+
+def _sanitize_slug(raw: str) -> str:
+    """Strip non-safe characters from a URL-derived slug."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "", raw)[:200]
+
+
+def _sanitize_error(msg: str, max_len: int = 500) -> str:
+    """Remove file paths and truncate error messages before DB storage."""
+    return _FILE_PATH_RE.sub("<path>", msg)[:max_len]
 
 # ---- Metadata extraction from detail pages ----
 
@@ -342,6 +355,12 @@ async def _download_pdf(
             attempt_errors.append(msg)
             continue
 
+        if len(resp.content) > MAX_PDF_SIZE:
+            msg = f"{attempt_url}: too large ({len(resp.content):,} bytes, limit {MAX_PDF_SIZE:,})"
+            print(f"    {msg}")
+            attempt_errors.append(msg)
+            continue
+
         dest.write_bytes(resp.content)
         print(f"    Downloaded {len(resp.content):,} bytes from {attempt_url}")
         return attempt_url, detail_metadata
@@ -386,7 +405,7 @@ async def process_jobs(
                 break
 
             job_id = job["id"]
-            slug = job.get("url", "").split("/")[-1] or f"job_{job_id}"
+            slug = _sanitize_slug(job.get("url", "").split("/")[-1]) or f"job_{job_id}"
             detail_url = job.get("url", f"https://peraturan.go.id/id/{slug}")
             pdf_path = PDF_DIR / f"{slug}.pdf"
 
@@ -476,7 +495,7 @@ async def process_jobs(
                 print(f"    FAIL: {error_msg}")
 
             except Exception as e:
-                update_status(job_id, "failed", str(e)[:1000])
+                update_status(job_id, "failed", _sanitize_error(str(e)))
                 stats["failed"] += 1
                 print(f"    FAIL: {e}")
 
@@ -535,7 +554,7 @@ def reprocess_jobs(
 
     for job in jobs:
         job_id = job["id"]
-        slug = job.get("url", "").split("/")[-1] or f"job_{job_id}"
+        slug = _sanitize_slug(job.get("url", "").split("/")[-1]) or f"job_{job_id}"
         pdf_local = job.get("pdf_local_path")
 
         # Try to find the PDF: local cache first, then Supabase Storage
@@ -577,7 +596,7 @@ def reprocess_jobs(
             print(f"    OK: {pasal_count} pasals, {chunk_count} chunks")
 
         except Exception as e:
-            update_status(job_id, "failed", f"reprocess: {str(e)[:400]}")
+            update_status(job_id, "failed", _sanitize_error(f"reprocess: {e}"))
             stats["failed"] += 1
             print(f"    FAIL: {e}")
 

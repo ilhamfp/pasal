@@ -3,7 +3,10 @@
 ~100x faster than pdfplumber.
 """
 import re
+import signal
 from pathlib import Path
+
+EXTRACTION_TIMEOUT = 120  # seconds — abort if a single PDF takes longer
 
 _PAGE_HEADER_RE = re.compile(
     r'^(?:SALINAN\s*\n)?'
@@ -134,6 +137,15 @@ def extract_text_pymupdf(pdf_path: str | Path) -> tuple[str, dict]:
         "empty_pages": 0,
     }
 
+    def _alarm_handler(signum: int, frame: object) -> None:
+        raise TimeoutError(f"PDF extraction timed out after {EXTRACTION_TIMEOUT}s")
+
+    # Set a timeout to prevent hanging on malformed PDFs (Unix only)
+    use_alarm = hasattr(signal, "SIGALRM")
+    if use_alarm:
+        prev_handler = signal.signal(signal.SIGALRM, _alarm_handler)
+        signal.alarm(EXTRACTION_TIMEOUT)
+
     try:
         doc = pymupdf.open(str(pdf_path))
         stats["page_count"] = len(doc)
@@ -166,3 +178,7 @@ def extract_text_pymupdf(pdf_path: str | Path) -> tuple[str, dict]:
 
     except Exception as e:
         return "", {"error": str(e), **stats}
+    finally:
+        if use_alarm:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, prev_handler)

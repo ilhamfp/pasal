@@ -634,6 +634,10 @@ def list_laws(
     try:
         _ensure_reg_types()
 
+        # Clamp pagination params to safe ranges
+        page = max(1, page)
+        per_page = max(1, min(100, per_page))
+
         query = sb.table("works").select("*, regulation_types(code, name_id)", count="exact")
 
         if regulation_type:
@@ -648,7 +652,8 @@ def list_laws(
             query = query.eq("status", status)
 
         if search:
-            query = query.ilike("title_id", f"%{search}%")
+            safe_search = search.replace("%", r"\%").replace("_", r"\_")
+            query = query.ilike("title_id", f"%{safe_search}%")
 
         offset = (page - 1) * per_page
         result = query.order("year", desc=True).range(offset, offset + per_page - 1).execute()
