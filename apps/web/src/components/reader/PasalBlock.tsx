@@ -16,9 +16,10 @@ interface PasalNode {
 interface PasalBlockProps {
   pasal: PasalNode;
   pathname: string;
+  pageUrl: string;
 }
 
-export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
+export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps) {
   const t = useTranslations("reader");
   const content = pasal.content_text || "";
   const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
@@ -44,6 +45,7 @@ export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
             <Pencil className="h-3 w-3" aria-hidden="true" />
             {t("correction")}
           </Link>
+          <CopyButton text={`${pageUrl}#pasal-${pasal.number}`} label="Link" />
           <CopyButton text={jsonData} label={t("jsonButton")} />
         </div>
       </div>

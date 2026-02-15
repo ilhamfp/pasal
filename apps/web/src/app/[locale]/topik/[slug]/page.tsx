@@ -5,6 +5,7 @@ import { ArrowRight, Search } from "lucide-react";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
+import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { getTopicBySlug, TOPICS } from "@/data/topics";
 import { workSlug as makeWorkSlug } from "@/lib/work-url";
@@ -65,6 +66,13 @@ export default async function TopicDetailPage({ params }: PageProps) {
         <div className="mb-10">
           <h1 className="font-heading text-3xl mb-2">{topic.title}</h1>
           <p className="text-muted-foreground text-lg">{topic.description}</p>
+          <div className="mt-4">
+            <ShareButton
+              url={`https://pasal.id/topik/${slug}`}
+              title={`${topic.title} — Panduan Hukum Indonesia`}
+              description={topic.description}
+            />
+          </div>
         </div>
 
         <div className="mb-10">

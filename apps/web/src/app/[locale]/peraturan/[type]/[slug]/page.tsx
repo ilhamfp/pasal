@@ -20,6 +20,7 @@ import PasalBlock from "@/components/reader/PasalBlock";
 import HashHighlighter from "@/components/reader/HashHighlighter";
 import VerificationBadge from "@/components/reader/VerificationBadge";
 import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice";
+import ShareButton from "@/components/ShareButton";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -235,14 +236,14 @@ async function LawReaderSection({
               )}
 
               {allBabPasals.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} />
+                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={`https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`} />
               ))}
             </section>
           );
         })
       ) : (
         pasalNodes.map((pasal) => (
-          <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} />
+          <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={`https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`} />
         ))
       )}
 
@@ -296,6 +297,14 @@ async function LawReaderSection({
               </a>
             </div>
           )}
+
+          <div className="rounded-lg border p-4">
+            <h3 className="font-heading text-sm mb-3">Bagikan</h3>
+            <ShareButton
+              url={`https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`}
+              title={`${type.toUpperCase()} ${work.number}/${work.year} — ${work.title_id}`}
+            />
+          </div>
         </div>
       }
       sourcePdfUrl={work.source_pdf_url ?? null}
@@ -379,6 +388,13 @@ export default async function LawDetailPage({ params }: PageProps) {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">{type.toUpperCase()}</Badge>
+            <div className="ml-auto">
+              <ShareButton
+                url={pageUrl}
+                title={`${type.toUpperCase()} ${work.number}/${work.year} — ${work.title_id}`}
+                description={`Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year}.`}
+              />
+            </div>
           </div>
           <h1 className="font-heading text-2xl mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
