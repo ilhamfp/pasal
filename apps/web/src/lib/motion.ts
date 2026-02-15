@@ -21,3 +21,9 @@ export const staggerContainer = {
   hidden: {},
   show: { transition: { staggerChildren: 0.12 } },
 };
+
+/** Faster stagger for search results and compact lists. */
+export const staggerContainerFast = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};

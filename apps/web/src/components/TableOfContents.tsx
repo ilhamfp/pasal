@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import PasalLogo from "./PasalLogo";
 
 interface TocNode {
@@ -14,10 +14,12 @@ interface TocNode {
 function TocContent({
   babs,
   pasals,
+  activeId,
   onNavigate,
 }: {
   babs: TocNode[];
   pasals: TocNode[];
+  activeId?: string | null;
   onNavigate?: () => void;
 }) {
   // When there are no BABs, show pasals directly
@@ -25,17 +27,26 @@ function TocContent({
     if (pasals.length === 0) return null;
     return (
       <ul className="space-y-1 text-sm">
-        {pasals.map((pasal) => (
-          <li key={pasal.id}>
-            <a
-              href={`#pasal-${pasal.number}`}
-              onClick={onNavigate}
-              className="block py-1 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pasal {pasal.number}
-            </a>
-          </li>
-        ))}
+        {pasals.map((pasal) => {
+          const anchorId = `pasal-${pasal.number}`;
+          const isActive = activeId === anchorId;
+          return (
+            <li key={pasal.id}>
+              <a
+                href={`#${anchorId}`}
+                onClick={onNavigate}
+                data-toc-id={anchorId}
+                className={`block py-1 rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                  isActive
+                    ? "text-foreground border-l-2 border-primary pl-2"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Pasal {pasal.number}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     );
   }
@@ -44,13 +55,20 @@ function TocContent({
     <ul className="space-y-1 text-sm">
       {babs.map((bab) => {
         const babPasals = pasals.filter((p) => p.parent_id === bab.id);
+        const babAnchorId = `bab-${bab.number}`;
+        const isBabActive = activeId === babAnchorId;
 
         return (
           <li key={bab.id}>
             <a
-              href={`#bab-${bab.number}`}
+              href={`#${babAnchorId}`}
               onClick={onNavigate}
-              className="block py-1 text-muted-foreground hover:text-foreground transition-colors font-medium"
+              data-toc-id={babAnchorId}
+              className={`block py-1 font-medium rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                isBabActive
+                  ? "text-foreground border-l-2 border-primary pl-2"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
               {bab.heading && bab.node_type !== "aturan" && (
@@ -61,17 +79,26 @@ function TocContent({
             </a>
             {babPasals.length > 0 && (
               <ul className="ml-3 space-y-0.5">
-                {babPasals.slice(0, 10).map((pasal) => (
-                  <li key={pasal.id}>
-                    <a
-                      href={`#pasal-${pasal.number}`}
-                      onClick={onNavigate}
-                      className="block py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Pasal {pasal.number}
-                    </a>
-                  </li>
-                ))}
+                {babPasals.slice(0, 10).map((pasal) => {
+                  const pasalAnchorId = `pasal-${pasal.number}`;
+                  const isPasalActive = activeId === pasalAnchorId;
+                  return (
+                    <li key={pasal.id}>
+                      <a
+                        href={`#${pasalAnchorId}`}
+                        onClick={onNavigate}
+                        data-toc-id={pasalAnchorId}
+                        className={`block py-0.5 text-xs rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                          isPasalActive
+                            ? "text-foreground border-l-2 border-primary pl-2"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Pasal {pasal.number}
+                      </a>
+                    </li>
+                  );
+                })}
                 {babPasals.length > 10 && (
                   <li className="text-xs text-muted-foreground py-0.5">
                     +{babPasals.length - 10} pasal lainnya
@@ -94,19 +121,56 @@ export default function TableOfContents({
   pasals: TocNode[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  const scrollActiveIntoView = useCallback((id: string) => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const activeEl = nav.querySelector(`[data-toc-id="${id}"]`);
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only run scroll-spy on desktop
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+
+    const targets = document.querySelectorAll<HTMLElement>(
+      '[id^="bab-"], [id^="pasal-"]'
+    );
+    if (targets.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the first intersecting entry
+        const intersecting = entries.filter((e) => e.isIntersecting);
+        if (intersecting.length > 0) {
+          const id = intersecting[0].target.id;
+          setActiveId(id);
+          scrollActiveIntoView(id);
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [scrollActiveIntoView]);
 
   return (
     <>
       {/* Desktop: sticky sidebar */}
-      <nav className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <nav ref={navRef} className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain">
         <h2 className="text-sm font-heading mb-3">Daftar Isi</h2>
-        <TocContent babs={babs} pasals={pasals} />
+        <TocContent babs={babs} pasals={pasals} activeId={activeId} />
       </nav>
 
       {/* Mobile: floating button + slide-out overlay */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-6 left-6 z-40 flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-sm text-sm font-medium hover:bg-primary/90 transition-colors"
+        className="lg:hidden fixed bottom-6 left-6 z-40 flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-sm text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
         aria-label="Buka daftar isi"
       >
         <PasalLogo size={18} />
@@ -116,12 +180,13 @@ export default function TableOfContents({
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
           {/* Backdrop */}
-          <div
+          <button
             className="absolute inset-0 bg-black/50"
             onClick={() => setMobileOpen(false)}
+            aria-label="Tutup daftar isi"
           />
           {/* Panel */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r overflow-y-auto p-4 animate-in slide-in-from-left duration-200 motion-reduce:animate-none">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r overflow-y-auto overscroll-contain p-4 animate-in slide-in-from-left duration-200 motion-reduce:animate-none">
             <div className="flex items-center justify-between mb-4">
               <h2 className="flex items-center gap-1.5 text-sm font-heading">
                 <PasalLogo size={18} className="text-primary" />

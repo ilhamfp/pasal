@@ -2,6 +2,7 @@ import Link from "next/link";
 import SearchBar from "./SearchBar";
 import PasalLogo from "./PasalLogo";
 import MobileNav from "./MobileNav";
+import ShimmerLink from "./ShimmerLink";
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -34,12 +35,12 @@ export default function Header({ showSearch = false, searchDefault }: HeaderProp
               {label}
             </Link>
           ))}
-          <Link
+          <ShimmerLink
             href="/connect"
             className="rounded-lg bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Hubungkan Claude
-          </Link>
+          </ShimmerLink>
         </nav>
         <MobileNav />
       </div>

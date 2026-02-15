@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function CopyButton({
@@ -25,7 +26,19 @@ export default function CopyButton({
       className="text-xs h-7"
       onClick={handleCopy}
     >
-      <span aria-live="polite">{copied ? "Tersalin!" : label}</span>
+      <span aria-live="polite" className="flex items-center gap-1">
+        {copied ? (
+          <>
+            <Check aria-hidden="true" className="h-3 w-3 text-primary animate-in zoom-in-75 duration-150" />
+            Tersalin!
+          </>
+        ) : (
+          <>
+            <Copy aria-hidden="true" className="h-3 w-3" />
+            {label}
+          </>
+        )}
+      </span>
     </Button>
   );
 }

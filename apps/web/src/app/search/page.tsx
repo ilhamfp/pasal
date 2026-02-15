@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import PasalLogo from "@/components/PasalLogo";
+import StaggeredList from "@/components/StaggeredList";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
@@ -117,54 +118,56 @@ async function SearchResults({ query, type }: SearchResultsProps) {
         {grouped.length} peraturan ditemukan untuk &ldquo;{query}&rdquo;
       </p>
 
-      {grouped.map((group) => {
-        const work = worksMap.get(group.work_id);
-        if (!work) return null;
+      <StaggeredList className="space-y-4">
+        {grouped.map((group) => {
+          const work = worksMap.get(group.work_id);
+          if (!work) return null;
 
-        const regType = getRegTypeCode(work.regulation_types);
-        const slug = workSlug(work, regType);
-        const rawSnippet = group.bestChunk.snippet || group.bestChunk.content.split("\n").slice(2).join(" ").slice(0, 250);
-        const snippetHtml = sanitizeSnippet(rawSnippet);
-        const pasalLabel = formatPasalList(group.matchingPasals);
+          const regType = getRegTypeCode(work.regulation_types);
+          const slug = workSlug(work, regType);
+          const rawSnippet = group.bestChunk.snippet || group.bestChunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+          const snippetHtml = sanitizeSnippet(rawSnippet);
+          const pasalLabel = formatPasalList(group.matchingPasals);
 
-        return (
-          <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
-            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary">{regType}</Badge>
-                  <CardTitle className="text-base">
-                    {regType} {work.number}/{work.year}
-                  </CardTitle>
-                  <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-                    {STATUS_LABELS[work.status] || work.status}
-                  </Badge>
-                  {group.totalChunks > 1 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {group.totalChunks} bagian cocok
+          return (
+            <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
+              <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary">{regType}</Badge>
+                    <CardTitle className="text-base">
+                      {regType} {work.number}/{work.year}
+                    </CardTitle>
+                    <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                      {STATUS_LABELS[work.status] || work.status}
                     </Badge>
+                    {group.totalChunks > 1 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {group.totalChunks} bagian cocok
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-1">
+                    {work.title_id}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {pasalLabel && (
+                    <p className="text-sm font-medium mb-1">{pasalLabel}</p>
                   )}
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {work.title_id}
-                </p>
-              </CardHeader>
-              <CardContent>
-                {pasalLabel && (
-                  <p className="text-sm font-medium mb-1">{pasalLabel}</p>
-                )}
-                <p
-                  className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
-                  dangerouslySetInnerHTML={{ __html: snippetHtml }}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Relevansi: {formatRelevance(group.bestScore, maxScore)}
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        );
-      })}
+                  <p
+                    className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
+                    dangerouslySetInnerHTML={{ __html: snippetHtml }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Relevansi: {formatRelevance(group.bestScore, maxScore)}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </StaggeredList>
     </div>
   );
 }
