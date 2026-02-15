@@ -1,18 +1,23 @@
 "use client";
 
-import Link from "next/link";
-
-const suggestions = [
-  "uud 1945",
-  "hak pekerja kontrak",
-  "perlindungan konsumen",
-  "pidana korupsi",
-];
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 export default function SearchSuggestions() {
+  const t = useTranslations("hero");
+  const st = useTranslations("search");
+
+  // Search terms stay in Indonesian — they are queries for Indonesian legal content
+  const suggestions = [
+    st("suggestion1"),
+    st("suggestion2"),
+    st("suggestion3"),
+    st("suggestion4"),
+  ];
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="text-sm text-muted-foreground">Coba cari:</span>
+      <span className="text-sm text-muted-foreground">{t("trySuggestion")}</span>
       {suggestions.map((q) => (
         <Link
           key={q}

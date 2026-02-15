@@ -93,13 +93,13 @@
    ⚠️ **Do NOT remove any existing config.** Only add the `createNextIntlPlugin` import and wrap.
 
 **Verification:**
-- [ ] `apps/web/src/i18n/routing.ts` exists with `locales: ['id', 'en']` and `localePrefix: 'as-needed'`
-- [ ] `apps/web/src/i18n/request.ts` exists with `timeZone: 'Asia/Jakarta'`
-- [ ] `next.config.ts` uses `withNextIntl()` wrapper AND still has all existing headers, experimental flags
-- [ ] `npm install` completes without errors
-- [ ] `npx tsc --noEmit` has no new type errors (message files don't exist yet — that's fine, next task)
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] `apps/web/src/i18n/routing.ts` exists with `locales: ['id', 'en']` and `localePrefix: 'as-needed'`
+- [x] `apps/web/src/i18n/request.ts` exists with `timeZone: 'Asia/Jakarta'`
+- [x] `next.config.ts` uses `withNextIntl()` wrapper AND still has all existing headers, experimental flags
+- [x] `npm install` completes without errors
+- [x] `npx tsc --noEmit` has no new type errors (message files don't exist yet — that's fine, next task)
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "chore: install next-intl and create i18n config" && git push`
 
@@ -371,13 +371,13 @@
    ```
 
 **Verification:**
-- [ ] `apps/web/messages/id.json` exists and is valid JSON (run `node -e "require('./messages/id.json')"`)
-- [ ] `apps/web/messages/en.json` exists and is valid JSON
-- [ ] Both files have identical keys (compare with `node -e "const id=Object.keys(require('./messages/id.json')); const en=Object.keys(require('./messages/en.json')); console.log('Match:', JSON.stringify(id)===JSON.stringify(en))"`)
-- [ ] `apps/web/global.d.ts` exists
-- [ ] `npx tsc --noEmit` shows no new errors
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] `apps/web/messages/id.json` exists and is valid JSON (run `node -e "require('./messages/id.json')"`)
+- [x] `apps/web/messages/en.json` exists and is valid JSON
+- [x] Both files have identical keys (compare with `node -e "const id=Object.keys(require('./messages/id.json')); const en=Object.keys(require('./messages/en.json')); console.log('Match:', JSON.stringify(id)===JSON.stringify(en))"`)
+- [x] `apps/web/global.d.ts` exists
+- [x] `npx tsc --noEmit` shows no new errors
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "chore: add i18n message files (id + en)" && git push`
 
@@ -420,11 +420,11 @@
    ⚠️ **Notice `/admin` is excluded from the matcher.** Admin pages stay in Indonesian only — no i18n needed there. This keeps the admin auth flow (`requireAdmin()`) completely untouched.
 
 **Verification:**
-- [ ] `apps/web/src/middleware.ts` exists
-- [ ] Matcher excludes `api`, `_next`, `_vercel`, `admin`, and static files
-- [ ] `npx tsc --noEmit` has no errors
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] `apps/web/src/middleware.ts` exists
+- [x] Matcher excludes `api`, `_next`, `_vercel`, `admin`, and static files
+- [x] `npx tsc --noEmit` has no errors
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "feat: add next-intl middleware for locale routing" && git push`
 
@@ -627,14 +627,14 @@
    ```
 
 **Verification:**
-- [ ] `apps/web/src/app/layout.tsx` is minimal — only fonts, `<html>`, `<body>`, `{children}`
-- [ ] `apps/web/src/app/layout.tsx` does NOT have `lang="id"` on `<html>` (next-intl handles this)
-- [ ] `apps/web/src/app/[locale]/layout.tsx` exists with `generateStaticParams`, `generateMetadata`, `NextIntlClientProvider`
-- [ ] Footer links use `Link` from `@/i18n/routing`
-- [ ] `npx tsc --noEmit` — no errors
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/frontend-design` skill, verify footer matches `BRAND_GUIDELINES.md`
+- [x] `apps/web/src/app/layout.tsx` is minimal — only fonts, `<html>`, `<body>`, `{children}`
+- [x] `apps/web/src/app/layout.tsx` does NOT have `lang="id"` on `<html>` (next-intl handles this)
+- [x] `apps/web/src/app/[locale]/layout.tsx` exists with `generateStaticParams`, `generateMetadata`, `NextIntlClientProvider`
+- [x] Footer links use `Link` from `@/i18n/routing`
+- [x] `npx tsc --noEmit` — no errors
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/frontend-design` skill, verify footer matches `BRAND_GUIDELINES.md`
 
 > 🔁 `git add -A && git commit -m "feat: create [locale] layout with translated metadata and footer" && git push`
 
@@ -746,18 +746,18 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 ```
 
 **Verification:**
-- [ ] All public pages are under `src/app/[locale]/`
-- [ ] Admin pages are still at `src/app/admin/` — UNCHANGED
-- [ ] API route handlers are still at `src/app/api/v1/`, `api/suggestions/`, `api/admin/` — UNCHANGED
-- [ ] Every moved Server Component page calls `setRequestLocale(locale)` early
-- [ ] `npm run build` succeeds ← **CRITICAL — do not proceed if this fails**
-- [ ] Visit `http://localhost:3000` — landing page loads (may show Indonesian — that's correct)
-- [ ] Visit `http://localhost:3000/en` — landing page loads (still Indonesian text is fine — we haven't wired translations yet)
-- [ ] Visit `http://localhost:3000/search?q=test` — search page loads
-- [ ] Visit `http://localhost:3000/admin` — admin page loads (not affected by i18n)
-- [ ] API endpoint `http://localhost:3000/api/v1/search?q=test` — returns JSON (not affected)
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] All public pages are under `src/app/[locale]/`
+- [x] Admin pages are still at `src/app/admin/` — UNCHANGED
+- [x] API route handlers are still at `src/app/api/v1/`, `api/suggestions/`, `api/admin/` — UNCHANGED
+- [x] Every moved Server Component page calls `setRequestLocale(locale)` early
+- [x] `npm run build` succeeds ← **CRITICAL — do not proceed if this fails**
+- [x] Visit `http://localhost:3000` — landing page loads (may show Indonesian — that's correct)
+- [x] Visit `http://localhost:3000/en` — landing page loads (still Indonesian text is fine — we haven't wired translations yet)
+- [x] Visit `http://localhost:3000/search?q=test` — search page loads
+- [x] Visit `http://localhost:3000/admin` — admin page loads (not affected by i18n)
+- [x] API endpoint `http://localhost:3000/api/v1/search?q=test` — returns JSON (not affected)
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "feat: move public pages under [locale] segment" && git push`
 
@@ -806,13 +806,13 @@ import { useRouter } from "@/i18n/routing";
 ```
 
 **Verification:**
-- [ ] `grep -r "from \"next/link\"" apps/web/src/` — only admin files and special cases remain
-- [ ] `grep -r "from \"next/navigation\"" apps/web/src/` — only admin files and route handlers remain (public components use `@/i18n/routing`)
-- [ ] `npm run build` succeeds
-- [ ] Click through the site — all links still work at `/` (Indonesian)
-- [ ] Navigate to `/en` — links in the page point to `/en/*` paths
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] `grep -r "from \"next/link\"" apps/web/src/` — only admin files and special cases remain
+- [x] `grep -r "from \"next/navigation\"" apps/web/src/` — only admin files and route handlers remain (public components use `@/i18n/routing`)
+- [x] `npm run build` succeeds
+- [x] Click through the site — all links still work at `/` (Indonesian)
+- [x] Navigate to `/en` — links in the page point to `/en/*` paths
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "refactor: replace next/link with next-intl Link for public routes" && git push`
 
@@ -935,16 +935,16 @@ import { useRouter } from "@/i18n/routing";
 **📖 BRAND CHECK:** The language switcher must use `font-sans` (Instrument Sans), `text-sm`, `text-muted-foreground`. No globe emoji if it clashes with the Batu Candi aesthetic — use a simple text toggle instead. Check `BRAND_GUIDELINES.md`.
 
 **Verification:**
-- [ ] Header shows translated nav labels at `/` (Indonesian) and `/en` (English)
-- [ ] Mobile nav shows translated labels and aria-labels
-- [ ] Language switcher is visible in both desktop and mobile nav
-- [ ] Clicking the switcher navigates between `/` and `/en` (preserving the current path)
-- [ ] CTA button says "Hubungkan Claude" in ID and "Connect Claude" in EN
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
-- [ ] Verify language switcher placement and styling against `BRAND_GUIDELINES.md`
+- [x] Header shows translated nav labels at `/` (Indonesian) and `/en` (English)
+- [x] Mobile nav shows translated labels and aria-labels
+- [x] Language switcher is visible in both desktop and mobile nav
+- [x] Clicking the switcher navigates between `/` and `/en` (preserving the current path)
+- [x] CTA button says "Hubungkan Claude" in ID and "Connect Claude" in EN
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] Verify language switcher placement and styling against `BRAND_GUIDELINES.md`
 
 > 🔁 `git add -A && git commit -m "feat: translate Header, MobileNav, add LanguageSwitcher" && git push`
 
@@ -1027,15 +1027,15 @@ import { useRouter } from "@/i18n/routing";
    ```
 
 **Verification:**
-- [ ] Landing page at `/` — all UI text in Indonesian
-- [ ] Landing page at `/en` — heading says "Find the legal article you need", stats say "Regulations", "Structured articles", "Free & Open Source"
-- [ ] Search suggestions still show Indonesian search terms (correct — legal content is in Indonesian)
-- [ ] Stats numbers still work (count up animation if applicable)
-- [ ] `JsonLd` `inLanguage` is `"id"` at `/` and `"en"` at `/en`
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] Landing page at `/` — all UI text in Indonesian
+- [x] Landing page at `/en` — heading says "Find the legal article you need", stats say "Regulations", "Structured articles", "Free & Open Source"
+- [x] Search suggestions still show Indonesian search terms (correct — legal content is in Indonesian)
+- [x] Stats numbers still work (count up animation if applicable)
+- [x] `JsonLd` `inLanguage` is `"id"` at `/` and `"en"` at `/en`
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
 
 > 🔁 `git add -A && git commit -m "feat: translate landing page components" && git push`
 
@@ -1093,16 +1093,16 @@ import { useRouter } from "@/i18n/routing";
 5. Update pagination aria-labels.
 
 **Verification:**
-- [ ] `/search?q=upah` — results page in Indonesian with "Hasil pencarian: upah"
-- [ ] `/en/search?q=upah` — results page in English with "Search results: upah"
-- [ ] Relevance labels show in correct language
-- [ ] Status badges ("In Force", "Amended") show in correct language
-- [ ] Pagination aria-labels are translated
-- [ ] Error and empty states show translated messages
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] `/search?q=upah` — results page in Indonesian with "Hasil pencarian: upah"
+- [x] `/en/search?q=upah` — results page in English with "Search results: upah"
+- [x] Relevance labels show in correct language
+- [x] Status badges ("In Force", "Amended") show in correct language
+- [x] Pagination aria-labels are translated
+- [x] Error and empty states show translated messages
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
 
 > 🔁 `git add -A && git commit -m "feat: translate search page" && git push`
 
@@ -1159,17 +1159,17 @@ import { useRouter } from "@/i18n/routing";
 6. **TYPE_LABELS stay in Indonesian** even when UI is in English — regulation type names are proper legal terms (e.g., "Undang-Undang" shouldn't become "Law"). These are not UI strings; they are Indonesian legal nomenclature. Add a code comment explaining this decision.
 
 **Verification:**
-- [ ] `/peraturan/uu/uu-13-2003` — page metadata, disclaimers, and UI labels in Indonesian
-- [ ] `/en/peraturan/uu/uu-13-2003` — UI labels in English, legal content still in Indonesian
-- [ ] English version shows "Legal documents are displayed in Bahasa Indonesia..." notice
-- [ ] Legal content is wrapped in `<article lang="id">`
-- [ ] Status badges show "In Force" / "Amended" in English
-- [ ] TYPE_LABELS remain in Indonesian on both versions (correct behavior)
-- [ ] `DisclaimerBanner` translates correctly
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] `/peraturan/uu/uu-13-2003` — page metadata, disclaimers, and UI labels in Indonesian
+- [x] `/en/peraturan/uu/uu-13-2003` — UI labels in English, legal content still in Indonesian
+- [x] English version shows "Legal documents are displayed in Bahasa Indonesia..." notice
+- [x] Legal content is wrapped in `<article lang="id">`
+- [x] Status badges show "In Force" / "Amended" in English
+- [x] TYPE_LABELS remain in Indonesian on both versions (correct behavior)
+- [x] `DisclaimerBanner` translates correctly
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
 
 > 🔁 `git add -A && git commit -m "feat: translate law reader UI, add lang attributes for accessibility" && git push`
 
@@ -1222,18 +1222,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 ```
 
 **Verification:**
-- [ ] `/jelajahi` — Indonesian UI
-- [ ] `/en/jelajahi` — English UI, regulation types still in Indonesian
-- [ ] `/topik` — Indonesian
-- [ ] `/en/topik` — English UI chrome
-- [ ] `/connect` — Indonesian
-- [ ] `/en/connect` — English headings, Indonesian example prompts with note
-- [ ] `/api` — both versions work
-- [ ] All pages have `alternates` in their metadata
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] `/jelajahi` — Indonesian UI
+- [x] `/en/jelajahi` — English UI, regulation types still in Indonesian
+- [x] `/topik` — Indonesian
+- [x] `/en/topik` — English UI chrome
+- [x] `/connect` — Indonesian
+- [x] `/en/connect` — English headings, Indonesian example prompts with note
+- [x] `/api` — both versions work
+- [x] All pages have `alternates` in their metadata
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
 
 > 🔁 `git add -A && git commit -m "feat: translate browse, topics, connect, and API pages" && git push`
 
@@ -1321,12 +1321,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
    ```
 
 **Verification:**
-- [ ] Visit `http://localhost:3000/sitemap.xml` — XML renders with `<xhtml:link>` alternates for each URL
-- [ ] Each entry has both `id` and `en` alternates
-- [ ] Static pages and dynamic regulation pages are both included
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] Visit `http://localhost:3000/sitemap.xml` — XML renders with `<xhtml:link>` alternates for each URL
+- [x] Each entry has both `id` and `en` alternates
+- [x] Static pages and dynamic regulation pages are both included
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "feat: add language alternates to sitemap" && git push`
 
@@ -1378,14 +1378,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 4. **Audit every page's `generateMetadata`** to ensure it includes `alternates`.
 
 **Verification:**
-- [ ] View source of every public page — each has `<link rel="alternate" hreflang="id" ...>` and `<link rel="alternate" hreflang="en" ...>` and `<link rel="alternate" hreflang="x-default" ...>`
-- [ ] `hreflang="id"` URLs never have `/id/` prefix (correct — they use root paths)
-- [ ] `hreflang="en"` URLs always have `/en/` prefix
-- [ ] `x-default` always points to the Indonesian (unprefixed) URL
-- [ ] Self-referencing canonical is correct for each language version
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
+- [x] View source of every public page — each has `<link rel="alternate" hreflang="id" ...>` and `<link rel="alternate" hreflang="en" ...>` and `<link rel="alternate" hreflang="x-default" ...>`
+- [x] `hreflang="id"` URLs never have `/id/` prefix (correct — they use root paths)
+- [x] `hreflang="en"` URLs always have `/en/` prefix
+- [x] `x-default` always points to the Indonesian (unprefixed) URL
+- [x] Self-referencing canonical is correct for each language version
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
 
 > 🔁 `git add -A && git commit -m "feat: add hreflang alternates to all page metadata" && git push`
 
@@ -1425,13 +1425,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 **📖 BRAND CHECK:** Ensure the notice uses `text-xs`, `rounded-lg`, `border-primary/20`, `bg-primary/5`. No `shadow-*`. Check `BRAND_GUIDELINES.md`.
 
 **Verification:**
-- [ ] At `/peraturan/uu/uu-13-2003` — NO notice shown (Indonesian page)
-- [ ] At `/en/peraturan/uu/uu-13-2003` — notice visible: "Legal documents are displayed in Bahasa Indonesia..."
-- [ ] Notice styling follows brand guidelines
-- [ ] `npm run build` succeeds
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills
+- [x] At `/peraturan/uu/uu-13-2003` — NO notice shown (Indonesian page)
+- [x] At `/en/peraturan/uu/uu-13-2003` — notice visible: "Legal documents are displayed in Bahasa Indonesia..."
+- [x] Notice styling follows brand guidelines
+- [x] `npm run build` succeeds
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills
 
 > 🔁 `git add -A && git commit -m "feat: add legal content language notice for English pages" && git push`
 
@@ -1505,14 +1505,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
    ```
 
 **Verification:**
-- [ ] `npm run build` — zero errors
-- [ ] `npm run lint` — zero errors
-- [ ] `npm run test` — all pass
-- [ ] All manual smoke tests above pass
-- [ ] `CLAUDE.md` updated with i18n section
-- [ ] Run `code-simplifier`
-- [ ] Run `code-review`
-- [ ] Run `/web-design-guidelines` and `/frontend-design` skills (final check)
+- [x] `npm run build` — zero errors
+- [x] `npm run lint` — zero errors
+- [x] `npm run test` — all pass
+- [x] All manual smoke tests above pass
+- [x] `CLAUDE.md` updated with i18n section
+- [x] Run `code-simplifier`
+- [x] Run `code-review`
+- [x] Run `/web-design-guidelines` and `/frontend-design` skills (final check)
 
 > 🔁 `git add -A && git commit -m "feat: complete i18n implementation — Indonesian default + English at /en" && git push`
 

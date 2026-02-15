@@ -1,19 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Briefcase, Heart, Scale, Shield } from "lucide-react";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
+import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import { TOPICS } from "@/data/topics";
 
-export const metadata: Metadata = {
-  title: "Topik Hukum: Kenali Hakmu",
-  description:
-    "Panduan hukum berdasarkan topik kehidupan sehari-hari. Ketenagakerjaan, pernikahan, data pribadi, dan hukum pidana.",
-  openGraph: {
-    title: "Topik Hukum: Kenali Hakmu | Pasal.id",
-    description:
-      "Panduan hukum berdasarkan topik kehidupan sehari-hari.",
-  },
-};
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "topics" });
+  return {
+    title: t("pageTitle"),
+    description: t("pageDescription"),
+    alternates: getAlternates("/topik", locale),
+    openGraph: {
+      title: `${t("pageTitle")} | Pasal.id`,
+      description: t("pageDescription"),
+    },
+  };
+}
 
 const ICONS: Record<string, React.ElementType> = {
   Briefcase,
@@ -22,16 +32,21 @@ const ICONS: Record<string, React.ElementType> = {
   Scale,
 };
 
-export default function TopicsPage() {
+export default async function TopicsPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale as Locale);
+
+  const t = await getTranslations("topics");
+
   return (
     <div className="min-h-screen">
       <Header />
 
       <main className="container mx-auto max-w-4xl px-4 py-12">
         <div className="text-center mb-10">
-          <h1 className="font-heading text-3xl mb-3">Kenali Hakmu</h1>
+          <h1 className="font-heading text-3xl mb-3">{t("pageTitle")}</h1>
           <p className="text-muted-foreground text-lg">
-            Panduan hukum berdasarkan topik kehidupan sehari-hari.
+            {t("pageDescription")}
           </p>
         </div>
 
@@ -51,7 +66,7 @@ export default function TopicsPage() {
                         {topic.description}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {topic.questions.length} pertanyaan •{" "}
+                        {t("questionsCount", { count: topic.questions.length })} •{" "}
                         {topic.relatedLaws.map((l) => `${l.type} ${l.number}/${l.year}`).join(", ")}
                       </p>
                     </div>

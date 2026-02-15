@@ -18,15 +18,18 @@ Monorepo with three main pieces:
 ### Key directories
 
 ```
-apps/web/src/app/          — App Router pages (/, /search, /jelajahi, /peraturan/[type]/[slug], /admin/*)
-apps/web/src/components/   — React components (PascalCase.tsx)
-apps/web/src/lib/          — Utilities, Supabase clients (server.ts, client.ts, service.ts)
-apps/mcp-server/server.py  — MCP tools: search_laws, get_pasal, get_law_status, list_laws
-scripts/crawler/           — Mass scraper for peraturan.go.id
-scripts/parser/            — PDF parsing pipeline (PyMuPDF-based)
-scripts/agent/             — Gemini verification agent + apply_revision()
-scripts/loader/            — DB import scripts
-packages/supabase/migrations/ — All SQL migrations (001–039)
+apps/web/src/app/[locale]/    — Public pages under locale segment (/, /search, /jelajahi, /peraturan/[type]/[slug])
+apps/web/src/app/admin/        — Admin pages (NOT under [locale], Indonesian only)
+apps/web/src/components/       — React components (PascalCase.tsx)
+apps/web/src/lib/              — Utilities, Supabase clients (server.ts, client.ts, service.ts)
+apps/web/src/i18n/             — i18n config (routing.ts, request.ts)
+apps/web/messages/             — Translation files (id.json, en.json)
+apps/mcp-server/server.py      — MCP tools: search_laws, get_pasal, get_law_status, list_laws
+scripts/crawler/               — Mass scraper for peraturan.go.id
+scripts/parser/                — PDF parsing pipeline (PyMuPDF-based)
+scripts/agent/                 — Gemini verification agent + apply_revision()
+scripts/loader/                — DB import scripts
+packages/supabase/migrations/  — All SQL migrations (001–039)
 ```
 
 ## Commands
@@ -87,6 +90,24 @@ All steps run in a single transaction. If any fails, everything rolls back.
 - **Styling:** Tailwind utility classes only. No CSS modules or styled-components.
 - **UI language:** Indonesian primary, English secondary. Legal content always Indonesian.
 - **Admin auth:** `requireAdmin()` from `src/lib/admin-auth.ts` — checks Supabase auth + `ADMIN_EMAILS` env var.
+
+### i18n
+
+Uses `next-intl` with `localePrefix: 'as-needed'`. Indonesian (default) has no URL prefix. English uses `/en` prefix.
+
+- **Config:** `src/i18n/routing.ts`, `src/i18n/request.ts`
+- **Messages:** `messages/id.json` (source of truth), `messages/en.json`
+- **Middleware:** `src/middleware.ts` (excludes `/api`, `/admin`, static files)
+- **Type safety:** `global.d.ts` augments `next-intl` with message types from `id.json`
+- **Navigation:** Use `Link`, `useRouter`, `usePathname` from `@/i18n/routing` (not `next/link`)
+- **Server Components:** Use `getTranslations` from `next-intl/server` with `await` for async components, `useTranslations` for sync
+- **Client Components:** Use `useTranslations` from `next-intl`
+- **setRequestLocale:** Required at the top of every Server Component page: `setRequestLocale(locale as Locale)`
+- **Legal content:** Stays in Indonesian regardless of UI locale — only UI chrome is translated
+- **TYPE_LABELS:** Remain in Indonesian (official legal nomenclature, not UI strings)
+- **Admin pages:** NOT internationalized — excluded from middleware matcher
+- **CRITICAL:** Async Server Components (`async function`) MUST use `getTranslations` with `await`, never `useTranslations` (causes "Expected a suspended thenable" error)
+- **STATUS_LABELS deprecated:** Use `statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")` instead
 
 ### Python
 
@@ -152,6 +173,9 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **No vector/embedding search.** `document_nodes.fts` is keyword-only (TSVECTOR). No pgvector, no embeddings.
 - **Instrument Serif has no bold.** Only weight 400. Use font size for heading hierarchy, not weight.
 - **`data/` is gitignored.** Raw PDFs and parsed JSON live in `data/raw/` and `data/parsed/` locally only.
+- **i18n async/sync distinction.** Using `useTranslations` in async Server Components causes build error. Use `getTranslations` with `await` for any `async function` component.
+- **i18n navigation imports.** Public pages must import from `@/i18n/routing`, not `next/link` or `next/navigation`, or locale prefixes won't work.
+- **Landing page metadata.** Lives in `[locale]/layout.tsx`, not `page.tsx` — applies to all pages under that locale.
 
 ## Deployment
 

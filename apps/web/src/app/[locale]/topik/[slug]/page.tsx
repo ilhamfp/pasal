@@ -1,44 +1,52 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { ArrowRight, Search } from "lucide-react";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { getTopicBySlug, TOPICS } from "@/data/topics";
 import { workSlug as makeWorkSlug } from "@/lib/work-url";
+import { getAlternates } from "@/lib/i18n-metadata";
 
 export function generateStaticParams() {
   return TOPICS.map((t) => ({ slug: t.slug }));
 }
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const topic = getTopicBySlug(slug);
   if (!topic) return {};
+
+  const t = await getTranslations({ locale: locale as Locale, namespace: "topics" });
 
   const lawList = topic.relatedLaws
     .map((l) => `${l.type} ${l.number}/${l.year}`)
     .join(", ");
 
   return {
-    title: `${topic.title}: Panduan Hukum`,
-    description: `${topic.description} Peraturan terkait: ${lawList}.`,
+    title: `${topic.title}: ${t("guideSuffix")}`,
+    description: `${topic.description} ${lawList}.`,
+    alternates: getAlternates(`/topik/${slug}`, locale),
     openGraph: {
-      title: `${topic.title}: Panduan Hukum | Pasal.id`,
+      title: `${topic.title}: ${t("guideSuffix")} | Pasal.id`,
       description: topic.description,
-      images: [{ url: `/api/og?title=${encodeURIComponent(topic.title)}`, width: 1200, height: 630 }],
     },
   };
 }
 
 export default async function TopicDetailPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  setRequestLocale(locale as Locale);
   const topic = getTopicBySlug(slug);
   if (!topic) notFound();
+
+  const t = await getTranslations("topics");
 
   return (
     <div className="min-h-screen">
@@ -50,7 +58,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
             href="/topik"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            ← Semua Topik
+            &larr; {t("allTopics")}
           </Link>
         </div>
 
@@ -60,7 +68,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
         </div>
 
         <div className="mb-10">
-          <h2 className="font-heading text-xl mb-4">Peraturan Terkait</h2>
+          <h2 className="font-heading text-xl mb-4">{t("relatedRegulations")}</h2>
           <div className="flex flex-wrap gap-2">
             {topic.relatedLaws.map((law) => {
               const lawSlug = makeWorkSlug(law, law.type);
@@ -79,7 +87,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
         </div>
 
         <div>
-          <h2 className="font-heading text-xl mb-4">Pertanyaan Umum</h2>
+          <h2 className="font-heading text-xl mb-4">{t("commonQuestions")}</h2>
           <div className="space-y-4">
             {topic.questions.map((q, i) => (
               <div key={i} className="rounded-lg border bg-card p-5">
@@ -90,12 +98,12 @@ export default async function TopicDetailPage({ params }: PageProps) {
                     className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
                   >
                     <Search className="h-3.5 w-3.5" aria-hidden="true" />
-                    Cari jawaban
+                    {t("searchAnswer")}
                     <ArrowRight className="h-3 w-3" aria-hidden="true" />
                   </Link>
                   {q.pasal && q.lawRef && (
                     <span className="text-xs text-muted-foreground">
-                      Lihat: Pasal {q.pasal} {q.lawRef}
+                      {t("seeArticle", { pasal: q.pasal, lawRef: q.lawRef })}
                     </span>
                   )}
                 </div>

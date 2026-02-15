@@ -1,12 +1,15 @@
 "use client";
 
 import { m } from "framer-motion";
+import { useTranslations } from "next-intl";
 import SearchBar from "@/components/SearchBar";
 import PasalLogo from "@/components/PasalLogo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import SearchSuggestions from "./SearchSuggestions";
 
 export default function HeroSection() {
+  const t = useTranslations("hero");
+
   return (
     <m.section
       variants={staggerContainer}
@@ -22,11 +25,11 @@ export default function HeroSection() {
           variants={fadeUp}
           className="font-heading text-5xl leading-[1.1] tracking-tight text-balance sm:text-7xl"
         >
-          Temukan pasal yang Anda butuhkan
+          {t("heading")}
         </m.h1>
         <m.p variants={fadeUp} className="text-muted-foreground">
           <em className="font-heading text-2xl sm:text-3xl">
-            Hukum Indonesia, terbuka untuk semua
+            {t("subheading")}
           </em>
         </m.p>
         <m.div variants={fadeUp} className="mt-2 w-full max-w-2xl">

@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, ShieldCheck } from "lucide-react";
+import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import CopyButton from "@/components/CopyButton";
 import MCPDemo from "@/components/connect/MCPDemo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export const metadata: Metadata = {
-  title: "Hubungkan ke Claude via MCP",
-  description:
-    "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP). Tanpa halusinasi, dengan sitasi nyata.",
-  openGraph: {
-    title: "Hubungkan ke Claude via MCP | Pasal.id",
-    description:
-      "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP).",
-  },
-};
 
 const MCP_URL = "https://pasal-mcp-server-production.up.railway.app/mcp/";
 const INSTALL_CMD = `claude mcp add pasal-id --transport http --url ${MCP_URL}`;
@@ -29,65 +21,56 @@ const CLAUDE_DESKTOP_CONFIG = `{
   }
 }`;
 
-const EXAMPLE_PROMPTS = [
-  "Jelaskan Pasal 81 UU Cipta Kerja tentang ketenagakerjaan",
-  "Apakah UU Perkawinan 1974 masih berlaku?",
-  "Apa hak pekerja kontrak menurut hukum Indonesia?",
-  "Berapa usia minimum menikah di Indonesia?",
-  "Bandingkan hak pekerja sebelum dan sesudah UU Cipta Kerja",
-];
+const STEP_ICONS = [MessageSquare, Database, Scale, Quote];
+const TOOL_ICONS = [Search, FileText, ShieldCheck, BookOpen];
 
-const HOW_IT_WORKS_STEPS = [
-  {
-    icon: MessageSquare,
-    title: "Ketik pertanyaan hukum",
-    description: "Tanyakan apa saja tentang hukum Indonesia kepada Claude, dalam bahasa sehari-hari.",
-  },
-  {
-    icon: Database,
-    title: "MCP mencari database",
-    description: "Claude secara otomatis memanggil Pasal.id untuk mencari peraturan yang relevan.",
-  },
-  {
-    icon: Scale,
-    title: "Dapatkan pasal yang tepat",
-    description: "Sistem mengembalikan teks pasal asli beserta metadata dan status hukumnya.",
-  },
-  {
-    icon: Quote,
-    title: "Jawaban dengan sitasi",
-    description: "Claude menjawab pertanyaan Anda dengan mengutip langsung dari sumber hukum resmi.",
-  },
-];
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
 
-const MCP_TOOLS = [
-  {
-    name: "search_laws",
-    description: "Cari peraturan berdasarkan topik",
-    detail: "Pencarian teks penuh dengan stemmer bahasa Indonesia. Mendukung filter berdasarkan jenis peraturan dan tahun.",
-    icon: Search,
-  },
-  {
-    name: "get_pasal",
-    description: "Ambil teks pasal tertentu",
-    detail: "Dapatkan isi lengkap satu pasal beserta ayat-ayatnya dari undang-undang tertentu.",
-    icon: FileText,
-  },
-  {
-    name: "get_law_status",
-    description: "Cek apakah UU masih berlaku",
-    detail: "Periksa status hukum: berlaku, diubah, atau dicabut, beserta riwayat perubahannya.",
-    icon: ShieldCheck,
-  },
-  {
-    name: "list_laws",
-    description: "Jelajahi daftar peraturan",
-    detail: "Lihat daftar semua peraturan yang tersedia, dengan filter jenis dan paginasi.",
-    icon: BookOpen,
-  },
-];
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "connect" });
+  return {
+    title: t("pageTitle"),
+    description: t("pageDescription"),
+    alternates: getAlternates("/connect", locale),
+    openGraph: {
+      title: `${t("pageTitle")} | Pasal.id`,
+      description: t("pageDescription"),
+    },
+  };
+}
 
-export default function ConnectPage() {
+export default async function ConnectPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale as Locale);
+
+  const t = await getTranslations("connect");
+  const commonT = await getTranslations("common");
+
+  const steps = [
+    { icon: STEP_ICONS[0], title: t("step1Title"), description: t("step1Description") },
+    { icon: STEP_ICONS[1], title: t("step2Title"), description: t("step2Description") },
+    { icon: STEP_ICONS[2], title: t("step3Title"), description: t("step3Description") },
+    { icon: STEP_ICONS[3], title: t("step4Title"), description: t("step4Description") },
+  ];
+
+  const tools = [
+    { name: t("tool1Name"), description: t("tool1Description"), detail: t("tool1Detail"), icon: TOOL_ICONS[0] },
+    { name: t("tool2Name"), description: t("tool2Description"), detail: t("tool2Detail"), icon: TOOL_ICONS[1] },
+    { name: t("tool3Name"), description: t("tool3Description"), detail: t("tool3Detail"), icon: TOOL_ICONS[2] },
+    { name: t("tool4Name"), description: t("tool4Description"), detail: t("tool4Detail"), icon: TOOL_ICONS[3] },
+  ];
+
+  const examplePrompts = [
+    t("examplePrompt1"),
+    t("examplePrompt2"),
+    t("examplePrompt3"),
+    t("examplePrompt4"),
+    t("examplePrompt5"),
+  ];
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -100,11 +83,10 @@ export default function ConnectPage() {
             <div className="space-y-8">
               <div className="space-y-3">
                 <h1 className="font-heading text-4xl tracking-tight text-pretty">
-                  Hubungkan ke Claude
+                  {t("heroTitle")}
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Berikan Claude akses langsung ke hukum Indonesia, tanpa
-                  halusinasi, dengan sitasi nyata.
+                  {t("heroTagline")}
                 </p>
               </div>
 
@@ -112,18 +94,18 @@ export default function ConnectPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-xl">
-                    Claude Code
+                    {t("claudeCodeTitle")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Jalankan perintah ini di terminal Claude Code:
+                    {t("claudeCodeInstructions")}
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 rounded-lg bg-muted px-3 py-2 text-sm font-mono break-all">
                       {INSTALL_CMD}
                     </code>
-                    <CopyButton text={INSTALL_CMD} label="Salin" />
+                    <CopyButton text={INSTALL_CMD} label={commonT("copy")} />
                   </div>
                 </CardContent>
               </Card>
@@ -132,28 +114,25 @@ export default function ConnectPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-xl">
-                    Claude Desktop
+                    {t("claudeDesktopTitle")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Tambahkan konfigurasi berikut ke file{" "}
-                    <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-                      claude_desktop_config.json
-                    </code>{" "}
-                    Anda:
+                    {t("claudeDesktopInstructions", {
+                      config: "claude_desktop_config.json",
+                    })}
                   </p>
                   <div className="relative">
                     <pre className="rounded-lg bg-muted px-4 py-3 text-sm font-mono overflow-x-auto">
                       {CLAUDE_DESKTOP_CONFIG}
                     </pre>
                     <div className="absolute top-2 right-2">
-                      <CopyButton text={CLAUDE_DESKTOP_CONFIG} label="Salin" />
+                      <CopyButton text={CLAUDE_DESKTOP_CONFIG} label={commonT("copy")} />
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Buka Claude Desktop, masuk ke Settings &rarr; Developer
-                    &rarr; Edit Config, lalu tempel konfigurasi di atas.
+                    {t("claudeDesktopHint")}
                   </p>
                 </CardContent>
               </Card>
@@ -163,11 +142,10 @@ export default function ConnectPage() {
             <div className="lg:sticky lg:top-20 space-y-4">
               <div className="space-y-2">
                 <h2 className="font-heading text-2xl tracking-tight text-pretty">
-                  Lihat MCP Beraksi
+                  {t("demoTitle")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Demo otomatis: Claude menggunakan 4 tool Pasal.id untuk
-                  menjawab pertanyaan hukum dengan kutipan akurat.
+                  {t("demoDescription")}
                 </p>
               </div>
               <MCPDemo />
@@ -179,10 +157,10 @@ export default function ConnectPage() {
           {/* Cara Kerjanya — How it works */}
           <section className="space-y-6">
             <h2 className="font-heading text-2xl tracking-tight text-center text-pretty">
-              Cara Kerjanya
+              {t("howItWorks")}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {HOW_IT_WORKS_STEPS.map((item, i) => (
+              {steps.map((item, i) => (
                 <Card key={item.title}>
                   <CardContent className="p-6 space-y-3">
                     <div className="flex items-center gap-3">
@@ -203,14 +181,14 @@ export default function ConnectPage() {
           <section className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="font-heading text-2xl tracking-tight text-pretty">
-                Tool yang Tersedia
+                {t("toolsTitle")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Empat tool MCP yang dapat digunakan Claude untuk mengakses database hukum Indonesia.
+                {t("toolsDescription")}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {MCP_TOOLS.map((tool) => (
+              {tools.map((tool) => (
                 <Card key={tool.name}>
                   <CardContent className="p-6 space-y-3">
                     <div className="flex items-center gap-3">
@@ -228,14 +206,14 @@ export default function ConnectPage() {
           {/* Example Prompts */}
           <section id="coba-sekarang" className="space-y-6 scroll-mt-20">
             <h2 className="font-heading text-2xl tracking-tight text-center text-pretty">
-              Coba Sekarang
+              {t("tryNowTitle")}
             </h2>
             <div className="space-y-3">
-              {EXAMPLE_PROMPTS.map((prompt, i) => (
+              {examplePrompts.map((prompt, i) => (
                 <Card key={i} className="transition-colors hover:border-primary/30">
                   <CardContent className="flex items-center justify-between py-3">
                     <p className="text-sm">&ldquo;{prompt}&rdquo;</p>
-                    <CopyButton text={prompt} label="Salin" />
+                    <CopyButton text={prompt} label={commonT("copy")} />
                   </CardContent>
                 </Card>
               ))}
@@ -245,24 +223,18 @@ export default function ConnectPage() {
           {/* What is MCP */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-xl">Apa itu MCP?</CardTitle>
+              <CardTitle className="font-heading text-xl">{t("whatIsMcpTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>
-                Model Context Protocol (MCP) adalah standar terbuka yang memungkinkan
-                AI seperti Claude untuk mengakses data eksternal secara aman.
-              </p>
-              <p>
-                Dengan MCP, Claude dapat mencari undang-undang, membaca pasal tertentu,
-                dan memeriksa status hukum, langsung dari database Pasal.id.
-              </p>
+              <p>{t("whatIsMcpParagraph1")}</p>
+              <p>{t("whatIsMcpParagraph2")}</p>
               <a
                 href="https://modelcontextprotocol.io"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Pelajari lebih lanjut tentang MCP &rarr;
+                {t("learnMoreMcp")}
               </a>
             </CardContent>
           </Card>
@@ -273,7 +245,7 @@ export default function ConnectPage() {
               href="/search"
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-sans font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Coba cari hukum Indonesia &rarr;
+              {t("ctaButton")}
             </Link>
           </div>
         </div>
@@ -281,4 +253,3 @@ export default function ConnectPage() {
     </div>
   );
 }
-

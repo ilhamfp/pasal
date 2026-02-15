@@ -237,12 +237,12 @@ The single highest-visibility change. Every link shared on WhatsApp/Telegram/Twi
 - If text overflows, it won't wrap automatically — set `overflow: "hidden"` on the container.
 
 **DONE WHEN:**
-- [ ] `@vercel/og` is in `apps/web/package.json` dependencies
-- [ ] Font `.ttf` files exist in `src/app/api/og/fonts/`
-- [ ] `GET /api/og` returns a PNG with stone background, § mark, and "Cari Hukum Indonesia"
-- [ ] `GET /api/og?page=law&title=Ketenagakerjaan&type=UU&number=13&year=2003&status=berlaku&pasalCount=193` returns a PNG with dark background, verdigris type badge, green status badge
-- [ ] Save both images locally — each must be under 300KB (if over, reduce font sizes or padding)
-- [ ] `npm run build` succeeds
+- [x] `@vercel/og` is in `apps/web/package.json` dependencies
+- [x] Font `.ttf` files exist in `src/app/api/og/fonts/`
+- [x] `GET /api/og` returns a PNG with stone background, § mark, and "Cari Hukum Indonesia"
+- [x] `GET /api/og?page=law&title=Ketenagakerjaan&type=UU&number=13&year=2003&status=berlaku&pasalCount=193` returns a PNG with dark background, verdigris type badge, green status badge
+- [x] Save both images locally — each must be under 300KB (if over, reduce font sizes or padding)
+- [x] `npm run build` succeeds
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -338,12 +338,12 @@ The single highest-visibility change. Every link shared on WhatsApp/Telegram/Twi
    ```
 
 **DONE WHEN:**
-- [ ] `curl ... | grep 'og:image'` shows `/api/og` for the landing page
-- [ ] `curl ... | grep 'og:image'` shows `page=law&title=...` for a law detail page
-- [ ] Topic pages and `/api` page have dynamic OG images
-- [ ] All pages have `<meta name="twitter:card" content="summary_large_image">`
-- [ ] Law detail pages have `twitter:label1` / `twitter:data1` meta tags
-- [ ] `npm run build` succeeds
+- [x] `curl ... | grep 'og:image'` shows `/api/og` for the landing page
+- [x] `curl ... | grep 'og:image'` shows `page=law&title=...` for a law detail page
+- [x] Topic pages and `/api` page have dynamic OG images
+- [x] All pages have `<meta name="twitter:card" content="summary_large_image">`
+- [x] Law detail pages have `twitter:label1` / `twitter:data1` meta tags
+- [x] `npm run build` succeeds
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 
@@ -477,12 +477,12 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 2. **Test the component.** Import it temporarily in any page to verify it renders correctly.
 
 **DONE WHEN:**
-- [ ] `ShareButton.tsx` exists at `apps/web/src/components/ShareButton.tsx`
-- [ ] It's a `"use client"` component
-- [ ] Desktop: "Bagikan" button opens dropdown with 4 options
-- [ ] WhatsApp opens `https://wa.me/?text=...` with title + URL on separate lines
-- [ ] "Salin Link" copies to clipboard, shows "Link disalin!" with checkmark for 2 seconds
-- [ ] All UI text is Indonesian
+- [x] `ShareButton.tsx` exists at `apps/web/src/components/ShareButton.tsx`
+- [x] It's a `"use client"` component
+- [x] Desktop: "Bagikan" button opens dropdown with 4 options
+- [x] WhatsApp opens `https://wa.me/?text=...` with title + URL on separate lines
+- [x] "Salin Link" copies to clipboard, shows "Link disalin!" with checkmark for 2 seconds
+- [x] All UI text is Indonesian
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -545,11 +545,11 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
      ```
 
 **DONE WHEN:**
-- [ ] Law page header has a "Bagikan" button aligned right
-- [ ] Right sidebar has a "Bagikan" card
-- [ ] Each PasalBlock has a "Link" copy button
-- [ ] Clicking "Link" copies `https://pasal.id/peraturan/...#pasal-{number}`
-- [ ] `npm run build` succeeds
+- [x] Law page header has a "Bagikan" button aligned right
+- [x] Right sidebar has a "Bagikan" card
+- [x] Each PasalBlock has a "Link" copy button
+- [x] Clicking "Link" copies `https://pasal.id/peraturan/...#pasal-{number}`
+- [x] `npm run build` succeeds
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -585,9 +585,9 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
    ```
 
 **DONE WHEN:**
-- [ ] Topic pages have a share button below the description
-- [ ] Connect page has a share button
-- [ ] `npm run build` succeeds
+- [x] Topic pages have a share button below the description
+- [x] Connect page has a share button
+- [x] `npm run build` succeeds
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 
@@ -641,11 +641,11 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 4. **Add smooth scrolling** — in `apps/web/src/app/globals.css`, check if `html { scroll-behavior: smooth; }` exists. If not, add it.
 
 **DONE WHEN:**
-- [ ] BAB sections have `id="bab-{number}"` attributes
-- [ ] Hovering a BAB heading reveals a link icon
-- [ ] Clicking the icon copies the URL with `#bab-{number}` anchor
-- [ ] TOC links scroll to the correct section
-- [ ] Direct navigation to `...#bab-I` scrolls correctly
+- [x] BAB sections have `id="bab-{number}"` attributes
+- [x] Hovering a BAB heading reveals a link icon
+- [x] Clicking the icon copies the URL with `#bab-{number}` anchor
+- [x] TOC links scroll to the correct section
+- [x] Direct navigation to `...#bab-I` scrolls correctly
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -739,11 +739,11 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 4. **Optionally add to PasalBlock** for per-pasal citations. This requires passing `type`, `number`, `year` props down to PasalBlock — only do this if the prop threading isn't too messy. If it is, skip per-pasal citations for now and only keep the law-level citation.
 
 **DONE WHEN:**
-- [ ] `CitationButton` component exists and renders
-- [ ] Clicking "Kutip" shows the formal citation: `Undang-Undang Nomor 13 Tahun 2003 tentang Ketenagakerjaan`
-- [ ] Citation includes the pasal.id URL
-- [ ] "Salin Kutipan" copies to clipboard with feedback
-- [ ] Popover uses white bg, border, no heavy shadow
+- [x] `CitationButton` component exists and renders
+- [x] Clicking "Kutip" shows the formal citation: `Undang-Undang Nomor 13 Tahun 2003 tentang Ketenagakerjaan`
+- [x] Citation includes the pasal.id URL
+- [x] "Salin Kutipan" copies to clipboard with feedback
+- [x] Popover uses white bg, border, no heavy shadow
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -808,11 +808,11 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 4. **Validate:** View page source → copy JSON-LD → paste in https://validator.schema.org/
 
 **DONE WHEN:**
-- [ ] Law `Legislation` JSON-LD has `legislationLegalValue` and `legislationJurisdiction`
-- [ ] Landing page has `WebSite` JSON-LD with `SearchAction`
-- [ ] Topic pages have `BreadcrumbList` JSON-LD
+- [x] Law `Legislation` JSON-LD has `legislationLegalValue` and `legislationJurisdiction`
+- [x] Landing page has `WebSite` JSON-LD with `SearchAction`
+- [x] Topic pages have `BreadcrumbList` JSON-LD
 - [ ] All validate at validator.schema.org
-- [ ] `npm run build` succeeds
+- [x] `npm run build` succeeds
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 
@@ -839,10 +839,10 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 3. Verify: `npm run build` then check `/robots.txt` and `/sitemap.xml` responses.
 
 **DONE WHEN:**
-- [ ] `robots.ts` exists
-- [ ] `/robots.txt` contains `Sitemap:` line
-- [ ] `/api/og` is disallowed
-- [ ] `/sitemap.xml` contains law page URLs
+- [x] `robots.ts` exists
+- [x] `/robots.txt` contains `Sitemap:` line
+- [x] `/api/og` is disallowed
+- [x] `/sitemap.xml` contains law page URLs
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 
@@ -907,10 +907,10 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 4. **Test:** Ctrl+P on a law page → should show clean content only.
 
 **DONE WHEN:**
-- [ ] Ctrl+P shows clean print preview (no header, sidebar, buttons)
-- [ ] White background, black text
-- [ ] Pasal blocks don't break across pages
-- [ ] "Cetak" button exists in sidebar and is hidden in print
+- [x] Ctrl+P shows clean print preview (no header, sidebar, buttons)
+- [x] White background, black text
+- [x] Pasal blocks don't break across pages
+- [x] "Cetak" button exists in sidebar and is hidden in print
 - [ ] Run `code-simplifier` skill. ☑
 - [ ] Run `code-review` skill. ☑
 - [ ] Run `/web-design-guidelines` skill, verify against `BRAND_GUIDELINES.md`. ☑
@@ -1010,16 +1010,16 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 ### Development Tasks (Junior Dev)
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | Install @vercel/og + create OG route with templates | ☐ |
-| 1 | Wire dynamic OG into all page metadata | ☐ |
-| 2 | Create ShareButton component | ☐ |
-| 2 | Add ShareButton to law detail pages | ☐ |
-| 2 | Add ShareButton to topic + connect pages | ☐ |
-| 3 | Section IDs + copy-link on BAB headings | ☐ |
-| 3 | Citation copy button ("Kutip") | ☐ |
-| 4 | Enhance JSON-LD structured data | ☐ |
-| 4 | Create robots.ts + verify sitemap | ☐ |
-| 5 | Print CSS + "Cetak" button | ☐ |
+| 1 | Install @vercel/og + create OG route with templates | ☑ |
+| 1 | Wire dynamic OG into all page metadata | ☑ |
+| 2 | Create ShareButton component | ☑ |
+| 2 | Add ShareButton to law detail pages | ☑ |
+| 2 | Add ShareButton to topic + connect pages | ☑ |
+| 3 | Section IDs + copy-link on BAB headings | ☑ |
+| 3 | Citation copy button ("Kutip") | ☑ |
+| 4 | Enhance JSON-LD structured data | ☑ |
+| 4 | Create robots.ts + verify sitemap | ☑ |
+| 5 | Print CSS + "Cetak" button | ☑ |
 | 6 | Create server.json + README badges | ☐ |
 | 7 | Truncate og:title/description for WhatsApp | ☐ |
 

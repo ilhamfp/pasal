@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/routing";
 import { useState, type FormEvent } from "react";
 import { m } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,8 @@ export default function SearchBar({
   autoFocus?: boolean;
   preserveParams?: Record<string, string>;
 }) {
+  const t = useTranslations("search");
+  const navT = useTranslations("navigation");
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -38,8 +41,8 @@ export default function SearchBar({
       <Input
         type="search"
         name="q"
-        aria-label="Cari hukum Indonesia"
-        placeholder={'Cari hukum Indonesia\u2026 (cth: "ketenagakerjaan", "uud 1945")'}
+        aria-label={t("placeholder")}
+        placeholder={t("placeholder")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="h-12 text-base"
@@ -48,7 +51,7 @@ export default function SearchBar({
         onBlur={() => setIsFocused(false)}
       />
       <Button type="submit" size="lg" className="h-12 px-6">
-        Cari
+        {navT("search")}
       </Button>
     </m.form>
   );

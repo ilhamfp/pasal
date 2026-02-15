@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { workPath } from "@/lib/work-url";
-import { STATUS_LABELS } from "@/lib/legal-status";
 
 interface TimelineNode {
   year: number;
@@ -38,24 +38,28 @@ interface AmendmentTimelineProps {
   regTypeCode: string;
 }
 
-const TIMELINE_STATUS_LABELS: Record<string, string> = {
-  ...STATUS_LABELS,
-  diubah: "Berlaku (dengan perubahan)",
-};
-
 export default function AmendmentTimeline({
   currentWork,
   relationships,
   regTypeCode,
 }: AmendmentTimelineProps) {
+  const t = useTranslations("timeline");
+
   if (relationships.length === 0) return null;
+
+  const TIMELINE_STATUS_LABELS: Record<string, string> = {
+    berlaku: t("statusBerlaku"),
+    diubah: t("statusDiubah"),
+    dicabut: t("statusDicabut"),
+    tidak_berlaku: t("statusTidakBerlaku"),
+  };
 
   const currentNode: TimelineNode = {
     year: currentWork.year,
     type: regTypeCode,
     number: currentWork.number,
     title: currentWork.title_id,
-    relationship: "Undang-Undang ini",
+    relationship: t("currentLaw"),
     slug: currentWork.slug ?? null,
     href: workPath(currentWork, regTypeCode),
     isCurrent: true,
@@ -76,7 +80,7 @@ export default function AmendmentTimeline({
 
   return (
     <div className="rounded-lg border p-4">
-      <h3 className="font-heading text-sm mb-4">Riwayat Perubahan</h3>
+      <h3 className="font-heading text-sm mb-4">{t("title")}</h3>
       <div className="relative pl-6">
         {/* Vertical line */}
         <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />
@@ -117,7 +121,7 @@ export default function AmendmentTimeline({
         <div className="relative flex items-center min-h-[18px] pt-5">
           <div className="absolute -left-6 h-[18px] w-[18px] rounded-full border-2 border-primary bg-primary/20" />
           <p className="text-xs font-medium text-primary">
-            Status: {TIMELINE_STATUS_LABELS[currentWork.status] || currentWork.status}
+            {t("statusPrefix")} {TIMELINE_STATUS_LABELS[currentWork.status] || currentWork.status}
           </p>
         </div>
       </div>

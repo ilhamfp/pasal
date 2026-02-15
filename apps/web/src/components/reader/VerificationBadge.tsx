@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -12,13 +13,15 @@ export default function VerificationBadge({
 }: {
   verified: boolean;
 }) {
+  const t = useTranslations("verification");
+
   if (verified) {
     return (
       <Badge
         className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20"
         variant="outline"
       >
-        ✓ Terverifikasi
+        ✓ {t("verified")}
       </Badge>
     );
   }
@@ -31,22 +34,17 @@ export default function VerificationBadge({
             className="bg-status-diubah-bg text-status-diubah border-status-diubah/20 cursor-pointer hover:bg-status-diubah-bg/80 transition-colors"
             variant="outline"
           >
-            ⚠ Belum Diverifikasi
+            ⚠ {t("unverified")}
           </Badge>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 text-sm" side="bottom" align="start">
         <div className="space-y-2">
-          <p className="font-medium">Apa artinya?</p>
+          <p className="font-medium">{t("unverifiedTitle")}</p>
           <ul className="space-y-1.5 text-muted-foreground text-xs">
-            <li>
-              Data ini diproses secara otomatis oleh parser kami berdasarkan PDF
-              resmi.
-            </li>
-            <li>
-              Belum ditinjau oleh manusia untuk memastikan akurasi 100%.
-            </li>
-            <li>Kami sedang memverifikasi data secara bertahap.</li>
+            <li>{t("unverifiedReason1")}</li>
+            <li>{t("unverifiedReason2")}</li>
+            <li>{t("unverifiedReason3")}</li>
           </ul>
         </div>
       </PopoverContent>

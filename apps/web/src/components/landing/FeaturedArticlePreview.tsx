@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";

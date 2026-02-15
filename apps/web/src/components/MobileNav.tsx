@@ -2,22 +2,25 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { Menu, X } from "lucide-react";
 import PasalLogo from "./PasalLogo";
-
-const NAV_LINKS = [
-  { href: "/search", label: "Cari" },
-  { href: "/jelajahi", label: "Jelajahi" },
-  { href: "/api", label: "API" },
-] as const;
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function MobileNav() {
+  const t = useTranslations("navigation");
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const close = useCallback(() => setOpen(false), []);
+
+  const NAV_LINKS = [
+    { href: "/search" as const, label: t("search") },
+    { href: "/jelajahi" as const, label: t("browse") },
+    { href: "/api" as const, label: t("api") },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +32,7 @@ export default function MobileNav() {
     // Focus the close button when drawer opens
     const panel = panelRef.current;
     if (panel) {
-      const closeBtn = panel.querySelector<HTMLElement>("[aria-label='Tutup menu']");
+      const closeBtn = panel.querySelector<HTMLElement>("button[data-close]");
       closeBtn?.focus();
     }
 
@@ -72,7 +75,7 @@ export default function MobileNav() {
         ref={triggerRef}
         onClick={() => setOpen(true)}
         className="lg:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-        aria-label="Buka menu navigasi"
+        aria-label={t("openMenu")}
       >
         <Menu className="h-6 w-6" />
       </button>
@@ -96,9 +99,10 @@ export default function MobileNav() {
                 <span>Pasal<span className="text-muted-foreground">.id</span></span>
               </Link>
               <button
+                data-close
                 onClick={close}
                 className="text-muted-foreground hover:text-foreground p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                aria-label="Tutup menu"
+                aria-label={t("closeMenu")}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -121,8 +125,12 @@ export default function MobileNav() {
                 onClick={close}
                 className="mt-4 rounded-lg bg-primary px-4 py-2.5 text-sm font-sans font-semibold text-primary-foreground text-center transition-colors hover:bg-primary/90"
               >
-                Hubungkan Claude
+                {t("connect")}
               </Link>
+
+              <div className="mt-4 px-3">
+                <LanguageSwitcher />
+              </div>
             </nav>
           </div>
         </div>,

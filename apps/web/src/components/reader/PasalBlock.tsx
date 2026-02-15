@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import PasalLogo from "@/components/PasalLogo";
 import CopyButton from "@/components/CopyButton";
 import { Pencil } from "lucide-react";
@@ -18,6 +19,7 @@ interface PasalBlockProps {
 }
 
 export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
+  const t = useTranslations("reader");
   const content = pasal.content_text || "";
   const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
   const koreksiHref = `${pathname}/koreksi/${pasal.id}`;
@@ -31,18 +33,18 @@ export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
       <div className="flex items-center justify-between mb-2">
         <h3 className="flex items-center gap-1.5 font-heading text-base">
           <PasalLogo size={18} className="text-primary/60" />
-          Pasal {pasal.number}
+          {t("pasalPrefix")} {pasal.number}
         </h3>
         <div className="flex items-center gap-1">
           <Link
             href={koreksiHref}
             className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-            aria-label="Sarankan Koreksi"
+            aria-label={t("suggestCorrection")}
           >
             <Pencil className="h-3 w-3" aria-hidden="true" />
-            Koreksi
+            {t("correction")}
           </Link>
-          <CopyButton text={jsonData} label="JSON" />
+          <CopyButton text={jsonData} label={t("jsonButton")} />
         </div>
       </div>
       <div className="text-sm leading-relaxed whitespace-pre-wrap">{content}</div>

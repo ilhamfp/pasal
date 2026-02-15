@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import { TYPE_LABELS } from "@/lib/legal-status";
 import { FileText, ArrowRight } from "lucide-react";
@@ -8,6 +9,7 @@ import RevealOnScroll from "./RevealOnScroll";
 const FEATURED_TYPES = ["UU", "PP", "PERPRES", "PERMEN", "PERPPU", "PERDA"];
 
 export default async function BrowseSection() {
+  const t = await getTranslations("browse");
   const supabase = await createClient();
 
   const { data: types } = await supabase
@@ -16,12 +18,12 @@ export default async function BrowseSection() {
     .order("hierarchy_level");
 
   const typesWithCounts = (types || [])
-    .map((t) => ({
-      ...t,
-      count: (t.works as unknown as { count: number }[])?.[0]?.count ?? 0,
-      label: TYPE_LABELS[t.code] || t.name_id,
+    .map((tp) => ({
+      ...tp,
+      count: (tp.works as unknown as { count: number }[])?.[0]?.count ?? 0,
+      label: TYPE_LABELS[tp.code] || tp.name_id,
     }))
-    .filter((t) => t.count > 0 && FEATURED_TYPES.includes(t.code))
+    .filter((tp) => tp.count > 0 && FEATURED_TYPES.includes(tp.code))
     .sort((a, b) => FEATURED_TYPES.indexOf(a.code) - FEATURED_TYPES.indexOf(b.code));
 
   if (typesWithCounts.length === 0) return null;
@@ -31,10 +33,10 @@ export default async function BrowseSection() {
       <RevealOnScroll>
         <div className="mx-auto max-w-5xl px-4">
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Telusuri Peraturan
+            {t("sectionLabel")}
           </p>
           <h2 className="font-heading text-center text-4xl tracking-tight sm:text-5xl">
-            Jelajahi Berdasarkan Jenis
+            {t("sectionTitle")}
           </h2>
 
           <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
@@ -63,7 +65,7 @@ export default async function BrowseSection() {
               href="/jelajahi"
               className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
-              Lihat semua jenis peraturan
+              {t("seeAllTypes")}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>

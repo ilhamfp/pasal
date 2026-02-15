@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import { STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS, TYPE_LABELS } from "@/lib/legal-status";
 import { workPath } from "@/lib/work-url";
+import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,22 +16,30 @@ export const revalidate = 3600; // ISR: 1 hour
 const PAGE_SIZE = 20;
 
 interface PageProps {
-  params: Promise<{ type: string }>;
+  params: Promise<{ locale: string; type: string }>;
   searchParams: Promise<{ page?: string; year?: string; status?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { type } = await params;
+  const { locale, type } = await params;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "browse" });
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   return {
-    title: `Jelajahi ${typeLabel}`,
-    description: `Daftar ${typeLabel} dalam database hukum Indonesia.`,
+    title: t("typePageTitle", { type: typeLabel }),
+    description: t("typePageDescription", { type: typeLabel }),
+    alternates: getAlternates(`/jelajahi/${type}`, locale),
   };
 }
 
 export default async function TypeListingPage({ params, searchParams }: PageProps) {
-  const { type } = await params;
+  const { locale, type } = await params;
+  setRequestLocale(locale as Locale);
   const { page: pageStr, year, status } = await searchParams;
+
+  const t = await getTranslations("browse");
+  const statusT = await getTranslations("status");
+  const filtersT = await getTranslations("filters");
+  const searchT = await getTranslations("search");
   const supabase = await createClient();
 
   const typeCode = type.toUpperCase();
@@ -116,7 +127,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <ChevronLeft className="h-4 w-4" />
-          Kembali ke Jelajahi
+          {t("backToBrowse")}
         </Link>
 
         <div className="mb-8">
@@ -124,7 +135,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
             {typeLabel} ({typeCode})
           </h1>
           <p className="text-muted-foreground">
-            {(count || 0).toLocaleString("id-ID")} peraturan
+            {t("regulationsCount", { count: (count || 0).toLocaleString("id-ID") })}
           </p>
         </div>
 
@@ -133,10 +144,10 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           <select
             name="year"
             defaultValue={year || ""}
-            aria-label="Filter tahun"
+            aria-label={t("filterByYear")}
             className="rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
           >
-            <option value="">Semua Tahun</option>
+            <option value="">{t("allYears")}</option>
             {uniqueYears.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
@@ -145,20 +156,20 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           <select
             name="status"
             defaultValue={status || ""}
-            aria-label="Filter status"
+            aria-label={t("filterByStatus")}
             className="rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
           >
-            <option value="">Semua Status</option>
-            <option value="berlaku">Berlaku</option>
-            <option value="diubah">Diubah</option>
-            <option value="dicabut">Dicabut</option>
+            <option value="">{filtersT("allStatus")}</option>
+            <option value="berlaku">{filtersT("statusActive")}</option>
+            <option value="diubah">{filtersT("statusAmended")}</option>
+            <option value="dicabut">{filtersT("statusRevoked")}</option>
           </select>
 
           <button
             type="submit"
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
-            Filter
+            {t("filterButton")}
           </button>
         </form>
 
@@ -185,7 +196,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
                       className={STATUS_COLORS[work.status] || ""}
                       variant="outline"
                     >
-                      {STATUS_LABELS[work.status] || work.status}
+                      {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                     </Badge>
                   )}
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -196,18 +207,18 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
 
           {(!works || works.length === 0) && (
             <div className="rounded-lg border p-8 text-center text-muted-foreground">
-              Tidak ada peraturan ditemukan.
+              {t("noRegulationsFound")}
             </div>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <nav aria-label="Halaman" className="flex items-center justify-center gap-2 mt-8">
+          <nav aria-label={searchT("pagination")} className="flex items-center justify-center gap-2 mt-8">
             {currentPage > 1 && (
               <Link
                 href={pageUrl(currentPage - 1)}
-                aria-label="Halaman sebelumnya"
+                aria-label={searchT("previousPage")}
                 className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -242,7 +253,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
             {currentPage < totalPages && (
               <Link
                 href={pageUrl(currentPage + 1)}
-                aria-label="Halaman berikutnya"
+                aria-label={searchT("nextPage")}
                 className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
               >
                 <ChevronRight className="h-4 w-4" />

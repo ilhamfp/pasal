@@ -1,18 +1,34 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import { TYPE_LABELS } from "@/lib/legal-status";
+import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import { FileText } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Jelajahi Peraturan",
-  description: "Telusuri database hukum Indonesia berdasarkan jenis peraturan.",
-};
-
 export const revalidate = 3600; // ISR: 1 hour
 
-export default async function JelajahiPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "browse" });
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: getAlternates("/jelajahi", locale),
+  };
+}
+
+export default async function JelajahiPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale as Locale);
+
+  const t = await getTranslations("browse");
   const supabase = await createClient();
 
   // Single query with inline count — replaces N+1 pattern
@@ -36,10 +52,10 @@ export default async function JelajahiPage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="font-heading text-4xl tracking-tight mb-3">
-            Jelajahi Peraturan
+            {t("title")}
           </h1>
           <p className="text-muted-foreground text-lg">
-            Telusuri database hukum Indonesia berdasarkan jenis peraturan
+            {t("description")}
           </p>
         </div>
 
@@ -66,7 +82,7 @@ export default async function JelajahiPage() {
 
         {typesWithCounts.length === 0 && (
           <div className="rounded-lg border p-12 text-center text-muted-foreground">
-            Belum ada peraturan dalam database.
+            {t("noRegulationsYet")}
           </div>
         )}
       </div>

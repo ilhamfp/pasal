@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import type { ReactNode } from "react";
 
 const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;

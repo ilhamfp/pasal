@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { createClient } from "@/lib/supabase/server";
 import LawCarousel, { type LawData } from "./LawCarousel";
@@ -27,6 +28,7 @@ const CURATED = [
 ];
 
 export default async function CuratedLaws() {
+  const t = await getTranslations("curated");
   const supabase = await createClient();
 
   const { data: works } = await supabase
@@ -92,10 +94,10 @@ export default async function CuratedLaws() {
       <RevealOnScroll>
         <div className="mx-auto max-w-5xl px-4">
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Paling Sering Diakses
+            {t("sectionLabel")}
           </p>
           <h2 className="font-heading text-center text-4xl tracking-tight sm:text-5xl">
-            Peraturan Populer
+            {t("sectionTitle")}
           </h2>
         </div>
       </RevealOnScroll>

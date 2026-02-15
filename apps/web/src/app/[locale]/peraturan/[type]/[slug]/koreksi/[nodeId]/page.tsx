@@ -1,14 +1,17 @@
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/Header";
 import KoreksiEditor from "./KoreksiEditor";
 
 interface PageProps {
-  params: Promise<{ type: string; slug: string; nodeId: string }>;
+  params: Promise<{ locale: string; type: string; slug: string; nodeId: string }>;
 }
 
 export default async function KoreksiPage({ params }: PageProps) {
-  const { type, slug, nodeId } = await params;
+  const { locale, type, slug, nodeId } = await params;
+  setRequestLocale(locale as Locale);
   const supabase = await createClient();
 
   const nodeIdNum = parseInt(nodeId, 10);

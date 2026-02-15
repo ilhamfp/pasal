@@ -1,9 +1,13 @@
 import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
+import { LEGAL_FORCE_MAP, STATUS_COLORS, TYPE_LABELS } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
+import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import PasalLogo from "@/components/PasalLogo";
@@ -15,6 +19,7 @@ import ReaderLayout from "@/components/reader/ReaderLayout";
 import PasalBlock from "@/components/reader/PasalBlock";
 import HashHighlighter from "@/components/reader/HashHighlighter";
 import VerificationBadge from "@/components/reader/VerificationBadge";
+import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -53,54 +58,41 @@ const getWorkBySlug = cache(async (typeCode: string, slug: string) => {
 });
 
 interface PageProps {
-  params: Promise<{ type: string; slug: string }>;
+  params: Promise<{ locale: string; type: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { type, slug } = await params;
+  const { locale, type, slug } = await params;
 
   const result = await getWorkBySlug(type.toUpperCase(), slug);
   if (!result) return {};
 
   const { work } = result;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "reader" });
+  const statusT = await getTranslations({ locale: locale as Locale, namespace: "status" });
+
+  // TYPE_LABELS stay in Indonesian — they are official legal nomenclature
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   const title = `${work.title_id} | ${typeLabel} No. ${work.number} Tahun ${work.year}`;
-  const description = `Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year} tentang ${work.title_id}. Status: ${STATUS_LABELS[work.status] || work.status}.`;
-  const url = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
-
-  const ogParams = new URLSearchParams({
-    page: "law",
-    title: work.title_id,
-    type: type.toUpperCase(),
+  const description = t("readFullText", {
+    type: typeLabel,
     number: work.number,
-    year: String(work.year),
-    status: work.status,
-  });
-  const ogImageUrl = `/api/og?${ogParams.toString()}`;
+    year: work.year,
+    title: work.title_id,
+  }) + ` Status: ${statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}.`;
+  const path = `/peraturan/${type.toLowerCase()}/${slug}`;
+  const url = `https://pasal.id${path}`;
 
   return {
     title,
     description,
     keywords: work.subject_tags || undefined,
-    alternates: { canonical: url },
+    alternates: getAlternates(path, locale),
     openGraph: {
       title,
       description,
       url,
       type: "article",
-      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImageUrl],
-    },
-    other: {
-      "twitter:label1": "Status",
-      "twitter:data1": STATUS_LABELS[work.status] || work.status,
-      "twitter:label2": "Jenis",
-      "twitter:data2": typeLabel,
     },
   };
 }
@@ -171,6 +163,8 @@ async function LawReaderSection({
   slug: string;
   pathname: string;
 }) {
+  const t = await getTranslations("reader");
+  const statusT = await getTranslations("status");
   const supabase = await createClient();
 
   // Fetch nodes and relationships in parallel
@@ -255,7 +249,7 @@ async function LawReaderSection({
       {pasalNodes.length === 0 && (
         <div className="rounded-lg border p-8 text-center text-muted-foreground">
           <PasalLogo size={48} className="mx-auto mb-3 opacity-20" />
-          Konten pasal belum tersedia untuk peraturan ini.
+          {t("noContentYet")}
         </div>
       )}
     </>
@@ -264,14 +258,20 @@ async function LawReaderSection({
   return (
     <ReaderLayout
       toc={<TableOfContents babs={babNodes} pasals={pasalNodes} />}
-      content={<><HashHighlighter />{mainContent}</>}
+      content={
+        <>
+          <HashHighlighter />
+          <LegalContentLanguageNotice />
+          {mainContent}
+        </>
+      }
       sidebar={
         <div className="space-y-4">
           <div className="rounded-lg border p-4">
-            <h3 className="font-heading text-sm mb-2">Status</h3>
+            <h3 className="font-heading text-sm mb-2">{t("statusLabel")}</h3>
             <div className="flex flex-wrap gap-2">
               <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-                {STATUS_LABELS[work.status] || work.status}
+                {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
               </Badge>
               <VerificationBadge verified={work.content_verified ?? false} />
             </div>
@@ -285,14 +285,14 @@ async function LawReaderSection({
 
           {work.source_url && (
             <div className="rounded-lg border p-4">
-              <h3 className="font-heading text-sm mb-2">Sumber</h3>
+              <h3 className="font-heading text-sm mb-2">{t("sourceLabel")}</h3>
               <a
                 href={work.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:text-primary/80 break-all"
               >
-                peraturan.go.id
+                {t("sourceLink")}
               </a>
             </div>
           )}
@@ -332,13 +332,17 @@ function ReaderSkeleton() {
 }
 
 export default async function LawDetailPage({ params }: PageProps) {
-  const { type, slug } = await params;
+  const { locale, type, slug } = await params;
+  setRequestLocale(locale as Locale);
+
+  const t = await getTranslations({ locale: locale as Locale, namespace: "reader" });
 
   // Use cached function (shared with generateMetadata — second call hits cache)
   const result = await getWorkBySlug(type.toUpperCase(), slug);
   if (!result) notFound();
   const { work } = result;
 
+  // TYPE_LABELS stay in Indonesian — they are official legal nomenclature
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
   const pathname = `/peraturan/${type.toLowerCase()}/${slug}`;
@@ -347,7 +351,7 @@ export default async function LawDetailPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+      { "@type": "ListItem", position: 1, name: t("breadcrumbHome"), item: "https://pasal.id" },
       { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
       { "@type": "ListItem", position: 3, name: `${type.toUpperCase()} ${work.number}/${work.year}` },
     ],

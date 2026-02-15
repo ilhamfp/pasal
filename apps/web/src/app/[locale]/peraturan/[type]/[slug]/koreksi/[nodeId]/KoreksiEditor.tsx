@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { m } from "framer-motion";
 import {
   ArrowLeft,
@@ -72,6 +73,7 @@ function useKoreksiSubmit({
   hasChanges: boolean;
   getMetadata: () => Record<string, unknown>;
 }) {
+  const t = useTranslations("correction");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -106,29 +108,29 @@ function useKoreksiSubmit({
 
       if (res.status === 429) {
         setStatus("error");
-        setErrorMsg("Terlalu banyak saran. Coba lagi nanti (maks 10/jam).");
+        setErrorMsg(t("errorRateLimit"));
         return;
       }
 
       if (res.status === 409) {
         setStatus("error");
-        setErrorMsg("Teks sudah diperbarui oleh pihak lain. Muat ulang halaman untuk melihat versi terbaru.");
+        setErrorMsg(t("errorStaleContent"));
         return;
       }
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setStatus("error");
-        setErrorMsg(data.error || "Gagal mengirim saran.");
+        setErrorMsg(data.error || t("errorGeneric"));
         return;
       }
 
       setStatus("success");
     } catch {
       setStatus("error");
-      setErrorMsg("Gagal mengirim saran. Periksa koneksi internet.");
+      setErrorMsg(t("errorNetwork"));
     }
-  }, [hasChanges, currentContent, suggestedContent, reason, email, workId, nodeId, nodeType, nodeNumber, getMetadata]);
+  }, [hasChanges, currentContent, suggestedContent, reason, email, workId, nodeId, nodeType, nodeNumber, getMetadata, t]);
 
   return { status, errorMsg, submit };
 }
@@ -160,19 +162,20 @@ function KoreksiPdfPanel({
   onError: () => void;
   onLoad: () => void;
 }) {
+  const t = useTranslations("correction");
   return (
     <div className="lg:w-[55%] xl:w-[60%] flex-none flex flex-col min-h-0 border-r">
       {/* PDF toolbar */}
       <div className="flex-none flex items-center justify-between px-3 py-2 border-b bg-secondary/30">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          PDF Sumber
+          {t("pdfSourceLabel")}
         </span>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onZoomChange(Math.max(50, pdfZoom - 25))}
             disabled={pdfZoom <= 50}
             className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            aria-label="Perkecil"
+            aria-label={t("zoomOut")}
           >
             <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -183,7 +186,7 @@ function KoreksiPdfPanel({
             onClick={() => onZoomChange(Math.min(200, pdfZoom + 25))}
             disabled={pdfZoom >= 200}
             className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            aria-label="Perbesar"
+            aria-label={t("zoomIn")}
           >
             <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -191,18 +194,18 @@ function KoreksiPdfPanel({
           <button
             onClick={() => onPageChange(Math.max(1, pdfPage - 1))}
             disabled={pdfPage <= 1}
-            aria-label="Halaman sebelumnya"
+            aria-label={t("previousPage")}
             className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           <span className="text-xs tabular-nums min-w-[3.5rem] text-center">
-            Hal. {pdfPage}
+            {t("pageLabel")} {pdfPage}
           </span>
           <button
             onClick={() => onPageChange(pdfPage + 1)}
             disabled={pdfError || (pdfPageEnd != null && pdfPage >= pdfPageEnd)}
-            aria-label="Halaman berikutnya"
+            aria-label={t("nextPage")}
             className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -213,7 +216,7 @@ function KoreksiPdfPanel({
               target="_blank"
               rel="noopener noreferrer"
               className="rounded border p-1 hover:border-primary/30 ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              aria-label="Buka PDF asli"
+              aria-label={t("openOriginalPdf")}
             >
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
@@ -227,7 +230,7 @@ function KoreksiPdfPanel({
           <div className="flex items-center justify-center h-full text-center p-6 text-muted-foreground">
             <div>
               <FileText className="h-10 w-10 mx-auto mb-2 opacity-20" aria-hidden="true" />
-              <p className="text-xs mb-2">Halaman PDF tidak tersedia.</p>
+              <p className="text-xs mb-2">{t("pdfNotAvailable")}</p>
               {sourcePdfUrl && (
                 <a
                   href={sourcePdfUrl}
@@ -236,7 +239,7 @@ function KoreksiPdfPanel({
                   className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80"
                 >
                   <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                  Buka PDF asli
+                  {t("openOriginalPdf")}
                 </a>
               )}
             </div>
@@ -248,7 +251,7 @@ function KoreksiPdfPanel({
           >
             <img
               src={imageUrl}
-              alt={`Halaman ${pdfPage}`}
+              alt={`${t("pageLabel")} ${pdfPage}`}
               className="w-full h-auto"
               onError={onError}
               onLoad={onLoad}
@@ -273,13 +276,14 @@ function KoreksiEditView({
   suggestedContent: string;
   onContentChange: (value: string) => void;
 }) {
+  const t = useTranslations("correction");
   return (
     <>
       {/* Current text */}
       <div className="flex-1 min-h-0 flex flex-col border-b">
         <div className="flex-none px-4 py-2 border-b bg-secondary/30">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Teks Saat Ini
+            {t("currentTextLabel")}
           </span>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap bg-secondary/20">
@@ -291,7 +295,7 @@ function KoreksiEditView({
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-none px-4 py-2 border-b bg-secondary/30">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Koreksi Anda
+            {t("yourCorrectionLabel")}
           </span>
         </div>
         <textarea
@@ -316,15 +320,20 @@ function KoreksiDiffView({
   diffOps: DiffOp[];
   stats: DiffStats | null;
 }) {
+  const t = useTranslations("correction");
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div className="flex-none flex items-center justify-between px-4 py-2 border-b bg-secondary/30">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Pratinjau Perubahan
+          {t("changesPreviewLabel")}
         </span>
         {stats && (
           <span className="text-xs text-muted-foreground">
-            {stats.changes} perubahan &middot; {stats.charsDeleted} dihapus &middot; {stats.charsInserted} ditambahkan
+            {t("changesStats", {
+              changes: stats.changes,
+              deleted: stats.charsDeleted,
+              inserted: stats.charsInserted,
+            })}
           </span>
         )}
       </div>
@@ -374,6 +383,8 @@ function KoreksiSubmitBar({
   onSubmit: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("correction");
+  const commonT = useTranslations("common");
   return (
     <div className="flex-none border-t bg-card px-4 py-3">
       {errorMsg && (
@@ -385,7 +396,7 @@ function KoreksiSubmitBar({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
         <div className="flex-1 min-w-0">
           <label className="text-xs font-medium text-muted-foreground mb-1 block">
-            Alasan koreksi
+            {t("reasonLabel")}
           </label>
           <input
             type="text"
@@ -395,12 +406,12 @@ function KoreksiSubmitBar({
             onChange={(e) => onReasonChange(e.target.value)}
             maxLength={2000}
             className="w-full rounded-lg border bg-card px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-1 outline-none"
-            placeholder="Contoh: Typo pada ayat (2), huruf besar salah"
+            placeholder={t("reasonPlaceholder")}
           />
         </div>
         <div className="flex-1 min-w-0 sm:max-w-[220px]">
           <label className="text-xs font-medium text-muted-foreground mb-1 block">
-            Email (opsional)
+            {t("emailLabel")}
           </label>
           <input
             type="email"
@@ -409,7 +420,7 @@ function KoreksiSubmitBar({
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             className="w-full rounded-lg border bg-card px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-1 outline-none"
-            placeholder="email@contoh.com"
+            placeholder={t("emailPlaceholder")}
           />
         </div>
         <div className="flex gap-2 flex-none">
@@ -418,7 +429,7 @@ function KoreksiSubmitBar({
             onClick={onCancel}
             className="rounded-lg border px-4 py-1.5 text-sm hover:bg-secondary"
           >
-            Batal
+            {commonT("cancel")}
           </button>
           <button
             type="button"
@@ -427,7 +438,7 @@ function KoreksiSubmitBar({
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             <Send className="h-3.5 w-3.5" aria-hidden="true" />
-            {status === "loading" ? "Mengirim..." : "Kirim Saran"}
+            {status === "loading" ? t("submitting") : t("submitButton")}
           </button>
         </div>
       </div>
@@ -457,6 +468,7 @@ export default function KoreksiEditor({
   backHref,
 }: KoreksiEditorProps) {
   const router = useRouter();
+  const t = useTranslations("correction");
   const [suggestedContent, setSuggestedContent] = useState(currentContent);
   const [reason, setReason] = useState("");
   const [email, setEmail] = useState("");
@@ -503,16 +515,16 @@ export default function KoreksiEditor({
           className="text-center"
         >
           <Check className="h-16 w-16 mx-auto mb-4 text-primary" aria-hidden="true" />
-          <p className="font-heading text-xl mb-2">Saran Terkirim</p>
+          <p className="font-heading text-xl mb-2">{t("successTitle")}</p>
           <p className="text-sm text-muted-foreground mb-6">
-            Terima kasih! Saran Anda akan ditinjau oleh tim admin.
+            {t("successMessage")}
           </p>
           <button
             onClick={goBack}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Kembali ke Peraturan
+            {t("backToRegulation")}
           </button>
         </m.div>
       </div>
@@ -526,14 +538,14 @@ export default function KoreksiEditor({
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={goBack}
-            aria-label="Kembali"
+            aria-label={t("backToRegulation")}
             className="rounded-lg p-1.5 hover:bg-secondary flex-none"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="min-w-0">
             <h1 className="font-heading text-base truncate">
-              Koreksi Pasal {nodeNumber}
+              {t("pageTitle", { number: nodeNumber })}
             </h1>
             <p className="text-xs text-muted-foreground truncate">
               {regType} No. {lawNumber} Tahun {lawYear} | {lawTitle}
@@ -552,7 +564,7 @@ export default function KoreksiEditor({
             }`}
           >
             <Pencil className="h-3 w-3" aria-hidden="true" />
-            Edit
+            {t("editTab")}
           </button>
           <button
             onClick={() => setViewMode("diff")}
@@ -563,7 +575,7 @@ export default function KoreksiEditor({
             }`}
           >
             <Eye className="h-3 w-3" aria-hidden="true" />
-            Perubahan
+            {t("changesTab")}
           </button>
         </div>
       </div>

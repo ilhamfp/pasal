@@ -13,30 +13,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select("number, year, slug, regulation_types(code)")
     .order("year", { ascending: false });
 
-  // Static pages
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: "https://pasal.id", changeFrequency: "weekly", priority: 1.0 },
-    { url: "https://pasal.id/search", changeFrequency: "weekly", priority: 0.8 },
-    { url: "https://pasal.id/connect", changeFrequency: "monthly", priority: 0.6 },
-    { url: "https://pasal.id/api", changeFrequency: "monthly", priority: 0.5 },
-    { url: "https://pasal.id/topik", changeFrequency: "monthly", priority: 0.7 },
-  ];
+  const BASE = "https://pasal.id";
 
-  // Topic pages
+  // Static pages with language alternates
+  const STATIC_PATHS = ["", "/search", "/jelajahi", "/connect", "/api", "/topik"];
+  const staticPages: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
+    url: `${BASE}${path}`,
+    alternates: {
+      languages: {
+        id: `${BASE}${path}`,
+        en: `${BASE}/en${path}`,
+      },
+    },
+    changeFrequency: path === "" ? "weekly" : path === "/search" ? "weekly" : "monthly",
+    priority: path === "" ? 1.0 : path === "/search" ? 0.8 : path === "/topik" ? 0.7 : path === "/connect" ? 0.6 : 0.5,
+  }) as const);
+
+  // Topic pages with language alternates
   const topicPages: MetadataRoute.Sitemap = TOPICS.map((topic) => ({
-    url: `https://pasal.id/topik/${topic.slug}`,
+    url: `${BASE}/topik/${topic.slug}`,
+    alternates: {
+      languages: {
+        id: `${BASE}/topik/${topic.slug}`,
+        en: `${BASE}/en/topik/${topic.slug}`,
+      },
+    },
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
-  // Regulation detail pages
+  // Regulation detail pages with language alternates
   const regulationPages: MetadataRoute.Sitemap = (works || [])
     .filter((work) => getRegTypeCode(work.regulation_types))
     .map((work) => {
       const type = getRegTypeCode(work.regulation_types).toLowerCase();
       const slug = workSlug(work, type);
+      const path = `/peraturan/${type}/${slug}`;
       return {
-        url: `https://pasal.id/peraturan/${type}/${slug}`,
+        url: `${BASE}${path}`,
+        alternates: {
+          languages: {
+            id: `${BASE}${path}`,
+            en: `${BASE}/en${path}`,
+          },
+        },
         changeFrequency: "yearly" as const,
         priority: 0.9,
       };

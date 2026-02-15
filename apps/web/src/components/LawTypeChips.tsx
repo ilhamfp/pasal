@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 
 const LAW_TYPES = [
   { code: "UU", label: "Undang-Undang" },

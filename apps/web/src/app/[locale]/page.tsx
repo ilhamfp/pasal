@@ -2,8 +2,10 @@ export const revalidate = 3600; // ISR: 1 hour
 
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Search } from "lucide-react";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
 import HeroSection from "@/components/landing/HeroSection";
@@ -14,33 +16,44 @@ import BrowseSection from "@/components/landing/BrowseSection";
 const TrustBlock = nextDynamic(() => import("@/components/landing/TrustBlock"));
 const RevealOnScroll = nextDynamic(() => import("@/components/landing/RevealOnScroll"));
 
-const websiteLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "Pasal.id",
-  url: "https://pasal.id",
-  description: "Cari undang-undang, PP, Perpres, dan peraturan Indonesia lainnya. Gratis dan open source.",
-  inLanguage: "id",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: "https://pasal.id/search?q={search_term_string}",
-    },
-    "query-input": "required name=search_term_string",
-  },
-  publisher: {
-    "@type": "Organization",
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale as Locale);
+
+  const metaT = await getTranslations({ locale: locale as Locale, namespace: "metadata" });
+  const devT = await getTranslations({ locale: locale as Locale, namespace: "developer" });
+  const ctaT = await getTranslations({ locale: locale as Locale, namespace: "cta" });
+
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
     name: "Pasal.id",
     url: "https://pasal.id",
-    logo: {
-      "@type": "ImageObject",
-      url: "https://pasal.id/og-image.png",
+    description: metaT("siteDescription"),
+    inLanguage: locale,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "https://pasal.id/search?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
     },
-  },
-};
+    publisher: {
+      "@type": "Organization",
+      name: "Pasal.id",
+      url: "https://pasal.id",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://pasal.id/og-image.png",
+      },
+    },
+  };
 
-export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -120,7 +133,7 @@ export default function HomePage() {
         <section className="border-y bg-card py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-4">
             <p className="mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Untuk Developer
+              {devT("sectionLabel")}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* MCP Card */}
@@ -129,14 +142,14 @@ export default function HomePage() {
                 className="rounded-lg bg-[#1D1A18] p-6 transition-colors hover:bg-[#2D2826]"
               >
                 <p className="mb-3 font-medium text-[#EEE8E4]">
-                  Hubungkan ke Claude via MCP
+                  {devT("mcpTitle")}
                 </p>
                 <code className="block break-all rounded bg-black/30 px-3 py-2 font-mono text-sm text-[#96C3B1]">
                   claude mcp add pasal-id --transport http --url
                   https://pasal-mcp-server-production.up.railway.app/mcp/
                 </code>
                 <p className="mt-3 text-sm text-[#958D88]">
-                  Panduan lengkap &rarr;
+                  {devT("mcpGuide")}
                 </p>
               </Link>
 
@@ -145,12 +158,12 @@ export default function HomePage() {
                 href="/api"
                 className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30"
               >
-                <p className="mb-3 font-medium">REST API</p>
+                <p className="mb-3 font-medium">{devT("apiTitle")}</p>
                 <code className="block break-all rounded bg-muted px-3 py-2 font-mono text-sm">
                   curl https://pasal.id/api/v1/search?q=ketenagakerjaan
                 </code>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Dokumentasi API &rarr;
+                  {devT("apiDocs")}
                 </p>
               </Link>
             </div>
@@ -163,10 +176,10 @@ export default function HomePage() {
         <section className="py-20 sm:py-32">
           <div className="mx-auto max-w-5xl px-4 text-center">
             <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">
-              Hukum yang mudah diakses
+              {ctaT("heading1")}
               <br />
               <em className="text-muted-foreground">
-                adalah hak setiap warga
+                {ctaT("heading2")}
               </em>
             </h2>
             <div className="mt-8">
@@ -175,7 +188,7 @@ export default function HomePage() {
                 className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 font-sans text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
               >
                 <Search className="mr-2 h-4 w-4" />
-                Cari Sekarang
+                {ctaT("searchNow")}
               </Link>
             </div>
           </div>

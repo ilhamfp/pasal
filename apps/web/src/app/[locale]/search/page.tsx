@@ -2,10 +2,14 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
+import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
 import SearchFilters from "@/components/SearchFilters";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice";
 import PasalLogo from "@/components/PasalLogo";
 import StaggeredList from "@/components/StaggeredList";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +18,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import type { ChunkResult } from "@/lib/group-search-results";
 import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
-import { STATUS_COLORS, STATUS_LABELS } from "@/lib/legal-status";
+import { STATUS_COLORS } from "@/lib/legal-status";
 import { workSlug, workPath } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
+import { getAlternates } from "@/lib/i18n-metadata";
 
 const PAGE_SIZE = 10;
 
@@ -29,23 +34,39 @@ interface SearchParams {
 }
 
 export async function generateMetadata({
+  params: localeParams,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
+  const { locale } = await localeParams;
   const params = await searchParams;
   const query = params.q;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "search" });
+  const statusT = await getTranslations({ locale: locale as Locale, namespace: "status" });
+
   const parts: string[] = [];
   if (query) parts.push(`"${query}"`);
   if (params.type) parts.push(params.type.toUpperCase());
-  if (params.year) parts.push(`Tahun ${params.year}`);
-  if (params.status) parts.push(STATUS_LABELS[params.status] || params.status);
+  if (params.year) parts.push(params.year);
+  if (params.status) parts.push(statusT(params.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku"));
 
   const suffix = parts.length > 0 ? parts.join(", ") : "";
 
+  // Build query string for alternates
+  const queryParts: string[] = [];
+  if (query) queryParts.push(`q=${encodeURIComponent(query)}`);
+  if (params.type) queryParts.push(`type=${params.type}`);
+  if (params.year) queryParts.push(`year=${params.year}`);
+  if (params.status) queryParts.push(`status=${params.status}`);
+  const queryString = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+  const searchPath = `/search${queryString}`;
+
   return {
-    title: suffix ? `Hasil pencarian: ${suffix}` : "Cari Peraturan",
+    title: suffix ? t("resultsTitle", { query: suffix }) : t("title"),
     robots: { index: false, follow: true },
+    alternates: getAlternates(searchPath, locale),
   };
 }
 
@@ -64,13 +85,6 @@ function sanitizeSnippet(html: string): string {
   let cleaned = html.replace(/<(?!\/?mark\b)[^>]*>/gi, "");
   cleaned = cleaned.replace(/<mark\b[^>]*>/gi, "<mark>");
   return cleaned;
-}
-
-function formatRelevance(score: number, maxScore: number): string {
-  const pct = Math.round((score / maxScore) * 100);
-  if (pct >= 70) return `${pct}% · Sangat relevan`;
-  if (pct >= 40) return `${pct}% · Relevan`;
-  return `${pct}% · Mungkin relevan`;
 }
 
 interface FilterParams {
@@ -97,6 +111,8 @@ interface SearchResultsProps {
 }
 
 async function SearchResults({ query, filters, page }: SearchResultsProps) {
+  const t = await getTranslations("search");
+  const statusT = await getTranslations("status");
   const supabase = await createClient();
 
   const metadataFilter: Record<string, string> = {};
@@ -114,7 +130,7 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
     console.error("Search error:", error);
     return (
       <div className="rounded-lg border border-destructive p-4 text-destructive">
-        Terjadi kesalahan saat mencari. Silakan coba lagi.
+        {t("errorMessage")}
       </div>
     );
   }
@@ -123,9 +139,9 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
     return (
       <div className="rounded-lg border p-8 text-center">
         <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
-        <p className="text-lg font-medium">Tidak ditemukan hasil untuk &ldquo;{query}&rdquo;</p>
+        <p className="text-lg font-medium">{t("noResults", { query })}</p>
         <p className="mt-2 text-muted-foreground">
-          Coba gunakan kata kunci yang lebih sederhana atau hapus filter.
+          {t("noResultsSuggestion")}
         </p>
       </div>
     );
@@ -148,14 +164,22 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
   const worksMap = new Map((works || []).map((w: WorkResult) => [w.id, w]));
   const maxScore = Math.max(...grouped.map((g) => g.bestScore), 0.001);
 
+  function formatRelevance(score: number): string {
+    const pct = Math.round((score / maxScore) * 100);
+    if (pct >= 70) return t("relevanceHigh", { pct });
+    if (pct >= 40) return t("relevanceMedium", { pct });
+    return t("relevanceLow", { pct });
+  }
+
   return (
     <div className="space-y-4">
       <DisclaimerBanner />
+      <LegalContentLanguageNotice />
 
       <p className="text-sm text-muted-foreground">
-        Menampilkan {totalResults} peraturan untuk &ldquo;{query}&rdquo;
+        {t("showingResults", { total: totalResults, query })}
         {totalPages > 1 && (
-          <> &middot; Halaman {currentPage} dari {totalPages}</>
+          <> &middot; {t("pageInfo", { current: currentPage, total: totalPages })}</>
         )}
       </p>
 
@@ -180,11 +204,11 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
                       {regType} {work.number}/{work.year}
                     </CardTitle>
                     <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-                      {STATUS_LABELS[work.status] || work.status}
+                      {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                     </Badge>
                     {group.totalChunks > 1 && (
                       <Badge variant="secondary" className="text-xs">
-                        {group.totalChunks} bagian cocok
+                        {t("matchingParts", { count: group.totalChunks })}
                       </Badge>
                     )}
                   </div>
@@ -201,7 +225,7 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
                     dangerouslySetInnerHTML={{ __html: snippetHtml }}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Relevansi: {formatRelevance(group.bestScore, maxScore)}
+                    {t("relevanceLabel")}: {formatRelevance(group.bestScore)}
                   </p>
                 </CardContent>
               </Card>
@@ -226,6 +250,8 @@ interface BrowseResultsProps {
 }
 
 async function BrowseResults({ filters, page }: BrowseResultsProps) {
+  const t = await getTranslations("search");
+  const statusT = await getTranslations("status");
   const supabase = await createClient();
 
   const currentPage = Math.max(page, 1);
@@ -265,9 +291,9 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
     return (
       <div className="rounded-lg border p-8 text-center">
         <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
-        <p className="text-lg font-medium">Tidak ada peraturan ditemukan</p>
+        <p className="text-lg font-medium">{t("noLawsFoundBrowse")}</p>
         <p className="mt-2 text-muted-foreground">
-          Coba ubah filter atau tambahkan kata kunci pencarian.
+          {t("changeFilters")}
         </p>
       </div>
     );
@@ -278,9 +304,9 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
       <DisclaimerBanner />
 
       <p className="text-sm text-muted-foreground">
-        Menampilkan {(count || 0).toLocaleString("id-ID")} peraturan
+        {t("showingResultsBrowse", { count: (count || 0).toLocaleString("id-ID") })}
         {totalPages > 1 && (
-          <> &middot; Halaman {currentPage} dari {totalPages}</>
+          <> &middot; {t("pageInfo", { current: currentPage, total: totalPages })}</>
         )}
       </p>
 
@@ -311,7 +337,7 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
                       className={STATUS_COLORS[work.status] || ""}
                       variant="outline"
                     >
-                      {STATUS_LABELS[work.status] || work.status}
+                      {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                     </Badge>
                   )}
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -341,14 +367,16 @@ function Pagination({
   totalPages: number;
   pageUrl: (p: number) => string;
 }) {
+  const t = useTranslations("search");
+
   if (totalPages <= 1) return null;
 
   return (
-    <nav aria-label="Halaman" className="flex items-center justify-center gap-2 mt-8">
+    <nav aria-label={t("pagination")} className="flex items-center justify-center gap-2 mt-8">
       {currentPage > 1 && (
         <Link
           href={pageUrl(currentPage - 1)}
-          aria-label="Halaman sebelumnya"
+          aria-label={t("previousPage")}
           className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -383,7 +411,7 @@ function Pagination({
       {currentPage < totalPages && (
         <Link
           href={pageUrl(currentPage + 1)}
-          aria-label="Halaman berikutnya"
+          aria-label={t("nextPage")}
           className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30"
         >
           <ChevronRight className="h-4 w-4" />
@@ -394,10 +422,15 @@ function Pagination({
 }
 
 export default async function SearchPage({
+  params: localeParams,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<SearchParams>;
 }) {
+  const { locale } = await localeParams;
+  setRequestLocale(locale as Locale);
+  const t = await getTranslations({ locale: locale as Locale, namespace: "search" });
   const params = await searchParams;
   const query = params.q || "";
   const type = params.type;
@@ -468,7 +501,7 @@ export default async function SearchPage({
           <div className="text-center py-16">
             <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
             <p className="text-lg text-muted-foreground">
-              Masukkan kata kunci atau pilih filter untuk mencari peraturan Indonesia
+              {t("emptyState")}
             </p>
           </div>
         )}

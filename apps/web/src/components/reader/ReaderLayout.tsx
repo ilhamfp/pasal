@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { m, AnimatePresence } from "framer-motion";
 import { ExternalLink, FileText, X } from "lucide-react";
 
@@ -23,6 +24,7 @@ export default function ReaderLayout({
   sourcePdfUrl,
   slug,
 }: ReaderLayoutProps) {
+  const t = useTranslations("reader");
   const [showPdf, setShowPdf] = useState(false);
   const [activePdfPage, setActivePdfPage] = useState(1);
 
@@ -67,7 +69,7 @@ export default function ReaderLayout({
           {/* Desktop toggle */}
           <button
             onClick={() => setShowPdf(!showPdf)}
-            aria-label={showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
+            aria-label={showPdf ? t("hidePdf") : t("showPdf")}
             className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
               showPdf
                 ? "bg-primary text-primary-foreground border-primary"
@@ -75,7 +77,7 @@ export default function ReaderLayout({
             }`}
           >
             <FileText className="h-4 w-4" aria-hidden="true" />
-            {showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
+            {showPdf ? t("hidePdf") : t("showPdf")}
           </button>
 
           {/* Mobile: link to original PDF */}
@@ -86,7 +88,7 @@ export default function ReaderLayout({
             className="lg:hidden inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium bg-card hover:border-primary/30 transition-colors whitespace-nowrap"
           >
             <FileText className="h-4 w-4" aria-hidden="true" />
-            Buka PDF Asli
+            {t("openOriginalPdf")}
           </a>
         </div>
       )}
@@ -122,15 +124,15 @@ export default function ReaderLayout({
                     rel="noopener noreferrer"
                     className="text-sm font-heading text-primary hover:text-primary/80 inline-flex items-center gap-1"
                   >
-                    PDF Sumber
+                    {t("pdfSource")}
                     <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 ) : (
-                  <span className="text-sm font-heading">PDF Sumber</span>
+                  <span className="text-sm font-heading">{t("pdfSource")}</span>
                 )}
                 <button
                   onClick={() => setShowPdf(false)}
-                  aria-label="Tutup panel PDF"
+                  aria-label={t("closePdfPanel")}
                   className="rounded-lg border p-1 hover:border-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
