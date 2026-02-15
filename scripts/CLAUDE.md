@@ -30,7 +30,7 @@ Download PDF from detail page → Supabase Storage
     ↓  parser/extract_pymupdf.py — PyMuPDF text extraction
     ↓  parser/ocr_correct.py — deterministic OCR fixes
     ↓  parser/parse_structure.py — regex state machine → node tree
-    ↓  loader/load_to_supabase.py — insert works + document_nodes + legal_chunks
+    ↓  loader/load_to_supabase.py — insert works + document_nodes (FTS auto-generated)
 crawl_jobs [status: loaded]
 ```
 
@@ -51,7 +51,7 @@ crawl_jobs [status: loaded]
 | `parser/classify_pdf.py` | `classify_pdf(path)` → `born_digital` / `scanned_clean` / `image_only` |
 | `parser/ocr_correct.py` | `correct_ocr_errors(text)` → cleaned text |
 | `parser/parse_structure.py` | `parse_structure(text)` → node tree with BAB/Pasal/Ayat hierarchy |
-| `loader/load_to_supabase.py` | `load_work()`, `load_nodes_by_level()`, `create_chunks()` |
+| `loader/load_to_supabase.py` | `load_work()`, `load_nodes_by_level()` |
 | `agent/apply_revision.py` | Python wrapper for `apply_revision()` SQL function |
 | `agent/verify_suggestion.py` | Gemini Flash verification of user suggestions |
 | `eval/` | Dev utility — compare our extraction vs Gemini extraction |
@@ -74,9 +74,9 @@ Jobs are claimed atomically via `claim_jobs()` SQL function (`FOR UPDATE SKIP LO
 
 `load_nodes_by_level()` inserts all depth-1 nodes, then depth-2, etc. This avoids FK ordering issues (parent must exist before child).
 
-### Chunks are only created from Pasal and Penjelasan nodes
+### Search is on document_nodes directly
 
-Preamble, BAB headings, and generic content nodes don't become search chunks. This keeps search results focused.
+No separate chunks table. The `document_nodes.fts` TSVECTOR column is `GENERATED ALWAYS` from `content_text`. The `search_legal_chunks()` SQL function queries content-bearing node types (`pasal`, `ayat`, `preamble`, `content`, `aturan`, `penjelasan_umum`, `penjelasan_pasal`) and skips structural nodes (bab, bagian, paragraf).
 
 ### Reprocess recovers from missing local files
 
@@ -98,6 +98,5 @@ GEMINI_API_KEY=AIzaSy...       # For verify_suggestion.py
 - **Discovery freshness is per-type.** Cached in `discovery_progress` table, keyed `(source_id, regulation_type)`. Default 24h TTL. Use `--ignore-freshness` to force re-crawl.
 - **Roman numeral Pasals are real** in amendment laws and ATURAN PERALIHAN. The parser detects context and preserves them (doesn't convert to Arabic).
 - **OCR correction runs on all PDFs** (v5+), not just classified scanned ones.
-- **Chunk batch insert** uses batches of 50. If a batch fails, falls back to one-by-one insertion.
 - **Gemini model** is hardcoded as `gemini-3-flash-preview` in `verify_suggestion.py`. System prompt is in Indonesian.
 - **`data/` is gitignored.** Downloaded PDFs go to `data/pdfs/`, parsed output to `data/parsed/`.

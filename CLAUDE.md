@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 34 migrations (001–033, two 030s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 38 migrations (001–038, two 030s) |
 
 ### Key directories
 
@@ -26,7 +26,7 @@ scripts/crawler/           — Mass scraper for peraturan.go.id
 scripts/parser/            — PDF parsing pipeline (PyMuPDF-based)
 scripts/agent/             — Gemini verification agent + apply_revision()
 scripts/loader/            — DB import scripts
-packages/supabase/migrations/ — All SQL migrations (001–033)
+packages/supabase/migrations/ — All SQL migrations (001–038)
 ```
 
 ## Commands
@@ -54,8 +54,7 @@ Core tables — all have RLS enabled with public read policies for legal data:
 | Table | Purpose |
 |-------|---------|
 | `works` | Individual regulations (UU, PP, Perpres, etc.). Has `slug`, metadata, parse quality fields |
-| `document_nodes` | Hierarchical document structure: BAB > Bagian > Pasal > Ayat. Content in `content_text` |
-| `legal_chunks` | Search-indexed text chunks. `fts` TSVECTOR column auto-generated |
+| `document_nodes` | Hierarchical document structure: BAB > Bagian > Pasal > Ayat. Content in `content_text`, `fts` TSVECTOR column auto-generated for search |
 | `revisions` | **Append-only** audit log for content changes. Never UPDATE or DELETE rows |
 | `suggestions` | Crowd-sourced corrections. Anyone submits, admin approves |
 | `work_relationships` | Cross-references between regulations |
@@ -66,18 +65,17 @@ Core tables — all have RLS enabled with public read policies for legal data:
 
 ### Critical invariant: content mutations
 
-**Never UPDATE `document_nodes.content_text` directly.** All mutations go through `apply_revision()` (SQL function in migration 020, Python wrapper in `scripts/agent/apply_revision.py`):
+**Never UPDATE `document_nodes.content_text` directly.** All mutations go through `apply_revision()` (SQL function in migration 020, updated in 038; Python wrapper in `scripts/agent/apply_revision.py`):
 
 1. INSERT into `revisions` (old + new content, reason, actor)
-2. UPDATE `document_nodes.content_text`
-3. UPDATE `legal_chunks.content` (regenerate search index)
-4. UPDATE `suggestions.status` if triggered by a suggestion
+2. UPDATE `document_nodes.content_text` (the `fts` TSVECTOR column auto-updates via `GENERATED ALWAYS`)
+3. UPDATE `suggestions.status` if triggered by a suggestion
 
-All four steps run in a single transaction. If any fails, everything rolls back.
+All steps run in a single transaction. If any fails, everything rolls back.
 
 ### Search: `search_legal_chunks()`
 
-3-tier fallback (do not modify): `websearch_to_tsquery` > `plainto_tsquery` > `ILIKE`. Returns chunks with `ts_headline` snippets, boosted by hierarchy + recency.
+3-tier fallback (do not modify): `websearch_to_tsquery` > `plainto_tsquery` > `ILIKE`. Queries `document_nodes` directly (JOINs `works` + `regulation_types`), returns results with `ts_headline` snippets, boosted by hierarchy + recency. Metadata JSONB is constructed on-the-fly via `jsonb_build_object()`. The function name is intentionally preserved from the original `legal_chunks` era — 5 consumers call it via `.rpc("search_legal_chunks")`, so renaming would require cascading changes.
 
 ## Coding Conventions
 
@@ -100,10 +98,12 @@ All four steps run in a single transaction. If any fails, everything rolls back.
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 034)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 039)
+- Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
 - Computed columns use `GENERATED ALWAYS AS`.
+- Heavy migrations (ALTER TABLE on large tables) timeout via `apply_migration` MCP tool. Use `execute_sql` with `SET statement_timeout = '600s'` and run steps individually.
 
 ## Brand & Design
 
@@ -146,9 +146,10 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 
 ## Gotchas
 
+- **When deleting a Python function, grep all `.py` files for importers.** `scripts/worker/process.py` and `scripts/load_uud.py` both import from `loader/load_to_supabase.py` separately from the main loader flow.
 - **RLS blocks empty results.** If a new table returns no data, check that an RLS policy exists — Supabase silently returns `[]` without one.
 - **`SUPABASE_KEY` naming.** MCP server and scripts use `SUPABASE_KEY` but the root `.env` calls it `SUPABASE_SERVICE_ROLE_KEY`. They're the same value.
-- **No vector/embedding search.** `legal_chunks.fts` is keyword-only (TSVECTOR). No pgvector, no embeddings.
+- **No vector/embedding search.** `document_nodes.fts` is keyword-only (TSVECTOR). No pgvector, no embeddings.
 - **Instrument Serif has no bold.** Only weight 400. Use font size for heading hierarchy, not weight.
 - **`data/` is gitignored.** Raw PDFs and parsed JSON live in `data/raw/` and `data/parsed/` locally only.
 
