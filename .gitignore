@@ -4,9 +4,7 @@
 !.env.example
 
 # Data (local only)
-data/raw/
-data/parsed/
-data/eval/
+data/
 
 # Node
 node_modules/
