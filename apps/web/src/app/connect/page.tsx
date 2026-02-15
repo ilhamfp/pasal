@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, ShieldCheck } from "lucide-react";
 import Header from "@/components/Header";
 import CopyButton from "@/components/CopyButton";
+import MCPDemo from "@/components/connect/MCPDemo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -149,6 +150,20 @@ export default function ConnectPage() {
             </CardContent>
           </Card>
 
+          {/* Live MCP Demo */}
+          <section className="space-y-4">
+            <div className="text-center space-y-2">
+              <h2 className="font-heading text-2xl tracking-tight">
+                Lihat MCP Beraksi
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+                Demo otomatis: Claude menggunakan 4 tool Pasal.id
+                untuk menjawab pertanyaan hukum dengan kutipan akurat.
+              </p>
+            </div>
+            <MCPDemo />
+          </section>
+
           {/* Cara Kerjanya — How it works */}
           <section className="space-y-6">
             <h2 className="font-heading text-2xl tracking-tight text-center">
@@ -199,7 +214,7 @@ export default function ConnectPage() {
           </section>
 
           {/* Example Prompts */}
-          <section className="space-y-6">
+          <section id="coba-sekarang" className="space-y-6">
             <h2 className="font-heading text-2xl tracking-tight text-center">
               Coba Sekarang
             </h2>
