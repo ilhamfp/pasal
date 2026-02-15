@@ -110,7 +110,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
     <div className="min-h-screen">
       <Header />
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 lg:px-6 py-8">
         <Link
           href="/jelajahi"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"

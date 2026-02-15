@@ -33,7 +33,7 @@ export default async function JelajahiPage() {
     <div className="min-h-screen">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="font-heading text-4xl tracking-tight mb-3">
             Jelajahi Peraturan
