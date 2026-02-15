@@ -15,10 +15,12 @@
 </p>
 
 <p align="center">
+  <a href="https://pasal.id"><img src="https://img.shields.io/badge/Legal_Data-Pasal.id-2B6150?style=flat" alt="Legal Data by Pasal.id" /></a>
+  <a href="https://pasal.id/connect"><img src="https://img.shields.io/badge/MCP-Server-blue?style=flat" alt="MCP Server" /></a>
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" alt="Next.js" />
   <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase" alt="Supabase" />
   <img src="https://img.shields.io/badge/FastMCP-Python-4B8BBE?logo=python&logoColor=white" alt="FastMCP" />
-  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="License: MIT" /></a>
 </p>
 
 ---

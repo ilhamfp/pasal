@@ -87,16 +87,42 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const path = `/peraturan/${type.toLowerCase()}/${slug}`;
   const url = `https://pasal.id${path}`;
 
+  // Truncate for social platforms — WhatsApp truncates og:title at ~60 chars
+  const ogTitle = title.length > 60 ? title.slice(0, 57) + "..." : title;
+  const ogDescription = description.length > 155 ? description.slice(0, 152) + "..." : description;
+
+  const ogParams = new URLSearchParams({
+    page: "law",
+    title: work.title_id,
+    type: type.toUpperCase(),
+    number: work.number,
+    year: work.year,
+  });
+  const ogImageUrl = `https://pasal.id/api/og?${ogParams.toString()}`;
+
   return {
     title,
     description,
     keywords: work.subject_tags || undefined,
     alternates: getAlternates(path, locale),
     openGraph: {
-      title,
-      description,
+      title: ogTitle,
+      description: ogDescription,
       url,
       type: "article",
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: ogTitle }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: [ogImageUrl],
+    },
+    other: {
+      "twitter:label1": "Status",
+      "twitter:data1": STATUS_LABELS[work.status] || work.status,
+      "twitter:label2": "Jenis",
+      "twitter:data2": typeLabel,
     },
   };
 }

@@ -1020,8 +1020,8 @@ Every law page needs frictionless sharing. Priority: WhatsApp > Web Share API > 
 | 4 | Enhance JSON-LD structured data | ☑ |
 | 4 | Create robots.ts + verify sitemap | ☑ |
 | 5 | Print CSS + "Cetak" button | ☑ |
-| 6 | Create server.json + README badges | ☐ |
-| 7 | Truncate og:title/description for WhatsApp | ☐ |
+| 6 | Create server.json + README badges | ☑ |
+| 7 | Truncate og:title/description for WhatsApp | ☑ |
 
 **Estimated dev time: 10-12 hours**
 
