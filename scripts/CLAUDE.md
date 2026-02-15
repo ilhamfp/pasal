@@ -100,3 +100,4 @@ GEMINI_API_KEY=AIzaSy...       # For verify_suggestion.py
 - **OCR correction runs on all PDFs** (v5+), not just classified scanned ones.
 - **Gemini model** is hardcoded as `gemini-3-flash-preview` in `verify_suggestion.py`. System prompt is in Indonesian.
 - **`data/` is gitignored.** Downloaded PDFs go to `data/pdfs/`, parsed output to `data/parsed/`.
+- **`load_uud.py` is manual-only** — not run by the worker. After changing it, run `python scripts/load_uud.py --upload` locally to apply. It sets `source_pdf_url` via direct UPDATE (not through `load_work()`): the `--upload` flag uploads PDFs then updates `works.source_pdf_url` in a separate step. `load_work()` only includes `source_pdf_url` in the upsert when truthy, to avoid clearing URLs set by a previous `--upload` run.

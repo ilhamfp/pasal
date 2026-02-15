@@ -168,7 +168,7 @@ def insert_relationships(sb) -> int:
 
 
 def upload_pdfs(sb) -> int:
-    """Upload UUD PDFs to Supabase Storage."""
+    """Upload UUD PDFs to Supabase Storage and update source_pdf_url."""
     bucket = sb.storage.from_("regulation-pdfs")
     count = 0
     for entry in UUD_ENTRIES:
@@ -185,6 +185,13 @@ def upload_pdfs(sb) -> int:
                 )
             print(f"  Uploaded: {slug}.pdf ({pdf_path.stat().st_size:,} bytes)")
             count += 1
+
+            # Set source_pdf_url so the web UI shows the PDF viewer
+            public_url = bucket.get_public_url(f"{slug}.pdf")
+            sb.table("works").update(
+                {"source_pdf_url": public_url}
+            ).eq("frbr_uri", entry["metadata"]["frbr_uri"]).execute()
+            print(f"  Set source_pdf_url for {slug}")
         except Exception as e:
             print(f"  Upload error for {slug}: {e}")
     return count
