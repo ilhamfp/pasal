@@ -5,7 +5,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import { LEGAL_FORCE_MAP, STATUS_COLORS, TYPE_LABELS } from "@/lib/legal-status";
+import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
