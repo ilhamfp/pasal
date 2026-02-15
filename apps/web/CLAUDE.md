@@ -63,7 +63,7 @@ Three clients in `src/lib/supabase/`:
 
 - Server Components fetch directly with `await createClient()` — no `useEffect`.
 - Wrap repeated queries in `cache()` (React) for request deduplication within a render.
-- Use `supabase.rpc("search_legal_chunks", { ... })` for search.
+- Use `supabase.rpc("search_legal_chunks", { ... })` for search. This queries `document_nodes` directly (no separate chunks table).
 - ISR via `export const revalidate = <seconds>` at page level.
 - Landing stats use `unstable_cache()` with 24h TTL (`src/lib/stats.ts`).
 
@@ -91,7 +91,7 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 |------|---------|
 | `src/lib/stats.ts` | `getLandingStats()` — cached DB counts for landing page |
 | `src/lib/legal-status.ts` | Status labels, colors, type mappings |
-| `src/lib/group-search-results.ts` | Groups search chunks by work, formats Pasal lists |
+| `src/lib/group-search-results.ts` | Groups search results by work, formats Pasal lists |
 | `src/lib/parse-slug.ts` | Slug ↔ (number, year) parsing |
 | `src/lib/frbr.ts` | FRBR URI builder/parser |
 | `src/lib/api/cors.ts` | CORS headers for `/api/v1/` routes |
