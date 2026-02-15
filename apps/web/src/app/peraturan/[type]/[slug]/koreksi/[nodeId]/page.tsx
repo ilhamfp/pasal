@@ -35,7 +35,7 @@ export default async function KoreksiPage({ params }: PageProps) {
   const backHref = `/peraturan/${type}/${slug}#pasal-${node.number}`;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col">
       <Header />
       <KoreksiEditor
         workId={work.id}

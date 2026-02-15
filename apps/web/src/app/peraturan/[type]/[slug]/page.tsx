@@ -13,6 +13,7 @@ import TableOfContents from "@/components/TableOfContents";
 import AmendmentTimeline from "@/components/reader/AmendmentTimeline";
 import ReaderLayout from "@/components/reader/ReaderLayout";
 import PasalBlock from "@/components/reader/PasalBlock";
+import VerificationBadge from "@/components/reader/VerificationBadge";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -242,15 +243,7 @@ async function LawReaderSection({
               <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
                 {STATUS_LABELS[work.status] || work.status}
               </Badge>
-              {work.content_verified ? (
-                <Badge className="bg-status-berlaku-bg text-status-berlaku border-status-berlaku/20" variant="outline">
-                  ✓ Terverifikasi
-                </Badge>
-              ) : (
-                <Badge className="bg-status-diubah-bg text-status-diubah border-status-diubah/20" variant="outline">
-                  ⚠ Belum Diverifikasi
-                </Badge>
-              )}
+              <VerificationBadge verified={work.content_verified ?? false} />
             </div>
           </div>
 

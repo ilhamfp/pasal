@@ -118,17 +118,12 @@ export default function RootLayout({
               {FOOTER_LINKS.map(({ href, label }) => (
                 <Link key={href} href={href} className={footerLinkClass}>{label}</Link>
               ))}
-              <a href="https://github.com/ilhamfp/pasal" target="_blank" rel="noopener noreferrer"
-                 className={footerLinkClass}>GitHub<span className="sr-only"> (buka tab baru)</span></a>
             </div>
             <div className="mt-6 flex flex-col items-center gap-3 text-xs text-muted-foreground">
               <PasalLogo size={24} className="text-muted-foreground/60" />
               <div className="space-y-1 text-center">
                 <p>
-                  Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
-                  <a href="https://peraturan.go.id" target="_blank" rel="noopener noreferrer"
-                     className="underline text-primary hover:text-primary/80">peraturan.go.id<span className="sr-only"> (buka tab baru)</span></a>{" "}
-                  untuk kepastian hukum.
+                  Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi untuk kepastian hukum.
                 </p>
                 <p suppressHydrationWarning>&copy; {new Date().getFullYear()} Pasal.id — Platform Hukum Indonesia Terbuka</p>
               </div>

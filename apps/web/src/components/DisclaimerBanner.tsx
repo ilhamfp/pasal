@@ -11,16 +11,8 @@ export default function DisclaimerBanner({ className }: DisclaimerBannerProps) {
     >
       <PasalLogo size={18} className="mt-px shrink-0 opacity-60" />
       <p>
-        Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi di{" "}
-        <a
-          href="https://peraturan.go.id"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-        >
-          peraturan.go.id
-        </a>{" "}
-        untuk kepastian hukum.
+        Konten ini bukan nasihat hukum. Selalu rujuk sumber resmi untuk
+        kepastian hukum.
       </p>
     </div>
   );

@@ -19,7 +19,7 @@ const ITEMS = [
   {
     title: "Open source & dapat diverifikasi",
     detail:
-      "Kode sumber terbuka di GitHub. Bandingkan langsung dengan sumber resmi.",
+      "Kode sumber terbuka dan dapat diverifikasi. Bandingkan langsung dengan sumber resmi.",
   },
 ];
 

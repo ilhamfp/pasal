@@ -23,22 +23,26 @@ interface SearchParams {
 async function TypeGrid() {
   const supabase = await createClient();
 
-  const [typesRes, worksRes] = await Promise.all([
-    supabase
-      .from("regulation_types")
-      .select("id, code, name_id, hierarchy_level")
-      .order("hierarchy_level"),
-    supabase.from("works").select("regulation_type_id"),
-  ]);
+  const typesRes = await supabase
+    .from("regulation_types")
+    .select("id, code, name_id, hierarchy_level")
+    .order("hierarchy_level");
 
-  const countMap: Record<number, number> = {};
-  for (const w of worksRes.data || []) {
-    countMap[w.regulation_type_id] = (countMap[w.regulation_type_id] || 0) + 1;
-  }
+  const types = typesRes.data || [];
 
-  const allTypes = (typesRes.data || []).map((t) => ({
+  // Get accurate count per type (HEAD requests — no data transferred)
+  const countResults = await Promise.all(
+    types.map((t) =>
+      supabase
+        .from("works")
+        .select("id", { count: "exact", head: true })
+        .eq("regulation_type_id", t.id)
+    )
+  );
+
+  const allTypes = types.map((t, i) => ({
     ...t,
-    count: countMap[t.id] || 0,
+    count: countResults[i].count || 0,
     label: TYPE_LABELS[t.code] || t.name_id,
   }));
 
