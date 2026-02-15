@@ -85,7 +85,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          {regType.code} — Daftar Peraturan
+          {regType.code} | Daftar Peraturan
         </Link>
       </div>
 

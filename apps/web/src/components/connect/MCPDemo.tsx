@@ -124,7 +124,7 @@ export default function MCPDemo() {
           </div>
           <div className="flex-1 text-center">
             <span className="font-mono text-xs text-muted-foreground">
-              Claude — Pasal.id MCP
+              Claude · Pasal.id MCP
             </span>
           </div>
           <div className="flex items-center gap-2">

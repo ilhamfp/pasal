@@ -14,7 +14,7 @@ const ITEMS = [
   {
     title: "Terstruktur, bukan PDF",
     detail:
-      "Bab, pasal, dan ayat bisa dicari secara individual — tidak perlu membaca dokumen utuh.",
+      "Bab, pasal, dan ayat bisa dicari secara individual. Tidak perlu membaca dokumen utuh.",
   },
   {
     title: "Open source & dapat diverifikasi",

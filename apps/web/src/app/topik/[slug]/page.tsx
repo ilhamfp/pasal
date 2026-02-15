@@ -25,10 +25,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .join(", ");
 
   return {
-    title: `${topic.title} — Panduan Hukum`,
+    title: `${topic.title}: Panduan Hukum`,
     description: `${topic.description} Peraturan terkait: ${lawList}.`,
     openGraph: {
-      title: `${topic.title} — Panduan Hukum | Pasal.id`,
+      title: `${topic.title}: Panduan Hukum | Pasal.id`,
       description: topic.description,
     },
   };
@@ -69,7 +69,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
                   href={`/peraturan/${law.type.toLowerCase()}/${lawSlug}`}
                 >
                   <Badge variant="secondary" className="hover:bg-primary/10 transition-colors cursor-pointer">
-                    {law.type} {law.number}/{law.year} — {law.title}
+                    {law.type} {law.number}/{law.year}: {law.title}
                   </Badge>
                 </Link>
               );

@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import { FileText } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Jelajahi Peraturan — Pasal.id",
+  title: "Jelajahi Peraturan",
   description: "Telusuri database hukum Indonesia berdasarkan jenis peraturan.",
 };
 

@@ -5,11 +5,11 @@ import Header from "@/components/Header";
 import { TOPICS } from "@/data/topics";
 
 export const metadata: Metadata = {
-  title: "Topik Hukum — Kenali Hakmu",
+  title: "Topik Hukum: Kenali Hakmu",
   description:
     "Panduan hukum berdasarkan topik kehidupan sehari-hari. Ketenagakerjaan, pernikahan, data pribadi, dan hukum pidana.",
   openGraph: {
-    title: "Topik Hukum — Kenali Hakmu | Pasal.id",
+    title: "Topik Hukum: Kenali Hakmu | Pasal.id",
     description:
       "Panduan hukum berdasarkan topik kehidupan sehari-hari.",
   },

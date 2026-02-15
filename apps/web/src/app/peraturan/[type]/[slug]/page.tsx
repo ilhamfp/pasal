@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const { work } = result;
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
-  const title = `${work.title_id} — ${typeLabel} No. ${work.number} Tahun ${work.year}`;
+  const title = `${work.title_id} | ${typeLabel} No. ${work.number} Tahun ${work.year}`;
   const description = `Baca teks lengkap ${typeLabel} Nomor ${work.number} Tahun ${work.year} tentang ${work.title_id}. Status: ${STATUS_LABELS[work.status] || work.status}.`;
   const url = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
 
@@ -202,11 +202,11 @@ async function LawReaderSection({
 
           return (
             <section key={bab.id} id={`bab-${bab.number}`} className="mb-12 scroll-mt-20">
-              <h2 className="font-heading text-lg text-center mb-1">
+              <h2 className="font-heading text-xl text-center mb-1">
                 {bab.node_type === "aturan" ? bab.number : `BAB ${bab.number}`}
               </h2>
               {bab.heading && bab.node_type !== "aturan" && (
-                <p className="text-center text-sm font-heading text-muted-foreground mb-6">
+                <p className="text-center text-base font-heading text-muted-foreground mb-6">
                   {bab.heading}
                 </p>
               )}

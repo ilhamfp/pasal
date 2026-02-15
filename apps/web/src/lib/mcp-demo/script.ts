@@ -121,7 +121,7 @@ export const DEMO_SCRIPT: DemoStep[] = [
   // ── Act 3: The Answer ────────────────────────────────────
   {
     type: "assistant",
-    text: 'Berdasarkan [Pasal 59 UU No. 13 Tahun 2003](/peraturan/uu/uu-13-2003), perjanjian kerja waktu tertentu (PKWT) hanya dapat dibuat untuk jangka waktu paling lama 2 tahun dan diperpanjang 1 kali paling lama 1 tahun.\n\nKarena pekerja ini telah bekerja selama 8 tahun, kontrak tersebut melanggar batas waktu PKWT. Menurut Pasal 59 ayat (7), PKWT yang melebihi ketentuan "demi hukum menjadi perjanjian kerja waktu tidak tertentu" — artinya pekerja tersebut secara hukum berstatus sebagai pekerja tetap.\n\n⚠️ Catatan: UU 13/2003 telah diubah oleh [UU 6/2023 (Cipta Kerja)](/peraturan/uu/uu-6-2023). Ketentuan terbaru mengubah sebagian aturan PKWT, namun prinsip perlindungan pekerja kontrak tetap berlaku.',
+    text: 'Berdasarkan [Pasal 59 UU No. 13 Tahun 2003](/peraturan/uu/uu-13-2003), perjanjian kerja waktu tertentu (PKWT) hanya dapat dibuat untuk jangka waktu paling lama 2 tahun dan diperpanjang 1 kali paling lama 1 tahun.\n\nKarena pekerja ini telah bekerja selama 8 tahun, kontrak tersebut melanggar batas waktu PKWT. Menurut Pasal 59 ayat (7), PKWT yang melebihi ketentuan "demi hukum menjadi perjanjian kerja waktu tidak tertentu". Artinya pekerja tersebut secara hukum berstatus sebagai pekerja tetap.\n\n⚠️ Catatan: UU 13/2003 telah diubah oleh [UU 6/2023 (Cipta Kerja)](/peraturan/uu/uu-6-2023). Ketentuan terbaru mengubah sebagian aturan PKWT, namun prinsip perlindungan pekerja kontrak tetap berlaku.',
   },
 
   // ── Loop gap ─────────────────────────────────────────────

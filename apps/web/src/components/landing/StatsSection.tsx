@@ -9,7 +9,7 @@ export default async function StatsSection() {
     {
       numericValue: totalWorks,
       label: "Peraturan",
-      detail: `11 jenis peraturan — dari ${minYear} hingga ${maxYear}`,
+      detail: `11 jenis peraturan, dari ${minYear} hingga ${maxYear}`,
     },
     {
       numericValue: pasalCount,

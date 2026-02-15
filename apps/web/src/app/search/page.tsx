@@ -58,9 +58,9 @@ function sanitizeSnippet(html: string): string {
 
 function formatRelevance(score: number, maxScore: number): string {
   const pct = Math.round((score / maxScore) * 100);
-  if (pct >= 70) return `${pct}% — Sangat relevan`;
-  if (pct >= 40) return `${pct}% — Relevan`;
-  return `${pct}% — Mungkin relevan`;
+  if (pct >= 70) return `${pct}% · Sangat relevan`;
+  if (pct >= 40) return `${pct}% · Relevan`;
+  return `${pct}% · Mungkin relevan`;
 }
 
 interface SearchResultsProps {

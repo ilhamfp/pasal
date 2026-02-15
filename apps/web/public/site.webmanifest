@@ -1,7 +1,7 @@
 {
   "name": "Pasal.id",
   "short_name": "Pasal",
-  "description": "Platform hukum Indonesia terbuka pertama berbasis AI",
+  "description": "Cari undang-undang, PP, Perpres, dan peraturan Indonesia lainnya. Gratis dan open source.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8F5F0",

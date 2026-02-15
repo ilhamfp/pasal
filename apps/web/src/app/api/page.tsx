@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "API publik Pasal.id untuk mengakses data peraturan Indonesia. Gratis, tanpa autentikasi, mendukung CORS.",
   openGraph: {
-    title: "API Dokumentasi — Pasal.id",
+    title: "API Dokumentasi | Pasal.id",
     description:
       "API publik Pasal.id untuk mengakses data peraturan Indonesia. Gratis, tanpa autentikasi.",
   },
@@ -47,7 +47,7 @@ const ENDPOINTS = [
       {
         name: "type",
         required: false,
-        description: "Filter jenis peraturan — lihat daftar kode di bawah",
+        description: "Filter jenis peraturan (lihat daftar kode di bawah)",
       },
       { name: "limit", required: false, description: "Jumlah hasil (default: 10, max: 50)" },
     ],
@@ -85,7 +85,7 @@ const ENDPOINTS = [
       {
         name: "type",
         required: false,
-        description: "Filter jenis peraturan — lihat daftar kode di bawah",
+        description: "Filter jenis peraturan (lihat daftar kode di bawah)",
       },
       { name: "year", required: false, description: "Filter tahun (contoh: 2023)" },
       {
@@ -273,7 +273,7 @@ export default function ApiDocsPage() {
           <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">type</code>{" "}
           di endpoint <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">/search</code>{" "}
           dan <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">/laws</code>.
-          Tidak case-sensitive — <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">uu</code>,{" "}
+          Tidak case-sensitive: <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">uu</code>,{" "}
           <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">UU</code>, dan{" "}
           <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">Uu</code> semua valid.
         </p>
@@ -362,7 +362,7 @@ const data = await res.json();
 
 // data.results berisi array hasil pencarian
 for (const result of data.results) {
-  console.log(result.work.title, "—", result.metadata.node_type, result.metadata.node_number);
+  console.log(result.work.title, "-", result.metadata.node_type, result.metadata.node_number);
   console.log(result.snippet);
 }`}
           </CodeBlock>
@@ -373,7 +373,7 @@ res = requests.get("https://pasal.id/api/v1/laws", params={"type": "UU", "limit"
 data = res.json()
 
 for law in data["laws"]:
-    print(f"{law['type']} {law['number']}/{law['year']} — {law['title']}")`}
+    print(f"{law['type']} {law['number']}/{law['year']} - {law['title']}")`}
           </CodeBlock>
         </div>
 
@@ -456,7 +456,7 @@ for law in data["laws"]:
           <h2 className="font-heading text-xl">Butuh limit lebih besar?</h2>
           <p className="text-sm text-muted-foreground">
             Jika Anda membangun aplikasi yang memerlukan akses lebih banyak, kami siap membantu.
-            Hubungi kami untuk mendiskusikan kebutuhan Anda — termasuk API key khusus dan batas yang lebih besar.
+            Hubungi kami untuk mendiskusikan kebutuhan Anda, termasuk API key khusus dan batas yang lebih besar.
           </p>
           <a
             href="https://twitter.com/ilhamfputra"
@@ -474,7 +474,7 @@ for law in data["laws"]:
             <a href="/connect" className="text-primary hover:underline">
               MCP Server
             </a>{" "}
-            kami — akses langsung dari Claude tanpa perlu menulis kode.
+            kami, akses langsung dari Claude tanpa perlu menulis kode.
           </p>
         </div>
       </main>

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { type } = await params;
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   return {
-    title: `${typeLabel} — Jelajahi Peraturan — Pasal.id`,
+    title: `Jelajahi ${typeLabel}`,
     description: `Daftar ${typeLabel} dalam database hukum Indonesia.`,
   };
 }

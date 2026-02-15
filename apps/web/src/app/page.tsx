@@ -19,7 +19,7 @@ const websiteLd = {
   "@type": "WebSite",
   name: "Pasal.id",
   url: "https://pasal.id",
-  description: "Platform hukum Indonesia terbuka pertama berbasis AI.",
+  description: "Cari undang-undang, PP, Perpres, dan peraturan Indonesia lainnya. Gratis dan open source.",
   inLanguage: "id",
   potentialAction: {
     "@type": "SearchAction",

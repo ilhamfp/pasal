@@ -536,7 +536,7 @@ export default function KoreksiEditor({
               Koreksi Pasal {nodeNumber}
             </h1>
             <p className="text-xs text-muted-foreground truncate">
-              {regType} No. {lawNumber} Tahun {lawYear} — {lawTitle}
+              {regType} No. {lawNumber} Tahun {lawYear} | {lawTitle}
             </p>
           </div>
         </div>

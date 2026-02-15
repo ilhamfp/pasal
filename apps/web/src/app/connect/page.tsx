@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP). Tanpa halusinasi, dengan sitasi nyata.",
   openGraph: {
-    title: "Hubungkan ke Claude via MCP — Pasal.id",
+    title: "Hubungkan ke Claude via MCP | Pasal.id",
     description:
       "Berikan Claude akses langsung ke hukum Indonesia melalui Model Context Protocol (MCP).",
   },
@@ -103,7 +103,7 @@ export default function ConnectPage() {
                   Hubungkan ke Claude
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Berikan Claude akses langsung ke hukum Indonesia — tanpa
+                  Berikan Claude akses langsung ke hukum Indonesia, tanpa
                   halusinasi, dengan sitasi nyata.
                 </p>
               </div>
@@ -254,7 +254,7 @@ export default function ConnectPage() {
               </p>
               <p>
                 Dengan MCP, Claude dapat mencari undang-undang, membaca pasal tertentu,
-                dan memeriksa status hukum — langsung dari database Pasal.id.
+                dan memeriksa status hukum, langsung dari database Pasal.id.
               </p>
               <a
                 href="https://modelcontextprotocol.io"
