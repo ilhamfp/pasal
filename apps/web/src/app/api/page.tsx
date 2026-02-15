@@ -459,7 +459,9 @@ for law in data["laws"]:
             Hubungi kami untuk mendiskusikan kebutuhan Anda — termasuk API key khusus dan batas yang lebih besar.
           </p>
           <a
-            href="mailto:hello@pasal.id"
+            href="https://twitter.com/ilhamfputra"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Hubungi kami

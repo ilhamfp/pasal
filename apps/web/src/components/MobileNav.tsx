@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import PasalLogo from "./PasalLogo";
@@ -12,6 +12,8 @@ const NAV_LINKS = [
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -22,9 +24,37 @@ export default function MobileNav() {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Close on Escape
+    // Focus the close button when drawer opens
+    const panel = panelRef.current;
+    if (panel) {
+      const closeBtn = panel.querySelector<HTMLElement>("[aria-label='Tutup menu']");
+      closeBtn?.focus();
+    }
+
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      // Close on Escape
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+
+      // Focus trap
+      if (e.key === "Tab" && panel) {
+        const focusable = panel.querySelectorAll<HTMLElement>(
+          "a[href], button, [tabindex]:not([tabindex='-1'])"
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
     }
     document.addEventListener("keydown", onKey);
 
@@ -37,6 +67,7 @@ export default function MobileNav() {
   return (
     <>
       <button
+        ref={triggerRef}
         onClick={() => setOpen(true)}
         className="lg:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
         aria-label="Buka menu navigasi"
@@ -52,7 +83,7 @@ export default function MobileNav() {
             onClick={close}
           />
           {/* Panel — right side */}
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-background border-l overflow-y-auto p-4 animate-in slide-in-from-right duration-200 motion-reduce:animate-none">
+          <div ref={panelRef} className="absolute right-0 top-0 bottom-0 w-72 bg-background border-l overflow-y-auto overscroll-contain p-4 animate-in slide-in-from-right duration-200 motion-reduce:animate-none">
             <div className="flex items-center justify-between mb-6">
               <Link
                 href="/"
