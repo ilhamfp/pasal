@@ -99,6 +99,10 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 | `src/components/reader/` | Law reader components (ReaderLayout, PasalBlock, AmendmentTimeline) |
 | `src/components/landing/` | Landing page sections (HeroSection, StatsSection, CuratedLaws) |
 | `src/components/suggestions/` | Correction submission UI |
+| `src/components/ShareButton.tsx` | Social sharing dropdown (WhatsApp, Telegram, X, clipboard). Uses Web Share API on mobile |
+| `src/components/CitationButton.tsx` | Formal legal citation copy button |
+| `src/components/SectionLinkButton.tsx` | Copy anchor link for BAB/section headings |
+| `src/components/PrintButton.tsx` | Triggers `window.print()` |
 
 ## OG Image Route (`src/app/api/og/route.tsx`)
 
@@ -114,3 +118,7 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 - **`createServiceClient()` must only be used in API routes**, never in Server Components or client code.
 - **No middleware.ts.** Auth is handled per-page via `requireAdmin()` and per-API-route with manual checks.
 - **SEO on every public page.** Use `generateMetadata()` for dynamic OG tags and `<JsonLd>` component for schema.org structured data.
+- **OG truncation for WhatsApp.** `og:title` truncates at ~60 chars, `og:description` at ~155. The law detail page truncates both in `generateMetadata()`.
+- **Print CSS.** `globals.css` has `@media print` rules. Use `.no-print` class to hide elements when printing.
+- **Interactive button pattern.** Small action buttons (`ShareButton`, `CitationButton`, etc.) are `"use client"`, use lucide icons with `aria-hidden="true"`, and wrap state-change text in `<span aria-live="polite">`.
+- **Deep linking.** BAB/section headings have `id` attributes for anchor links. `SectionLinkButton` copies the full URL with hash.

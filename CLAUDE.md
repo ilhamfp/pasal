@@ -18,13 +18,14 @@ Monorepo with three main pieces:
 ### Key directories
 
 ```
-apps/web/src/app/[locale]/    — Public pages under locale segment (/, /search, /jelajahi, /peraturan/[type]/[slug])
+apps/web/src/app/[locale]/     — Public pages under locale segment (/, /search, /jelajahi, /peraturan/[type]/[slug])
 apps/web/src/app/admin/        — Admin pages (NOT under [locale], Indonesian only)
 apps/web/src/components/       — React components (PascalCase.tsx)
 apps/web/src/lib/              — Utilities, Supabase clients (server.ts, client.ts, service.ts)
 apps/web/src/i18n/             — i18n config (routing.ts, request.ts)
 apps/web/messages/             — Translation files (id.json, en.json)
 apps/mcp-server/server.py      — MCP tools: search_laws, get_pasal, get_law_status, list_laws
+server.json                    — MCP server registry manifest (name, tools, URL)
 scripts/crawler/               — Mass scraper for peraturan.go.id
 scripts/parser/                — PDF parsing pipeline (PyMuPDF-based)
 scripts/agent/                 — Gemini verification agent + apply_revision()
