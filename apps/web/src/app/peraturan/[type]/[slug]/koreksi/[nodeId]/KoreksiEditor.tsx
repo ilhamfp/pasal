@@ -171,10 +171,10 @@ function KoreksiPdfPanel({
           <button
             onClick={() => onZoomChange(Math.max(50, pdfZoom - 25))}
             disabled={pdfZoom <= 50}
-            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
-            title="Perkecil"
+            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            aria-label="Perkecil"
           >
-            <ZoomOut className="h-3.5 w-3.5" />
+            <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           <span className="text-xs tabular-nums min-w-[3rem] text-center">
             {pdfZoom}%
@@ -182,19 +182,19 @@ function KoreksiPdfPanel({
           <button
             onClick={() => onZoomChange(Math.min(200, pdfZoom + 25))}
             disabled={pdfZoom >= 200}
-            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
-            title="Perbesar"
+            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            aria-label="Perbesar"
           >
-            <ZoomIn className="h-3.5 w-3.5" />
+            <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           <div className="w-px h-4 bg-border mx-1" />
           <button
             onClick={() => onPageChange(Math.max(1, pdfPage - 1))}
             disabled={pdfPage <= 1}
             aria-label="Halaman sebelumnya"
-            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
+            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           <span className="text-xs tabular-nums min-w-[3.5rem] text-center">
             Hal. {pdfPage}
@@ -203,19 +203,19 @@ function KoreksiPdfPanel({
             onClick={() => onPageChange(pdfPage + 1)}
             disabled={pdfError || (pdfPageEnd != null && pdfPage >= pdfPageEnd)}
             aria-label="Halaman berikutnya"
-            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30"
+            className="rounded border p-1 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           {sourcePdfUrl && (
             <a
               href={sourcePdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded border p-1 hover:border-primary/30 ml-1"
-              title="Buka PDF asli"
+              className="rounded border p-1 hover:border-primary/30 ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              aria-label="Buka PDF asli"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
           )}
         </div>
@@ -226,7 +226,7 @@ function KoreksiPdfPanel({
         {pdfError ? (
           <div className="flex items-center justify-center h-full text-center p-6 text-muted-foreground">
             <div>
-              <FileText className="h-10 w-10 mx-auto mb-2 opacity-20" />
+              <FileText className="h-10 w-10 mx-auto mb-2 opacity-20" aria-hidden="true" />
               <p className="text-xs mb-2">Halaman PDF tidak tersedia.</p>
               {sourcePdfUrl && (
                 <a
@@ -235,7 +235,7 @@ function KoreksiPdfPanel({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80"
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   Buka PDF asli
                 </a>
               )}
@@ -378,7 +378,7 @@ function KoreksiSubmitBar({
     <div className="flex-none border-t bg-card px-4 py-3">
       {errorMsg && (
         <div className="flex items-center gap-2 text-sm text-destructive mb-2">
-          <AlertCircle className="h-4 w-4 flex-none" />
+          <AlertCircle className="h-4 w-4 flex-none" aria-hidden="true" />
           {errorMsg}
         </div>
       )}
@@ -389,6 +389,8 @@ function KoreksiSubmitBar({
           </label>
           <input
             type="text"
+            name="correction-reason"
+            autoComplete="off"
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
             maxLength={2000}
@@ -402,6 +404,8 @@ function KoreksiSubmitBar({
           </label>
           <input
             type="email"
+            name="submitter-email"
+            autoComplete="email"
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             className="w-full rounded-lg border bg-card px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-1 outline-none"
@@ -422,7 +426,7 @@ function KoreksiSubmitBar({
             disabled={!hasChanges || status === "loading"}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send className="h-3.5 w-3.5" aria-hidden="true" />
             {status === "loading" ? "Mengirim..." : "Kirim Saran"}
           </button>
         </div>
@@ -498,7 +502,7 @@ export default function KoreksiEditor({
           animate={{ scale: 1, opacity: 1 }}
           className="text-center"
         >
-          <Check className="h-16 w-16 mx-auto mb-4 text-primary" />
+          <Check className="h-16 w-16 mx-auto mb-4 text-primary" aria-hidden="true" />
           <p className="font-heading text-xl mb-2">Saran Terkirim</p>
           <p className="text-sm text-muted-foreground mb-6">
             Terima kasih! Saran Anda akan ditinjau oleh tim admin.
@@ -507,7 +511,7 @@ export default function KoreksiEditor({
             onClick={goBack}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Kembali ke Peraturan
           </button>
         </m.div>
@@ -525,7 +529,7 @@ export default function KoreksiEditor({
             aria-label="Kembali"
             className="rounded-lg p-1.5 hover:bg-secondary flex-none"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="min-w-0">
             <h1 className="font-heading text-base truncate">
@@ -541,24 +545,24 @@ export default function KoreksiEditor({
         <div className="flex items-center gap-1 rounded-lg border p-0.5">
           <button
             onClick={() => setViewMode("edit")}
-            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
               viewMode === "edit"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-secondary"
             }`}
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className="h-3 w-3" aria-hidden="true" />
             Edit
           </button>
           <button
             onClick={() => setViewMode("diff")}
-            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
               viewMode === "diff"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-secondary"
             }`}
           >
-            <Eye className="h-3 w-3" />
+            <Eye className="h-3 w-3" aria-hidden="true" />
             Perubahan
           </button>
         </div>

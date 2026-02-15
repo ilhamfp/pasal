@@ -67,13 +67,14 @@ export default function ReaderLayout({
           {/* Desktop toggle */}
           <button
             onClick={() => setShowPdf(!showPdf)}
-            className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+            aria-label={showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
+            className={`hidden lg:inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
               showPdf
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card hover:border-primary/30"
             }`}
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4" aria-hidden="true" />
             {showPdf ? "Sembunyikan PDF" : "Tampilkan PDF"}
           </button>
 
@@ -84,7 +85,7 @@ export default function ReaderLayout({
             rel="noopener noreferrer"
             className="lg:hidden inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium bg-card hover:border-primary/30 transition-colors whitespace-nowrap"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4" aria-hidden="true" />
             Buka PDF Asli
           </a>
         </div>
@@ -122,7 +123,7 @@ export default function ReaderLayout({
                     className="text-sm font-heading text-primary hover:text-primary/80 inline-flex items-center gap-1"
                   >
                     PDF Sumber
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 ) : (
                   <span className="text-sm font-heading">PDF Sumber</span>
@@ -130,9 +131,9 @@ export default function ReaderLayout({
                 <button
                   onClick={() => setShowPdf(false)}
                   aria-label="Tutup panel PDF"
-                  className="rounded-lg border p-1 hover:border-primary/30 transition-colors"
+                  className="rounded-lg border p-1 hover:border-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
               <PdfViewer

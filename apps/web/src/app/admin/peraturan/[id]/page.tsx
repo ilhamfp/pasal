@@ -84,7 +84,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
           href={`/admin/peraturan?type=${regType.code.toLowerCase()}`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           {regType.code} — Daftar Peraturan
         </Link>
       </div>
@@ -171,7 +171,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
                     className="text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {work.source_url}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 </div>
               )}
@@ -185,7 +185,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
                     className="text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {work.source_pdf_url}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 </div>
               )}

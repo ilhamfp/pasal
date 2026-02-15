@@ -22,17 +22,17 @@ export default async function StatsBar() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
       <span className="flex items-center gap-1.5">
-        <span className="font-heading text-lg text-foreground">{uuCount}</span>
+        <span className="font-heading text-lg text-foreground tabular-nums">{uuCount}</span>
         Undang-Undang
       </span>
       <span aria-hidden="true" className="hidden sm:inline">·</span>
       <span className="flex items-center gap-1.5">
-        <span className="font-heading text-lg text-foreground">{totalWorks}</span>
+        <span className="font-heading text-lg text-foreground tabular-nums">{totalWorks}</span>
         Peraturan
       </span>
       <span aria-hidden="true" className="hidden sm:inline">·</span>
       <span className="flex items-center gap-1.5">
-        <span className="font-heading text-lg text-foreground">{pasalCount}</span>
+        <span className="font-heading text-lg text-foreground tabular-nums">{pasalCount}</span>
         Pasal
       </span>
       <span aria-hidden="true" className="hidden sm:inline">·</span>

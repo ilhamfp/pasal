@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { href: "/api", label: "API" },
 ] as const;
 
-const navLinkClass = "text-muted-foreground hover:text-foreground transition-colors";
+const navLinkClass = "text-muted-foreground hover:text-foreground transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
 export default function Header({ showSearch = false, searchDefault }: HeaderProps) {
   return (

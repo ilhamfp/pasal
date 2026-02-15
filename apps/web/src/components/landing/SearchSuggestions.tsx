@@ -16,7 +16,7 @@ export default function SearchSuggestions() {
         <Link
           key={q}
           href={`/search?q=${encodeURIComponent(q)}`}
-          className="rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="rounded-full border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           {q}
         </Link>

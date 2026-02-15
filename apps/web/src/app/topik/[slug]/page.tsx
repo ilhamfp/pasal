@@ -88,9 +88,9 @@ export default async function TopicDetailPage({ params }: PageProps) {
                     href={`/search?q=${encodeURIComponent(q.searchQuery)}`}
                     className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
                   >
-                    <Search className="h-3.5 w-3.5" />
+                    <Search className="h-3.5 w-3.5" aria-hidden="true" />
                     Cari jawaban
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-3 w-3" aria-hidden="true" />
                   </Link>
                   {q.pasal && q.lawRef && (
                     <span className="text-xs text-muted-foreground">

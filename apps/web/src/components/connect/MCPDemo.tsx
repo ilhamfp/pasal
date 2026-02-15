@@ -53,7 +53,7 @@ export default function MCPDemo() {
         <p className="text-center text-sm text-muted-foreground">
           Demo animasi tidak ditampilkan karena preferensi gerakan dikurangi.
           Lihat contoh penggunaan MCP di bagian{" "}
-          <a href="#coba-sekarang" className="text-primary font-medium hover:text-primary/80">
+          <a href="#coba-sekarang" className="text-primary font-medium hover:text-primary/80 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
             Coba Sekarang
           </a>{" "}
           di bawah.

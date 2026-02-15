@@ -55,7 +55,7 @@ async function TypeGrid() {
             className="group rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors"
           >
             <div className="flex items-start justify-between mb-3">
-              <FileText className="h-5 w-5 text-primary/60" />
+              <FileText className="h-5 w-5 text-primary/60" aria-hidden="true" />
               <span className="font-heading text-2xl text-primary">
                 {type.count.toLocaleString("id-ID")}
               </span>
@@ -169,7 +169,7 @@ async function RegulationList({
             href="/admin/peraturan"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             Semua Jenis
           </Link>
           <h2 className="font-heading text-2xl">

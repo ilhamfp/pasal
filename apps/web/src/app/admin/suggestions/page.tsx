@@ -101,7 +101,7 @@ export default function SuggestionReviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
@@ -215,43 +215,45 @@ export default function SuggestionReviewPage() {
                 <button
                   onClick={() => handleVerify(s.id)}
                   disabled={actionLoading === s.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm hover:border-primary/30 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm hover:border-primary/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <Bot className="h-3.5 w-3.5" />
+                  <Bot className="h-3.5 w-3.5" aria-hidden="true" />
                   Verifikasi AI
                 </button>
                 <button
                   onClick={() => handleApprove(s.id)}
                   disabled={actionLoading === s.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <Check className="h-3.5 w-3.5" />
+                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
                   Setujui & Terapkan
                 </button>
                 {s.agent_modified_content && s.agent_modified_content !== s.suggested_content && (
                   <button
                     onClick={() => handleApprove(s.id, true)}
                     disabled={actionLoading === s.id}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary px-3 py-1.5 text-sm text-primary hover:bg-primary/5 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary px-3 py-1.5 text-sm text-primary hover:bg-primary/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
                     Terapkan Versi AI
                   </button>
                 )}
                 <div className="flex-1" />
                 <input
                   type="text"
+                  name="reject-reason"
+                  autoComplete="off"
                   placeholder="Alasan penolakan..."
                   value={rejectNote[s.id] || ""}
                   onChange={(e) => setRejectNote({ ...rejectNote, [s.id]: e.target.value })}
-                  className="rounded-lg border px-2 py-1.5 text-sm w-48"
+                  className="rounded-lg border px-2 py-1.5 text-sm w-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 />
                 <button
                   onClick={() => handleReject(s.id)}
                   disabled={actionLoading === s.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
                   Tolak
                 </button>
               </div>

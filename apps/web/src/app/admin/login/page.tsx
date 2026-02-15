@@ -45,16 +45,18 @@ export default function AdminLoginPage() {
 
         {unauthorized && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 mb-4 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             Akun Anda tidak memiliki akses admin.
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-xs font-medium mb-1 block">Email</label>
+            <label htmlFor="admin-email" className="text-xs font-medium mb-1 block">Email</label>
             <input
+              id="admin-email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 outline-none"
@@ -62,9 +64,11 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Password</label>
+            <label htmlFor="admin-password" className="text-xs font-medium mb-1 block">Password</label>
             <input
+              id="admin-password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border bg-card px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:ring-offset-2 outline-none"

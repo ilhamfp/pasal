@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-lg border bg-card p-5">
             <div className="flex items-center justify-between mb-2">
-              <stat.icon className="h-5 w-5 text-muted-foreground" />
+              <stat.icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               {stat.href && (
                 <Link href={stat.href} className="text-xs text-primary hover:text-primary/80">
                   Lihat

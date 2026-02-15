@@ -61,7 +61,7 @@ export default function DemoToolCall({ name, input, result, showResult }: Props)
 
       {/* Input parameters — always visible */}
       <div className="px-4 py-2 border-b">
-        <pre className="font-mono text-xs text-muted-foreground overflow-x-auto">
+        <pre className="font-mono text-xs text-muted-foreground overflow-x-auto tabular-nums">
           {JSON.stringify(input, null, 2)}
         </pre>
       </div>
@@ -81,7 +81,7 @@ export default function DemoToolCall({ name, input, result, showResult }: Props)
               <p className="mb-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 hasil
               </p>
-              <pre className="font-mono text-xs text-foreground overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
+              <pre className="font-mono text-xs text-foreground overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto tabular-nums">
                 {JSON.stringify(result, null, 2)}
               </pre>
             </div>

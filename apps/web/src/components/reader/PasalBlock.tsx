@@ -37,9 +37,9 @@ export default function PasalBlock({ pasal, pathname }: PasalBlockProps) {
           <Link
             href={koreksiHref}
             className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-            title="Sarankan Koreksi"
+            aria-label="Sarankan Koreksi"
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className="h-3 w-3" aria-hidden="true" />
             Koreksi
           </Link>
           <CopyButton text={jsonData} label="JSON" />

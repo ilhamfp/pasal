@@ -121,7 +121,7 @@ export default function TableOfContents({
             onClick={() => setMobileOpen(false)}
           />
           {/* Panel */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r overflow-y-auto p-4 animate-in slide-in-from-left duration-200">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r overflow-y-auto p-4 animate-in slide-in-from-left duration-200 motion-reduce:animate-none">
             <div className="flex items-center justify-between mb-4">
               <h2 className="flex items-center gap-1.5 text-sm font-heading">
                 <PasalLogo size={18} className="text-primary" />
@@ -129,8 +129,8 @@ export default function TableOfContents({
               </h2>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-1"
-                aria-label="Tutup"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                aria-label="Tutup daftar isi"
               >
                 &times;
               </button>

@@ -108,6 +108,7 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
   const [extIndex, setExtIndex] = useState(Math.floor(n / 2) + CLONES);
   const [shouldAnimate, setShouldAnimate] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const snapTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -141,16 +142,25 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
     return () => ro.disconnect();
   }, []);
 
-  // Auto-advance every 5 seconds
+  // Detect prefers-reduced-motion
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  // Auto-advance every 5 seconds (disabled when reduced motion preferred)
   const advance = useCallback(() => {
     setExtIndex((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || prefersReducedMotion) return;
     const timer = setInterval(advance, 5000);
     return () => clearInterval(timer);
-  }, [advance, isPaused]);
+  }, [advance, isPaused, prefersReducedMotion]);
 
   // Clean up snap timeout on unmount
   useEffect(() => {
@@ -212,7 +222,7 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
             aria-selected={i === realActive}
             aria-label={`Slide ${i + 1}: ${law.titleId}`}
             onClick={() => setExtIndex(i + CLONES)}
-            className="flex items-center justify-center p-3"
+            className="flex items-center justify-center p-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <span
               className={`relative block overflow-hidden rounded-full transition-all duration-300 ${

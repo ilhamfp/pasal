@@ -32,16 +32,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Admin
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/admin" className="text-muted-foreground hover:text-foreground">
+              <Link href="/admin" className="text-muted-foreground hover:text-foreground rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                 Dashboard
               </Link>
-              <Link href="/admin/peraturan" className="text-muted-foreground hover:text-foreground">
+              <Link href="/admin/peraturan" className="text-muted-foreground hover:text-foreground rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                 Peraturan
               </Link>
-              <Link href="/admin/suggestions" className="text-muted-foreground hover:text-foreground">
+              <Link href="/admin/suggestions" className="text-muted-foreground hover:text-foreground rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                 Saran
               </Link>
-              <Link href="/admin/scraper" className="text-muted-foreground hover:text-foreground">
+              <Link href="/admin/scraper" className="text-muted-foreground hover:text-foreground rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                 Scraper
               </Link>
             </nav>

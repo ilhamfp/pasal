@@ -67,10 +67,10 @@ export default async function BrowseSection() {
           <div className="mt-6 text-center">
             <Link
               href="/jelajahi"
-              className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+              className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               Lihat semua jenis peraturan
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>

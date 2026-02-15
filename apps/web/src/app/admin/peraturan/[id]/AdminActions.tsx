@@ -99,9 +99,9 @@ export default function AdminActions({
             onClick={() => handleRetrigger("reparse")}
           >
             {loading === "reparse" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
             )}
             Retrigger Parse
           </Button>
@@ -113,9 +113,9 @@ export default function AdminActions({
             onClick={() => handleRetrigger("rescrape")}
           >
             {loading === "rescrape" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4" aria-hidden="true" />
             )}
             Retrigger Scrape
           </Button>
@@ -134,9 +134,9 @@ export default function AdminActions({
             onClick={() => setEditing(!editing)}
           >
             {editing ? (
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-4 w-4" aria-hidden="true" />
             )}
             {editing ? "Batal Edit" : "Edit Metadata"}
           </Button>
@@ -187,9 +187,9 @@ export default function AdminActions({
               onClick={handleSave}
             >
               {loading === "save" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4" aria-hidden="true" />
               )}
               Simpan Perubahan
             </Button>

@@ -31,17 +31,17 @@ export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: Pd
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
             aria-label="Halaman sebelumnya"
-            className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
+            className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={hasError}
             aria-label="Halaman berikutnya"
-            className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30"
+            className="rounded-lg border p-1.5 hover:border-primary/30 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
           {sourcePdfUrl && (
             <a
@@ -50,7 +50,7 @@ export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: Pd
               rel="noopener noreferrer"
               className="text-xs text-primary hover:text-primary/80 ml-2 inline-flex items-center gap-1"
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
               PDF Asli
             </a>
           )}
@@ -62,13 +62,13 @@ export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: Pd
           sourcePdfUrl ? (
             <iframe
               src={sourcePdfUrl}
-              title="PDF Viewer"
+              title={`PDF Sumber — Halaman ${page}`}
               sandbox="allow-same-origin"
               className="w-full h-[80vh] border-0"
             />
           ) : (
             <div className="text-center p-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" aria-hidden="true" />
               <p className="text-sm mb-2">Halaman PDF tidak tersedia.</p>
             </div>
           )
@@ -76,6 +76,8 @@ export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: Pd
           <img
             src={imageUrl}
             alt={`Halaman ${page}`}
+            width={800}
+            height={1132}
             className="w-full h-auto"
             loading="lazy"
             onError={() => setHasError(true)}
