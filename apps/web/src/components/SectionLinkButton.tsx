@@ -15,14 +15,16 @@ export default function SectionLinkButton({ url }: { url: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-muted-foreground hover:text-foreground"
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-muted-foreground hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
       aria-label="Salin link bagian ini"
     >
-      {copied ? (
-        <Check aria-hidden="true" className="h-4 w-4 text-primary" />
-      ) : (
-        <Link2 aria-hidden="true" className="h-4 w-4" />
-      )}
+      <span aria-live="polite">
+        {copied ? (
+          <Check aria-hidden="true" className="h-4 w-4 text-primary" />
+        ) : (
+          <Link2 aria-hidden="true" className="h-4 w-4" />
+        )}
+      </span>
     </button>
   );
 }

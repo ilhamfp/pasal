@@ -44,17 +44,19 @@ export default function CitationButton({ type, number, year, title, url }: Citat
           {citation}
         </div>
         <Button size="sm" className="w-full text-xs h-7" onClick={handleCopy}>
-          {copied ? (
-            <>
-              <Check aria-hidden="true" className="h-3 w-3" />
-              Tersalin!
-            </>
-          ) : (
-            <>
-              <Copy aria-hidden="true" className="h-3 w-3" />
-              Salin Kutipan
-            </>
-          )}
+          <span aria-live="polite" className="flex items-center gap-1">
+            {copied ? (
+              <>
+                <Check aria-hidden="true" className="h-3 w-3" />
+                Tersalin!
+              </>
+            ) : (
+              <>
+                <Copy aria-hidden="true" className="h-3 w-3" />
+                Salin Kutipan
+              </>
+            )}
+          </span>
         </Button>
       </PopoverContent>
     </Popover>
