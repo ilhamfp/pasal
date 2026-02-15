@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 38 migrations (001–038, two 030s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 39 migrations (001–039, two 030s) |
 
 ### Key directories
 
@@ -26,7 +26,7 @@ scripts/crawler/           — Mass scraper for peraturan.go.id
 scripts/parser/            — PDF parsing pipeline (PyMuPDF-based)
 scripts/agent/             — Gemini verification agent + apply_revision()
 scripts/loader/            — DB import scripts
-packages/supabase/migrations/ — All SQL migrations (001–038)
+packages/supabase/migrations/ — All SQL migrations (001–039)
 ```
 
 ## Commands
@@ -53,12 +53,12 @@ Core tables — all have RLS enabled with public read policies for legal data:
 
 | Table | Purpose |
 |-------|---------|
-| `works` | Individual regulations (UU, PP, Perpres, etc.). Has `slug`, metadata, parse quality fields |
+| `works` | Individual regulations (UU, PP, Perpres, etc.). Has `slug`, metadata, parse quality fields. `search_text` maintained by trigger `trg_works_search_text`, `search_fts` TSVECTOR GENERATED ALWAYS from it |
 | `document_nodes` | Hierarchical document structure: BAB > Bagian > Pasal > Ayat. Content in `content_text`, `fts` TSVECTOR column auto-generated for search |
 | `revisions` | **Append-only** audit log for content changes. Never UPDATE or DELETE rows |
 | `suggestions` | Crowd-sourced corrections. Anyone submits, admin approves |
 | `work_relationships` | Cross-references between regulations |
-| `regulation_types` | 11 regulation types (UU, PP, Perpres, etc.) |
+| `regulation_types` | ~22 regulation types (UU, PP, PERPRES, UUD, PERPPU, PERMEN, PERDA, etc.) |
 | `crawl_jobs` | Scraper job queue and state tracking |
 | `scraper_runs` | Scraper session tracking (jobs discovered/processed/failed) |
 | `discovery_progress` | Crawl freshness cache per regulation type |
@@ -75,7 +75,7 @@ All steps run in a single transaction. If any fails, everything rolls back.
 
 ### Search: `search_legal_chunks()`
 
-3-tier fallback (do not modify): `websearch_to_tsquery` > `plainto_tsquery` > `ILIKE`. Queries `document_nodes` directly (JOINs `works` + `regulation_types`), returns results with `ts_headline` snippets, boosted by hierarchy + recency. Metadata JSONB is constructed on-the-fly via `jsonb_build_object()`. The function name is intentionally preserved from the original `legal_chunks` era — 5 consumers call it via `.rpc("search_legal_chunks")`, so renaming would require cascading changes.
+3-layer search (migration 039). Layer 1: **Identity fast path** — detects regulation identifiers (e.g. "uu 10 2011", "uud 1945") via code/name_id match + number extraction, returns deterministic score 1000. Handles codes, two-word codes (TAP_MPR), aliases (PERPU→PERPPU), and full name_id prefixes ("Undang-Undang Nomor 10"). Input sanitized (`[^a-zA-Z0-9 ]` → space) to prevent tsquery crashes. Layer 2: **Works FTS** — searches `works.search_fts` for title/topic queries ("ketenagakerjaan"), score ~1-15. Layer 3: **Content FTS** — 3-tier fallback on `document_nodes.fts` (`websearch_to_tsquery` > `plainto_tsquery` > `ILIKE`), score ~0.01-0.5. Results accumulate via `RETURN QUERY`; client `groupChunksByWork()` deduplicates by work_id keeping highest score. The function name is intentionally preserved — 5 consumers call it via `.rpc("search_legal_chunks")`.
 
 ## Coding Conventions
 
@@ -98,7 +98,7 @@ All steps run in a single transaction. If any fails, everything rolls back.
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 039)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 040)
 - Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
