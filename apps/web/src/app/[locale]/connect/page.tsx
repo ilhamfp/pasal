@@ -6,7 +6,6 @@ import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, Shie
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import CopyButton from "@/components/CopyButton";
-import ShareButton from "@/components/ShareButton";
 import MCPDemo from "@/components/connect/MCPDemo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -89,10 +88,6 @@ export default async function ConnectPage({ params }: PageProps) {
                 <p className="text-lg text-muted-foreground">
                   {t("heroTagline")}
                 </p>
-                <ShareButton
-                  url="https://pasal.id/connect"
-                  title="Hubungkan Claude ke database hukum Indonesia"
-                />
               </div>
 
               {/* Install Command — Claude Code */}

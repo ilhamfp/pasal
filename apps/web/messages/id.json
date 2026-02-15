@@ -111,8 +111,7 @@
     "pdfSource": "PDF Sumber",
     "closePdfPanel": "Tutup panel PDF",
     "pasalPrefix": "Pasal",
-    "suggestCorrection": "Sarankan Koreksi",
-    "jsonButton": "JSON"
+    "suggestCorrection": "Sarankan Koreksi"
   },
   "verification": {
     "verified": "Terverifikasi",

@@ -23,7 +23,6 @@ import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice"
 import PrintButton from "@/components/PrintButton";
 import ShareButton from "@/components/ShareButton";
 import SectionLinkButton from "@/components/SectionLinkButton";
-import CitationButton from "@/components/CitationButton";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -431,13 +430,6 @@ export default async function LawDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">{type.toUpperCase()}</Badge>
             <div className="ml-auto flex items-center gap-1 no-print">
-              <CitationButton
-                type={type}
-                number={work.number}
-                year={work.year}
-                title={work.title_id}
-                url={pageUrl}
-              />
               <ShareButton
                 url={pageUrl}
                 title={`${formatRegRef(type, work.number, work.year)} — ${work.title_id}`}

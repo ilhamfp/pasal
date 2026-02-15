@@ -111,8 +111,7 @@
     "pdfSource": "Source PDF",
     "closePdfPanel": "Close PDF panel",
     "pasalPrefix": "Article",
-    "suggestCorrection": "Suggest Correction",
-    "jsonButton": "JSON"
+    "suggestCorrection": "Suggest Correction"
   },
   "verification": {
     "verified": "Verified",

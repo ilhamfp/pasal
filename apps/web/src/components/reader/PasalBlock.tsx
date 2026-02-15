@@ -22,7 +22,6 @@ interface PasalBlockProps {
 export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps) {
   const t = useTranslations("reader");
   const content = pasal.content_text || "";
-  const jsonData = JSON.stringify({ pasal: pasal.number, content }, null, 2);
   const koreksiHref = `${pathname}/koreksi/${pasal.id}`;
 
   return (
@@ -46,7 +45,7 @@ export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps
             {t("correction")}
           </Link>
           <CopyButton text={`${pageUrl}#pasal-${pasal.number}`} label="Link" />
-          <CopyButton text={jsonData} label={t("jsonButton")} />
+          <CopyButton text={content} />
         </div>
       </div>
       <div className="text-sm leading-relaxed whitespace-pre-wrap">{content}</div>
