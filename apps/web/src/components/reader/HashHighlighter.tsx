@@ -3,12 +3,13 @@
 import { useEffect, useRef } from "react";
 import { animate, type AnimationPlaybackControls } from "framer-motion";
 
-const BORDER_COLOR = "oklch(0.450 0.065 170)";
-const BG_COLOR = "oklch(0.450 0.065 170 / 0.04)";
+const BG_COLOR = "oklch(0.450 0.065 170 / 0.06)";
 
 function clearStyles(el: HTMLElement) {
-  el.style.boxShadow = "";
   el.style.backgroundColor = "";
+  el.style.borderRadius = "";
+  el.style.padding = "";
+  el.style.margin = "";
 }
 
 export default function HashHighlighter() {
@@ -45,8 +46,10 @@ export default function HashHighlighter() {
       cancel();
 
       activeElRef.current = el;
-      el.style.boxShadow = `inset 4px 0 0 ${BORDER_COLOR}`;
       el.style.backgroundColor = BG_COLOR;
+      el.style.borderRadius = "12px";
+      el.style.padding = "12px 16px";
+      el.style.margin = "-12px -16px";
 
       if (prefersReducedMotion) {
         timerRef.current = setTimeout(() => {
@@ -62,7 +65,6 @@ export default function HashHighlighter() {
         animRef.current = animate(
           el,
           {
-            boxShadow: "inset 4px 0 0 oklch(0.450 0.065 170 / 0)",
             backgroundColor: "oklch(0.450 0.065 170 / 0)",
           },
           {
