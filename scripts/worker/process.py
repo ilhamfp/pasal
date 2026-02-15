@@ -238,6 +238,13 @@ def _build_law_dict(job: dict, text: str, nodes: list, detail_metadata: dict | N
     number = job.get("number", "")
     year = job.get("year", 0)
     title = job.get("title", f"{reg_type} {number}/{year}")
+
+    # When tentang is available from the detail page, replace the subject
+    # portion of the formal title — listing page link text can be wrong
+    tentang = detail_metadata.get("tentang") if detail_metadata else None
+    if tentang and " tentang " in title:
+        title = title[:title.index(" tentang ") + len(" tentang ")] + tentang
+
     frbr_uri = job.get("frbr_uri", f"/akn/id/act/{reg_type.lower()}/{year}/{number}")
 
     # Use status from detail page metadata if available, else default
@@ -439,6 +446,9 @@ async def process_jobs(
                         "pdf_url": confirmed_url,
                         "updated_at": now,
                     }).eq("id", job_id).execute()
+
+                    # Update local dict so _build_law_dict picks up the confirmed URL
+                    job["pdf_url"] = confirmed_url
 
                 # Store PDF metadata
                 local_hash = _sha256(pdf_path)
