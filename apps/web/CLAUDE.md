@@ -100,6 +100,12 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 | `src/components/landing/` | Landing page sections (HeroSection, StatsSection, CuratedLaws) |
 | `src/components/suggestions/` | Correction submission UI |
 
+## OG Image Route (`src/app/api/og/route.tsx`)
+
+- Edge runtime. Uses `ImageResponse` from `next/og` (bundled — do NOT install `@vercel/og`).
+- Font `.ttf` files at `src/app/api/og/fonts/`. Loaded via `new URL("./fonts/...", import.meta.url)`.
+- **Satori constraints:** Only `display: "flex"`, inline `style={{}}` objects, hex color strings (no CSS vars, no Tailwind). Hardcoded hex values are acceptable here since CSS custom properties are unavailable at edge.
+
 ## Gotchas
 
 - **Search snippets contain HTML.** The `ts_headline` function returns `<mark>` tags. Sanitize to only allow `<mark>` — strip everything else.

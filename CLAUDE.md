@@ -176,6 +176,8 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **i18n async/sync distinction.** Using `useTranslations` in async Server Components causes build error. Use `getTranslations` with `await` for any `async function` component.
 - **i18n navigation imports.** Public pages must import from `@/i18n/routing`, not `next/link` or `next/navigation`, or locale prefixes won't work.
 - **Landing page metadata.** Lives in `[locale]/layout.tsx`, not `page.tsx` — applies to all pages under that locale.
+- **Dual worktree.** `main` is checked out at `~/Desktop/personal-project/pasal`. From the `project-improve-scraper` worktree, use `git push origin <branch>:main` instead of `git checkout main && merge`.
+- **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
 
 ## Deployment
 
