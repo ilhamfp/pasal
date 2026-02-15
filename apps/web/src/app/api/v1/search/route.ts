@@ -13,6 +13,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
   const q = searchParams.get("q");
   const type = searchParams.get("type");
+  const year = searchParams.get("year");
+  const status = searchParams.get("status");
   const limitParam = searchParams.get("limit");
   const limit = Math.min(Math.max(parseInt(limitParam || "10"), 1), 50);
 
@@ -23,8 +25,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  if (year && (!/^\d{4}$/.test(year) || parseInt(year) < 1945)) {
+    return NextResponse.json(
+      { error: "Invalid year parameter. Must be a 4-digit year >= 1945." },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  const VALID_STATUSES = ["berlaku", "diubah", "dicabut", "tidak_berlaku"];
+  if (status && !VALID_STATUSES.includes(status.toLowerCase())) {
+    return NextResponse.json(
+      { error: "Invalid status parameter. Must be one of: berlaku, diubah, dicabut, tidak_berlaku." },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
   const supabase = await createClient();
-  const metadataFilter = type ? { type: type.toUpperCase() } : {};
+  const metadataFilter: Record<string, string> = {};
+  if (type) metadataFilter.type = type.toUpperCase();
+  if (year) metadataFilter.year = year;
+  if (status) metadataFilter.status = status.toLowerCase();
 
   // Over-fetch to account for grouping collapse
   const fetchCount = Math.min(limit * 3, 150);

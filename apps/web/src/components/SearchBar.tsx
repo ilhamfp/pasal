@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 export default function SearchBar({
   defaultValue = "",
   autoFocus = false,
+  preserveParams,
 }: {
   defaultValue?: string;
   autoFocus?: boolean;
+  preserveParams?: Record<string, string>;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
@@ -20,7 +22,9 @@ export default function SearchBar({
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+      const params = new URLSearchParams(preserveParams);
+      params.set("q", query.trim());
+      router.push(`/search?${params.toString()}`);
     }
   }
 

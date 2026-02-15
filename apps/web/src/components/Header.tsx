@@ -7,16 +7,18 @@ import ShimmerLink from "./ShimmerLink";
 interface HeaderProps {
   showSearch?: boolean;
   searchDefault?: string;
+  searchPreserveParams?: Record<string, string>;
 }
 
 const NAV_LINKS = [
+  { href: "/search", label: "Cari" },
   { href: "/jelajahi", label: "Jelajahi" },
   { href: "/api", label: "API" },
 ] as const;
 
 const navLinkClass = "text-muted-foreground hover:text-foreground transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
-export default function Header({ showSearch = false, searchDefault }: HeaderProps) {
+export default function Header({ showSearch = false, searchDefault, searchPreserveParams }: HeaderProps) {
   return (
     <header className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 lg:gap-8 py-4 px-4 lg:px-6">
@@ -26,7 +28,7 @@ export default function Header({ showSearch = false, searchDefault }: HeaderProp
         </Link>
         {showSearch && (
           <div className="min-w-0 flex-1">
-            <SearchBar defaultValue={searchDefault} />
+            <SearchBar defaultValue={searchDefault} preserveParams={searchPreserveParams} />
           </div>
         )}
         <nav className="hidden lg:flex items-center gap-6 text-base shrink-0">

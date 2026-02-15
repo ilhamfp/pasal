@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import PasalLogo from "./PasalLogo";
 
 const NAV_LINKS = [
+  { href: "/search", label: "Cari" },
   { href: "/jelajahi", label: "Jelajahi" },
   { href: "/api", label: "API" },
 ] as const;
