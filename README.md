@@ -8,6 +8,7 @@
 <h3 align="center">The First Open, AI-Native Platform for Indonesian Law</h3>
 
 <p align="center">
+  <a href="https://www.loom.com/share/da211318bbe14c4396840b97f5ab8603">Demo Video</a> ·
   <a href="https://pasal.id">Website</a> ·
   <a href="https://pasal.id/connect">Connect to Claude</a> ·
   <a href="https://pasal.id/api">REST API</a> ·
