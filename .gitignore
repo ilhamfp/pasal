@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!**/.env.example
 
 # Data (local only)
 data/
@@ -15,6 +16,9 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+
+# Supabase temp files (may contain credentials)
+supabase/.temp/
 
 # IDE / tool config
 .agent/

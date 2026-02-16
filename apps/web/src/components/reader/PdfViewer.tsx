@@ -10,7 +10,8 @@ interface PdfViewerProps {
   onPageChange: (page: number) => void;
 }
 
-export default function PdfViewer({ slug, sourcePdfUrl, page, onPageChange }: PdfViewerProps) {
+export default function PdfViewer({ slug, sourcePdfUrl: rawPdfUrl, page, onPageChange }: PdfViewerProps) {
+  const sourcePdfUrl = rawPdfUrl?.startsWith("https://") ? rawPdfUrl : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const [hasError, setHasError] = useState(false);
 

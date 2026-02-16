@@ -19,9 +19,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: NextRequest) {
   try {
-    // --- Fix 7: Origin check ---
+    // --- Fix 7: Origin check (reject null origin to block non-browser requests) ---
     const origin = request.headers.get("origin");
-    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    if (!origin || !ALLOWED_ORIGINS.has(origin)) {
       return NextResponse.json(
         { error: "Origin tidak diizinkan." },
         { status: 403 },

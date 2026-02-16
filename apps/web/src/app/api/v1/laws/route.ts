@@ -40,8 +40,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     query = query.eq("regulation_type_id", regType.id);
   }
 
-  if (year) query = query.eq("year", parseInt(year));
-  if (status) query = query.eq("status", status);
+  if (year) {
+    if (!/^\d{4}$/.test(year) || parseInt(year) < 1945) {
+      return NextResponse.json(
+        { error: "Invalid year" },
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+    query = query.eq("year", parseInt(year));
+  }
+
+  if (status) {
+    const VALID_STATUSES = ["berlaku", "diubah", "dicabut", "tidak_berlaku"];
+    if (!VALID_STATUSES.includes(status.toLowerCase())) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+    query = query.eq("status", status.toLowerCase());
+  }
 
   const { data: works, count, error } = await query
     .order("year", { ascending: false })

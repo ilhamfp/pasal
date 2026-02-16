@@ -349,7 +349,7 @@ def search_laws(
         }).execute()
     except Exception as e:
         logger.error("search_laws RPC failed: %s", e)
-        return _with_disclaimer([{"error": f"Search failed: {str(e)}"}])
+        return _with_disclaimer([{"error": "Search failed. Please try again later."}])
 
     if not result.data:
         logger.info("search_laws: no results for %r (%.0fms)", query, (time.time() - t0) * 1000)
@@ -366,7 +366,7 @@ def search_laws(
         works_map = {w["id"]: w for w in works_result.data}
     except Exception as e:
         logger.error("search_laws metadata fetch failed: %s", e)
-        return _with_disclaimer([{"error": f"Failed to fetch law metadata: {str(e)}"}])
+        return _with_disclaimer([{"error": "Failed to fetch law metadata. Please try again later."}])
 
     _ensure_reg_types()
 
@@ -496,7 +496,7 @@ def get_pasal(
         return result
     except Exception as e:
         logger.error("get_pasal failed: %s", e)
-        return _with_disclaimer({"error": f"Failed to retrieve pasal: {str(e)}"})
+        return _with_disclaimer({"error": "Failed to retrieve pasal. Please try again later."})
 
 
 @mcp.tool
@@ -597,7 +597,7 @@ def get_law_status(
         return result
     except Exception as e:
         logger.error("get_law_status failed: %s", e)
-        return _with_disclaimer({"error": f"Failed to retrieve law status: {str(e)}"})
+        return _with_disclaimer({"error": "Failed to retrieve law status. Please try again later."})
 
 
 @mcp.tool
@@ -679,7 +679,7 @@ def list_laws(
         })
     except Exception as e:
         logger.error("list_laws failed: %s", e)
-        return _with_disclaimer({"error": f"Failed to list laws: {str(e)}"})
+        return _with_disclaimer({"error": "Failed to list laws. Please try again later."})
 
 
 @mcp.tool
@@ -690,7 +690,8 @@ def ping() -> str:
         count = result.count or 0
         return f"Pasal.id MCP server is running. Database has {count} laws loaded."
     except Exception as e:
-        return f"Server running but database error: {e}"
+        logger.error("ping DB check failed: %s", e)
+        return "Server running but database connection failed."
 
 
 if __name__ == "__main__":
