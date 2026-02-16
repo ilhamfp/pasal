@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, X, Bot, Loader2 } from "lucide-react";
 
 interface Suggestion {
@@ -28,15 +28,15 @@ interface Suggestion {
   created_at: string;
 }
 
-export default function SuggestionReviewClient() {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function SuggestionReviewClient({
+  initialSuggestions = [],
+}: {
+  initialSuggestions?: Suggestion[];
+}) {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(initialSuggestions);
+  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [rejectNote, setRejectNote] = useState<Record<number, string>>({});
-
-  useEffect(() => {
-    fetchSuggestions();
-  }, []);
 
   async function fetchSuggestions() {
     const res = await fetch("/api/admin/suggestions");
@@ -44,7 +44,6 @@ export default function SuggestionReviewClient() {
       const data = await res.json();
       setSuggestions(data);
     }
-    setLoading(false);
   }
 
   async function handleVerify(id: number) {
