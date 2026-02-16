@@ -209,7 +209,7 @@ async def process_suggestion(suggestion: dict) -> dict | None:
                 node_id=node["id"],
                 work_id=work["id"],
                 new_content=content_to_apply,
-                revision_type="correction",
+                revision_type="suggestion_approved",
                 reason=f"Agent auto-approved: {result.get('reasoning', '')[:200]}",
                 suggestion_id=suggestion_id,
                 actor_type="agent",
