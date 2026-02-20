@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/Header";
 import KoreksiEditor from "./KoreksiEditor";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 interface PageProps {
   params: Promise<{ locale: string; type: string; slug: string; nodeId: string }>;

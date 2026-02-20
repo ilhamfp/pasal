@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 39 migrations (001–039, two 030s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 50 migrations (001–050, two 030s) |
 
 ### Key directories
 
@@ -43,7 +43,7 @@ npm run lint         # ESLint
 npm run test         # Vitest
 
 # MCP server (from apps/mcp-server/)
-python server.py     # Start MCP server (needs SUPABASE_URL + SUPABASE_KEY)
+python server.py     # Start MCP server (needs SUPABASE_URL + SUPABASE_ANON_KEY)
 
 # Scraper worker (from project root)
 python -m scripts.worker.run  # Background job processor
@@ -120,7 +120,7 @@ Uses `next-intl` with `localePrefix: 'as-needed'`. Indonesian (default) has no U
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 044)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 051)
 - Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
@@ -146,10 +146,10 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 |------|----------|
 | `.env` (root) | `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` |
 | `apps/web/.env.local` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ADMIN_EMAILS`, `NEXT_PUBLIC_SITE_URL` |
-| `apps/mcp-server/.env` | `SUPABASE_URL`, `SUPABASE_KEY` (= service role key) |
+| `apps/mcp-server/.env` | `SUPABASE_URL`, `SUPABASE_ANON_KEY` |
 | `scripts/.env` | `SUPABASE_URL`, `SUPABASE_KEY`, `GEMINI_API_KEY` |
 
-**`SUPABASE_KEY` in MCP server and scripts = `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS). Never expose to browser.**
+**`SUPABASE_KEY` in scripts = `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS). Never expose to browser.** MCP server uses `SUPABASE_ANON_KEY` (read-only via RLS).
 
 ## Domain Glossary
 
@@ -170,19 +170,25 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 
 - **When deleting a Python function, grep all `.py` files for importers.** `scripts/worker/process.py` and `scripts/load_uud.py` both import from `loader/load_to_supabase.py` separately from the main loader flow.
 - **RLS blocks empty results.** If a new table returns no data, check that an RLS policy exists — Supabase silently returns `[]` without one.
-- **`SUPABASE_KEY` naming.** MCP server and scripts use `SUPABASE_KEY` but the root `.env` calls it `SUPABASE_SERVICE_ROLE_KEY`. They're the same value.
+- **`SUPABASE_KEY` naming.** Scripts use `SUPABASE_KEY` but the root `.env` calls it `SUPABASE_SERVICE_ROLE_KEY`. They're the same value. MCP server uses `SUPABASE_ANON_KEY` (separate key).
 - **No vector/embedding search.** `document_nodes.fts` is keyword-only (TSVECTOR). No pgvector, no embeddings.
+- **Supabase `anon` role has a 3s `statement_timeout`.** Queries on large tables (e.g. `COUNT(*)` on `document_nodes` ~3M rows) will silently fail. Use an RPC function with `SET statement_timeout = '30s'` to bypass.
 - **Instrument Serif has no bold.** Only weight 400. Use font size for heading hierarchy, not weight.
 - **`data/` is gitignored.** Raw PDFs and parsed JSON live in `data/raw/` and `data/parsed/` locally only.
 - **i18n async/sync distinction.** Using `useTranslations` in async Server Components causes build error. Use `getTranslations` with `await` for any `async function` component.
 - **i18n navigation imports.** Public pages must import from `@/i18n/routing`, not `next/link` or `next/navigation`, or locale prefixes won't work.
-- **Landing page metadata.** Lives in `[locale]/layout.tsx`, not `page.tsx` — applies to all pages under that locale.
+- **Landing page metadata.** Shared metadata (title template, OG, Twitter) in `[locale]/layout.tsx`. Hreflang alternates in `[locale]/page.tsx` via `generateMetadata` + `getAlternates("/", locale)`.
+- **`<html lang>` is dynamic.** Root layout uses `getLocale()` from `next-intl/server` — returns the active locale for public pages, falls back to `"id"` for admin routes (excluded from middleware). Does NOT break ISR — each page segment controls its own rendering strategy independently.
+- **Metadata layering.** Root `layout.tsx` owns shared static metadata (icons, manifest, metadataBase, msapplication). `[locale]/layout.tsx` owns locale-specific metadata (title template, OG, Twitter). Individual pages add page-specific metadata (hreflang alternates via `getAlternates()`). Never duplicate fields across layers — Next.js merges parent→child automatically.
+- **Title template trap.** A plain string `title` in `generateMetadata` gets the parent layout's `template` applied (`%s | Pasal.id`). Use `title: { absolute: "..." }` on pages like the landing page to prevent doubling.
+- **robots.txt wildcards.** `*` in robots.txt (RFC 9309) matches any character sequence including `/`. `/peraturan/*/koreksi/` correctly matches `/peraturan/uu/uu-13-2003/koreksi/123`.
+- **Sitemap hreflang.** `sitemap.ts` emits `alternates.languages` (id + en) for every URL. The `getAlternates()` helper in `src/lib/i18n-metadata.ts` does the same for `<link rel="alternate">` in page metadata — keep both in sync when adding new public pages.
 - **Dual worktree.** `main` is checked out at `~/Desktop/personal-project/pasal`. From the `project-improve-scraper` worktree, use `git push origin <branch>:main` instead of `git checkout main && merge`.
 - **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
 - **MCP URL referenced in 5 places.** `connect/page.tsx`, `[locale]/page.tsx` (landing MCP card), `server.json`, `public/llms.txt`, `README.md`. Update all when the URL changes. No trailing slash — Starlette 307 redirects break Claude Code's HTTP transport on Railway.
 
 ## Deployment
 
-- **Web:** Vercel (auto-deploys from `main`)
+- **Web:** Vercel (auto-deploys from `main`). **CLI:** Run `vercel --prod --yes` from the **monorepo root** (not `apps/web/`). The Vercel project `pasal-id-web` has root directory set to `apps/web` in its settings — running from `apps/web/` causes path doubling error.
 - **MCP Server:** Railway (Dockerfile at `apps/mcp-server/Dockerfile`, config at `railway.json`)
 - **Git:** Push to `main` directly. Repo is public.

@@ -23,11 +23,12 @@ ALLOW_INSECURE_SSL = os.environ.get("ALLOW_INSECURE_SSL", "false").lower() == "t
 def create_ssl_context() -> ssl.SSLContext:
     """Create an SSL context. Uses verified SSL by default.
 
-    Set ALLOW_INSECURE_SSL=true env var to skip certificate verification
-    (only for peraturan.go.id which has intermittent TLS issues).
+    Set ALLOW_INSECURE_SSL=true env var to skip certificate verification.
+    NOTE: The insecure context is implicitly scoped to peraturan.go.id since
+    that is the only domain these crawlers connect to (discover.py, process.py).
     """
     if ALLOW_INSECURE_SSL:
-        logger.warning("SSL verification disabled via ALLOW_INSECURE_SSL — use only for trusted government endpoints")
+        logger.warning("SSL verification disabled via ALLOW_INSECURE_SSL")
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE

@@ -4,12 +4,15 @@ import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import type { ChunkResult } from "@/lib/group-search-results";
 import { groupChunksByWork } from "@/lib/group-search-results";
 import { CORS_HEADERS } from "@/lib/api/cors";
+import { checkRateLimit } from "@/lib/api/rate-limit";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const rateLimited = checkRateLimit(request, "v1/search", 60);
+  if (rateLimited) return rateLimited;
   const { searchParams } = request.nextUrl;
   const q = searchParams.get("q");
   const type = searchParams.get("type");
@@ -36,6 +39,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (status && !VALID_STATUSES.includes(status.toLowerCase())) {
     return NextResponse.json(
       { error: "Invalid status parameter. Must be one of: berlaku, diubah, dicabut, tidak_berlaku." },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  const VALID_TYPES = [
+    "UU", "PP", "PERPRES", "PERMEN", "PERPPU", "KEPPRES", "INPRES",
+    "PENPRES", "PERBAN", "PERMENKUMHAM", "PERMENKUM", "PERDA",
+    "PERDA_PROV", "PERDA_KAB", "KEPMEN", "SE", "TAP_MPR", "PERMA",
+    "PBI", "UUDRT", "UUDS", "UUD",
+  ];
+  if (type && !VALID_TYPES.includes(type.toUpperCase())) {
+    return NextResponse.json(
+      { error: "Invalid type parameter. See /api documentation for valid regulation types." },
       { status: 400, headers: CORS_HEADERS },
     );
   }

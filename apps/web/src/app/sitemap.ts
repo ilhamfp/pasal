@@ -6,32 +6,41 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
+  const now = new Date();
 
-  // Fetch all works with their regulation type codes
+  // Fetch all works with their regulation type codes and updated_at
   const { data: works } = await supabase
     .from("works")
-    .select("number, year, slug, regulation_types(code)")
+    .select("number, year, slug, updated_at, regulation_types(code)")
     .order("year", { ascending: false });
+
+  // Fetch regulation types that have at least one work (for /jelajahi/[type] pages)
+  const { data: regTypes } = await supabase
+    .from("regulation_types")
+    .select("code, works(count)")
+    .gt("works.count", 0);
 
   const BASE = "https://pasal.id";
 
-  // Static pages with language alternates
-  const STATIC_PATHS = ["", "/search", "/jelajahi", "/connect", "/api", "/topik"];
+  // Static pages with language alternates (no /search — it has noindex)
+  const STATIC_PATHS = ["", "/jelajahi", "/connect", "/api", "/topik"];
   const staticPages: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
     url: `${BASE}${path}`,
+    lastModified: now,
     alternates: {
       languages: {
         id: `${BASE}${path}`,
         en: `${BASE}/en${path}`,
       },
     },
-    changeFrequency: path === "" ? "weekly" : path === "/search" ? "weekly" : "monthly",
-    priority: path === "" ? 1.0 : path === "/search" ? 0.8 : path === "/topik" ? 0.7 : path === "/connect" ? 0.6 : 0.5,
+    changeFrequency: path === "" ? "weekly" : "monthly",
+    priority: path === "" ? 1.0 : path === "/topik" ? 0.7 : path === "/connect" ? 0.6 : 0.5,
   }) as const);
 
   // Topic pages with language alternates
   const topicPages: MetadataRoute.Sitemap = TOPICS.map((topic) => ({
     url: `${BASE}/topik/${topic.slug}`,
+    lastModified: now,
     alternates: {
       languages: {
         id: `${BASE}/topik/${topic.slug}`,
@@ -42,6 +51,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Browse-by-type pages (/jelajahi/uu, /jelajahi/pp, etc.)
+  const browsePages: MetadataRoute.Sitemap = (regTypes || [])
+    .filter((rt) => {
+      const count = rt.works as unknown as { count: number }[];
+      return count?.[0]?.count > 0;
+    })
+    .map((rt) => {
+      const typePath = `/jelajahi/${rt.code.toLowerCase()}`;
+      return {
+        url: `${BASE}${typePath}`,
+        lastModified: now,
+        alternates: {
+          languages: {
+            id: `${BASE}${typePath}`,
+            en: `${BASE}/en${typePath}`,
+          },
+        },
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      };
+    });
+
   // Regulation detail pages with language alternates
   const regulationPages: MetadataRoute.Sitemap = (works || [])
     .filter((work) => getRegTypeCode(work.regulation_types))
@@ -51,6 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const path = `/peraturan/${type}/${slug}`;
       return {
         url: `${BASE}${path}`,
+        lastModified: work.updated_at ? new Date(work.updated_at) : now,
         alternates: {
           languages: {
             id: `${BASE}${path}`,
@@ -62,5 +94,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-  return [...staticPages, ...topicPages, ...regulationPages];
+  return [...staticPages, ...topicPages, ...browsePages, ...regulationPages];
 }

@@ -1,5 +1,6 @@
 export const revalidate = 3600; // ISR: 1 hour
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { Link } from "@/i18n/routing";
@@ -12,9 +13,25 @@ import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
 import CuratedLaws from "@/components/landing/CuratedLaws";
 import BrowseSection from "@/components/landing/BrowseSection";
+import { getAlternates } from "@/lib/i18n-metadata";
 
 const TrustBlock = nextDynamic(() => import("@/components/landing/TrustBlock"));
 const RevealOnScroll = nextDynamic(() => import("@/components/landing/RevealOnScroll"));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale: locale as Locale, namespace: "metadata" });
+
+  return {
+    title: { absolute: t("siteTitle") },
+    description: t("siteDescription"),
+    alternates: getAlternates("/", locale),
+  };
+}
 
 const STATS_SKELETON = (
   <section className="border-y bg-card py-12 sm:py-16">

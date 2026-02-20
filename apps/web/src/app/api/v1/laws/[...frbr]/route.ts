@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CORS_HEADERS } from "@/lib/api/cors";
+import { checkRateLimit } from "@/lib/api/rate-limit";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
@@ -10,6 +11,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ frbr: string[] }> },
 ): Promise<NextResponse> {
+  const rateLimited = checkRateLimit(_request, "v1/laws/frbr", 120);
+  if (rateLimited) return rateLimited;
+
   const { frbr } = await params;
   const frbrUri = "/" + frbr.join("/");
 
@@ -23,7 +27,7 @@ export async function GET(
 
   if (workError || !work) {
     return NextResponse.json(
-      { error: `Law not found: ${frbrUri}` },
+      { error: "Law not found" },
       { status: 404, headers: CORS_HEADERS },
     );
   }

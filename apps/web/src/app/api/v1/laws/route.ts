@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { CORS_HEADERS } from "@/lib/api/cors";
+import { checkRateLimit } from "@/lib/api/rate-limit";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const rateLimited = checkRateLimit(request, "v1/laws", 120);
+  if (rateLimited) return rateLimited;
   const { searchParams } = request.nextUrl;
   const type = searchParams.get("type");
   const year = searchParams.get("year");
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!regType) {
       return NextResponse.json(
-        { error: `Unknown regulation type: ${type}` },
+        { error: "Unknown regulation type" },
         { status: 400, headers: CORS_HEADERS },
       );
     }

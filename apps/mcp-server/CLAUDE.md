@@ -10,7 +10,7 @@ python server.py                    # Start server (streamable-http on port 8000
 python -m pytest test_server.py -v  # Run tests
 ```
 
-Requires: `SUPABASE_URL` + `SUPABASE_KEY` (or `SUPABASE_ANON_KEY`) in `.env`.
+Requires: `SUPABASE_URL` + `SUPABASE_ANON_KEY` in `.env`.
 
 ## Tools
 
@@ -50,13 +50,9 @@ Single-file server. All five tools, the `TTLCache`, `RateLimiter`, regulation ty
 - **`TTLCache`** — simple dict-based cache with per-key expiry. Pasal + status caches are 1h, law count is 5min.
 - **`RateLimiter`** — per-instance sliding window. Not distributed — each server instance has its own counters.
 
-### Supabase key preference
+### Supabase key
 
-```python
-_supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ["SUPABASE_KEY"]
-```
-
-Prefers anon key (read-only via RLS) over service role key. The server only reads data, so anon key is sufficient and safer.
+Requires `SUPABASE_ANON_KEY` env var (read-only via RLS). Raises `RuntimeError` at startup if missing. The server only reads data, so the anon key is sufficient and safer than a service role key.
 
 ## Deployment
 

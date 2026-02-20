@@ -118,7 +118,12 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 - **`createServiceClient()` must only be used in API routes**, never in Server Components or client code.
 - **No middleware.ts.** Auth is handled per-page via `requireAdmin()` and per-API-route with manual checks.
 - **SEO on every public page.** Use `generateMetadata()` for dynamic OG tags and `<JsonLd>` component for schema.org structured data.
+- **Hreflang on every public page.** Use `alternates: getAlternates(path, locale)` in `generateMetadata()`. Also add the page to `sitemap.ts` with matching `alternates.languages`.
+- **noindex pages.** Pages like `/search` and `/koreksi/` use `robots: { index: false }` in their metadata AND are `Disallow`ed in `robots.ts`. When adding new noindex pages, update both.
+- **Title template override.** Pages that want their exact title (not `%s | Pasal.id`) must use `title: { absolute: "..." }` in `generateMetadata`. The landing page uses this pattern.
 - **OG truncation for WhatsApp.** `og:title` truncates at ~60 chars, `og:description` at ~155. The law detail page truncates both in `generateMetadata()`.
 - **Print CSS.** `globals.css` has `@media print` rules. Use `.no-print` class to hide elements when printing.
 - **Interactive button pattern.** Small action buttons (`ShareButton`, `CitationButton`, etc.) are `"use client"`, use lucide icons with `aria-hidden="true"`, and wrap state-change text in `<span aria-live="polite">`.
 - **Deep linking.** BAB/section headings have `id` attributes for anchor links. `SectionLinkButton` copies the full URL with hash.
+- **Local build fails on prerender.** `npm run build` errors on `/en` with "supabaseUrl is required" because `NEXT_PUBLIC_SUPABASE_URL` isn't available at static generation time locally. This is expected — Vercel provides env vars at build time. Use `npx tsc --noEmit` for local TypeScript verification.
+- **Supabase RPC typing.** `supabase.rpc("fn").single()` returns `unknown`. Always provide a generic: `.single<{ col: type }>()` to avoid TypeScript errors.

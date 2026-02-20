@@ -38,6 +38,16 @@ export async function PATCH(
     }
   }
 
+  if (updates.status !== undefined) {
+    const VALID_STATUSES = ["berlaku", "diubah", "dicabut", "tidak_berlaku"];
+    if (!VALID_STATUSES.includes(updates.status as string)) {
+      return NextResponse.json(
+        { error: "Invalid status. Must be one of: berlaku, diubah, dicabut, tidak_berlaku" },
+        { status: 400 }
+      );
+    }
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
       { error: "No valid fields to update" },

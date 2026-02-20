@@ -1,9 +1,7 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin-auth";
-
-const hash = (v: string) => createHmac("sha256", "pasal-admin").update(v).digest();
 
 export async function POST(request: NextRequest) {
   // Dual auth: API key OR Supabase session — fail-closed
@@ -13,7 +11,9 @@ export async function POST(request: NextRequest) {
   const adminKey = process.env.ADMIN_API_KEY;
   if (adminKey && authHeader) {
     try {
-      if (timingSafeEqual(hash(authHeader), hash(adminKey))) {
+      const a = Buffer.from(authHeader);
+      const b = Buffer.from(adminKey);
+      if (a.length === b.length && timingSafeEqual(a, b)) {
         isAuthed = true;
       }
     } catch {

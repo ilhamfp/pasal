@@ -68,8 +68,13 @@ mcp = FastMCP(
     ),
 )
 
-# Prefer anon key (read-only via RLS) over service role key
-_supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ["SUPABASE_KEY"]
+# Require anon key (read-only via RLS) — never fall back to service role key
+_supabase_key = os.environ.get("SUPABASE_ANON_KEY")
+if not _supabase_key:
+    raise RuntimeError(
+        "SUPABASE_ANON_KEY is required. The MCP server must not use the service role key. "
+        "Set SUPABASE_ANON_KEY in your .env file."
+    )
 sb = create_client(
     os.environ["SUPABASE_URL"],
     _supabase_key,
@@ -163,10 +168,11 @@ def extract_cross_references(text: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 class TTLCache:
-    """Simple in-memory cache with per-key TTL expiration."""
+    """Simple in-memory cache with per-key TTL expiration and max size."""
 
-    def __init__(self, ttl_seconds: int = 3600):
+    def __init__(self, ttl_seconds: int = 3600, maxsize: int = 1000):
         self._ttl = ttl_seconds
+        self._maxsize = maxsize
         self._data: dict[str, tuple[float, Any]] = {}
 
     def get(self, key: str) -> Any | None:
@@ -180,15 +186,25 @@ class TTLCache:
         return value
 
     def set(self, key: str, value: Any) -> None:
+        # Evict expired entries when at capacity
+        if len(self._data) >= self._maxsize:
+            now = time.time()
+            expired = [k for k, (ts, _) in self._data.items() if now - ts > self._ttl]
+            for k in expired:
+                del self._data[k]
+        # If still at capacity, evict oldest entry
+        if len(self._data) >= self._maxsize:
+            oldest_key = min(self._data, key=lambda k: self._data[k][0])
+            del self._data[oldest_key]
         self._data[key] = (time.time(), value)
 
     def clear(self) -> None:
         self._data.clear()
 
 
-_pasal_cache = TTLCache(ttl_seconds=3600)
-_status_cache = TTLCache(ttl_seconds=3600)
-_law_count_cache = TTLCache(ttl_seconds=300)
+_pasal_cache = TTLCache(ttl_seconds=3600, maxsize=2000)
+_status_cache = TTLCache(ttl_seconds=3600, maxsize=2000)
+_law_count_cache = TTLCache(ttl_seconds=300, maxsize=10)
 
 
 # ---------------------------------------------------------------------------

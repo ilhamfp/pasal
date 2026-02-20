@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import PasalLogo from "@/components/PasalLogo";
 import CopyButton from "@/components/CopyButton";
-import { Pencil } from "lucide-react";
+import { Pencil, Link2 } from "lucide-react";
 
 interface PasalNode {
   id: number;
@@ -42,9 +42,9 @@ export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps
             aria-label={t("suggestCorrection")}
           >
             <Pencil className="h-3 w-3" aria-hidden="true" />
-            {t("correction")}
+            <span className="hidden sm:inline">{t("correction")}</span>
           </Link>
-          <CopyButton text={`${pageUrl}#pasal-${pasal.number}`} label="Link" />
+          <CopyButton text={`${pageUrl}#pasal-${pasal.number}`} label="Link" icon={<Link2 className="h-3 w-3" aria-hidden="true" />} />
           <CopyButton text={content} />
         </div>
       </div>

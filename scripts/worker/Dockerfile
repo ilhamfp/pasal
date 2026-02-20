@@ -17,8 +17,11 @@ ENV PYTHONPATH=/app/scripts
 # Disable output buffering for real-time logs on Railway
 ENV PYTHONUNBUFFERED=1
 
-# Create data dir for temporary PDF downloads
-RUN mkdir -p /app/data/raw/pdfs
+# Create non-root user
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+# Create data dir for temporary PDF downloads (owned by appuser)
+RUN mkdir -p /app/data/raw/pdfs && chown -R appuser:appgroup /app/data
 
 # Configurable via Railway env vars per service:
 #   WORKER_BATCH_SIZE=100         (jobs per batch)
@@ -37,4 +40,5 @@ RUN mkdir -p /app/data/raw/pdfs
 # Job claiming is atomic (FOR UPDATE SKIP LOCKED) — workers never duplicate work.
 COPY scripts/worker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+USER appuser
 CMD ["/app/entrypoint.sh"]

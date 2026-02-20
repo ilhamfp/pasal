@@ -1,39 +1,32 @@
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export const getLandingStats = unstable_cache(
   async () => {
-    const [totalWorksResult, pasalResult, minYearResult, maxYearResult] =
-      await Promise.all([
-        supabase.from("works").select("id", { count: "exact", head: true }),
-        supabase
-          .from("document_nodes")
-          .select("id", { count: "exact", head: true })
-          .eq("node_type", "pasal"),
-        supabase
-          .from("works")
-          .select("year")
-          .order("year", { ascending: true })
-          .limit(1)
-          .single(),
-        supabase
-          .from("works")
-          .select("year")
-          .order("year", { ascending: false })
-          .limit(1)
-          .single(),
-      ]);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data, error } = await supabase
+      .rpc("get_landing_stats")
+      .single<{
+        total_works: number;
+        pasal_count: number;
+        min_year: number;
+        max_year: number;
+      }>();
+
+    if (error) {
+      console.error("Landing stats query failed:", error);
+      return { totalWorks: 0, pasalCount: 0, minYear: 1945, maxYear: 2024 };
+    }
 
     return {
-      totalWorks: totalWorksResult.count ?? 0,
-      pasalCount: pasalResult.count ?? 0,
-      minYear: minYearResult.data?.year ?? 1974,
-      maxYear: maxYearResult.data?.year ?? 2023,
+      totalWorks: data.total_works ?? 0,
+      pasalCount: data.pasal_count ?? 0,
+      minYear: data.min_year ?? 1945,
+      maxYear: data.max_year ?? 2024,
     };
   },
   ["landing-stats"],

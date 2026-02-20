@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 # Env vars required by server module at import time
 os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
-os.environ.setdefault("SUPABASE_KEY", "fake-key")
+os.environ.setdefault("SUPABASE_ANON_KEY", "fake-key")
 
 # Patch create_client before importing server so module-level init works
 with patch("supabase.create_client", return_value=MagicMock()):

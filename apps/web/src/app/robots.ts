@@ -6,7 +6,13 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/"],
+        disallow: [
+          "/admin/",
+          "/search",
+          "/en/search",
+          "/peraturan/*/koreksi/",
+          "/en/peraturan/*/koreksi/",
+        ],
       },
     ],
     sitemap: "https://pasal.id/sitemap.xml",

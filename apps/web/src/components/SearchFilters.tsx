@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { X } from "lucide-react";
@@ -21,6 +22,12 @@ export default function SearchFilters({
 }: SearchFiltersProps) {
   const t = useTranslations("filters");
   const router = useRouter();
+  const [yearInput, setYearInput] = useState(currentYear || "");
+  const [prevYear, setPrevYear] = useState(currentYear);
+  if (currentYear !== prevYear) {
+    setPrevYear(currentYear);
+    setYearInput(currentYear || "");
+  }
 
   const hasFilters = currentType || currentYear || currentStatus;
 
@@ -71,29 +78,34 @@ export default function SearchFilters({
 
       {/* Year input */}
       <input
-        type="number"
-        min={1945}
-        max={2026}
+        type="text"
+        inputMode="numeric"
+        maxLength={4}
         placeholder={t("yearPlaceholder")}
-        value={currentYear || ""}
+        value={yearInput}
         onChange={(e) => {
-          const val = e.target.value;
+          const val = e.target.value.replace(/\D/g, "");
+          setYearInput(val);
           if (val.length === 4 || val === "") {
             pushParams({ year: val || undefined });
           }
         }}
+        onBlur={() => {
+          if (yearInput.length === 4) {
+            pushParams({ year: yearInput });
+          } else {
+            setYearInput(currentYear || "");
+          }
+        }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            const val = (e.target as HTMLInputElement).value;
-            if (val.length === 4 || val === "") {
-              pushParams({ year: val || undefined });
-            }
+          if (e.key === "Enter" && yearInput.length === 4) {
+            pushParams({ year: yearInput });
           }
         }}
         aria-label={t("yearLabel")}
         name="year"
         autoComplete="off"
-        className="w-full sm:w-24 rounded-lg border bg-card px-3 py-2.5 sm:py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:outline-none hover:border-border/80 motion-safe:transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="w-full sm:w-24 rounded-lg border bg-card px-3 py-2.5 sm:py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:outline-none hover:border-border/80 motion-safe:transition-colors"
       />
 
       {/* Status dropdown */}

@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 export default function CopyButton({
   text,
   label,
+  icon,
 }: {
   text: string;
   label?: string;
+  icon?: React.ReactNode;
 }) {
   const t = useTranslations("common");
   const [copied, setCopied] = useState(false);
@@ -32,12 +34,12 @@ export default function CopyButton({
         {copied ? (
           <>
             <Check aria-hidden="true" className="h-3 w-3 text-primary animate-in zoom-in-75 duration-150" />
-            {t("copied")}
+            <span className="hidden sm:inline">{t("copied")}</span>
           </>
         ) : (
           <>
-            <Copy aria-hidden="true" className="h-3 w-3" />
-            {label || t("copy")}
+            {icon || <Copy aria-hidden="true" className="h-3 w-3" />}
+            <span className="hidden sm:inline">{label || t("copy")}</span>
           </>
         )}
       </span>

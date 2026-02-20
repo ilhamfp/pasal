@@ -11,8 +11,9 @@ const VALID_NODE_TYPES = new Set([
 
 const ALLOWED_ORIGINS = new Set([
   "https://pasal.id",
-  "http://localhost:3000",
-  "http://localhost:3001",
+  ...(process.env.NODE_ENV === "development"
+    ? ["http://localhost:3000", "http://localhost:3001"]
+    : []),
 ]);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
