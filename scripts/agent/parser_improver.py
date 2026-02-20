@@ -8,6 +8,7 @@ and creates GitHub issues with specific code fixes.
 import base64
 import json
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -181,6 +182,57 @@ def _is_duplicate(title: str, existing: list[dict]) -> dict | None:
     return None
 
 
+def _repair_truncated_json(text: str) -> str:
+    """Attempt to repair JSON truncated by max_tokens.
+
+    Closes unterminated strings, arrays, and objects so json.loads() can parse
+    a partial but structurally valid result.
+    """
+    # Close unterminated string (odd number of unescaped quotes)
+    in_string = False
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '\\' and in_string:
+            i += 2  # skip escaped char
+            continue
+        if ch == '"':
+            in_string = not in_string
+        i += 1
+    if in_string:
+        text += '"'
+
+    # Close open brackets/braces by scanning for unmatched openers
+    stack: list[str] = []
+    in_str = False
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '\\' and in_str:
+            i += 2
+            continue
+        if ch == '"':
+            in_str = not in_str
+        elif not in_str:
+            if ch in ('{', '['):
+                stack.append(ch)
+            elif ch == '}' and stack and stack[-1] == '{':
+                stack.pop()
+            elif ch == ']' and stack and stack[-1] == '[':
+                stack.pop()
+        i += 1
+
+    # Remove trailing comma before closing
+    text = text.rstrip()
+    if text.endswith(','):
+        text = text[:-1]
+
+    for opener in reversed(stack):
+        text += ']' if opener == '[' else '}'
+
+    return text
+
+
 def analyze_parser_improvements(
     feedback_items: list[dict],
     parser_files: dict[str, str],
@@ -229,6 +281,8 @@ Focus on:
 - Text extraction issues in extract_pymupdf.py
 - Systematic issues (not one-off typos)
 
+Keep code_before and code_after concise — only the directly relevant lines (max ~30 lines each), not entire functions.
+
 Only propose issues you are confident about. Quality over quantity."""
 
         # Build numbered feedback list
@@ -257,23 +311,40 @@ Only propose issues you are confident about. Quality over quantity."""
 
         response = client.messages.create(
             model="claude-opus-4-6",
-            max_tokens=4096,
+            max_tokens=16384,
             temperature=0.1,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}],
         )
 
+        truncated = response.stop_reason == "max_tokens"
+        if truncated:
+            print("  Warning: Opus response truncated (hit max_tokens)", flush=True)
+
         raw_text = response.content[0].text
         text = raw_text.strip()
 
-        # Strip markdown code fences
-        if "```json" in text:
-            text = text.split("```json")[1].split("```")[0].strip()
-        elif "```" in text:
-            text = text.split("```")[1].split("```")[0].strip()
+        # Extract JSON object using regex (handles nested backticks correctly)
+        json_match = re.search(r'\{[\s\S]*\}', text)
+        if json_match:
+            text = json_match.group(0)
 
-        return json.loads(text)
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            if truncated:
+                # Attempt repair: close unterminated strings, arrays, objects
+                repaired = _repair_truncated_json(text)
+                try:
+                    return json.loads(repaired)
+                except json.JSONDecodeError:
+                    pass
+            print(f"  Raw response (first 500 chars): {raw_text[:500]}", flush=True)
+            raise
 
+    except json.JSONDecodeError as e:
+        print(f"  Error in Opus analysis (JSON parse): {e}", flush=True)
+        return {"issues": [], "summary": f"Analysis failed: JSON parse error", "error": str(e)}
     except Exception as e:
         print(f"  Error in Opus analysis: {e}", flush=True)
         return {"issues": [], "summary": f"Analysis failed: {e}", "error": str(e)}
