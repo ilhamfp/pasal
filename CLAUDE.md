@@ -120,12 +120,14 @@ Uses `next-intl` with `localePrefix: 'as-needed'`. Indonesian (default) has no U
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 051)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 053)
 - Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
 - Computed columns use `GENERATED ALWAYS AS`.
 - Heavy migrations (ALTER TABLE on large tables) timeout via `apply_migration` MCP tool. Use `execute_sql` with `SET statement_timeout = '600s'` and run steps individually.
+- **Use `apply_migration` (not `execute_sql`) for migrations** — `execute_sql` runs SQL but doesn't track it in the migrations table. Only use `execute_sql` for heavy operations that timeout via `apply_migration`, or for one-off queries.
+- **`CREATE OR REPLACE FUNCTION` drops `SET search_path`.** Migration 049 hardened all functions with `SET search_path = 'public', 'extensions'`. When replacing a function, re-apply with `ALTER FUNCTION ... SET search_path = 'public', 'extensions'` after the definition (see migration 050 for inline pattern).
 
 ## Brand & Design
 
@@ -185,10 +187,11 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **Sitemap hreflang.** `sitemap.ts` emits `alternates.languages` (id + en) for every URL. The `getAlternates()` helper in `src/lib/i18n-metadata.ts` does the same for `<link rel="alternate">` in page metadata — keep both in sync when adding new public pages.
 - **Dual worktree.** `main` is checked out at `~/Desktop/personal-project/pasal`. From the `project-improve-scraper` worktree, use `git push origin <branch>:main` instead of `git checkout main && merge`.
 - **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
+- **UUD amendment FRBR URIs.** Amendments use `/akn/id/act/uud/1945/perubahan-1` (not `.../p1`). Slugs are `uud-1945-p1` (from `number: "1945/P1"`). Keep `load_uud.py` slugs in sync with the DB trigger output.
 - **MCP URL referenced in 5 places.** `connect/page.tsx`, `[locale]/page.tsx` (landing MCP card), `server.json`, `public/llms.txt`, `README.md`. Update all when the URL changes. No trailing slash — Starlette 307 redirects break Claude Code's HTTP transport on Railway.
 
 ## Deployment
 
-- **Web:** Vercel (auto-deploys from `main`). **CLI:** Run `vercel --prod --yes` from the **monorepo root** (not `apps/web/`). The Vercel project `pasal-id-web` has root directory set to `apps/web` in its settings — running from `apps/web/` causes path doubling error.
+- **Web:** Vercel (auto-deploys from `main`). **CLI:** Run `vercel link --project pasal-id-web --yes` first if `.vercel/` doesn't exist, then `vercel --prod --yes` from the **monorepo root** (not `apps/web/`). The Vercel project `pasal-id-web` has root directory set to `apps/web` in its settings — running from `apps/web/` causes path doubling error. Without the link step, `vercel` creates a new project instead of deploying to `pasal-id-web`.
 - **MCP Server:** Railway (Dockerfile at `apps/mcp-server/Dockerfile`, config at `railway.json`)
 - **Git:** Push to `main` directly. Repo is public.
