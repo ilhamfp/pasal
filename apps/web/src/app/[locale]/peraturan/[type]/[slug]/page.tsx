@@ -103,8 +103,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const url = `https://pasal.id${path}`;
 
   // Truncate for social platforms — WhatsApp truncates og:title at ~60 chars
-  const ogTitle = title.length > 60 ? title.slice(0, 57) + "..." : title;
-  const ogDescription = description.length > 155 ? description.slice(0, 152) + "..." : description;
+  const ogTitle = title.length > 60 ? title.slice(0, 57) + "\u2026" : title;
+  const ogDescription = description.length > 155 ? description.slice(0, 152) + "\u2026" : description;
 
   const ogParams = new URLSearchParams({
     page: "law",
@@ -490,7 +490,7 @@ export default async function LawDetailPage({ params }: PageProps) {
               />
             </div>
           </div>
-          <h1 className="font-heading text-2xl mb-2">{work.title_id}</h1>
+          <h1 className="font-heading text-2xl text-pretty mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
             {formatRegRef(type, work.number, work.year)}
           </p>

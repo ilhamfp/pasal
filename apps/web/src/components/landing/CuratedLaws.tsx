@@ -72,7 +72,7 @@ export default async function CuratedLaws() {
     const pasal = pasalResults[i]?.data;
     const snippet = pasal?.content_text
       ? pasal.content_text.length > 120
-        ? pasal.content_text.slice(0, 120) + "..."
+        ? pasal.content_text.slice(0, 120) + "\u2026"
         : pasal.content_text
       : null;
 
@@ -97,7 +97,7 @@ export default async function CuratedLaws() {
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
             {t("sectionLabel")}
           </p>
-          <h2 className="font-heading text-center text-4xl tracking-tight sm:text-5xl">
+          <h2 className="font-heading text-center text-4xl tracking-tight text-pretty sm:text-5xl">
             {t("sectionTitle")}
           </h2>
         </div>
