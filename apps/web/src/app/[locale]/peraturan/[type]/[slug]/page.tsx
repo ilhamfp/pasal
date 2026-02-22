@@ -45,19 +45,34 @@ const getWorkBySlug = cache(async (typeCode: string, slug: string) => {
 
   if (work) return { regType, work };
 
-  // Fallback: parse slug into number+year for backwards compat (old URLs like uud-1945-1945)
+  // Fallback: parse slug into number+year for backwards compat
   const parsed = parseSlug(slug);
-  if (!parsed) return null;
+  if (parsed) {
+    const { data: fallbackWork } = await supabase
+      .from("works")
+      .select("id, title_id, number, year, status, subject_tags, content_verified, source_url, frbr_uri, slug, source_pdf_url")
+      .eq("regulation_type_id", regType.id)
+      .eq("number", parsed.lawNumber)
+      .eq("year", parsed.lawYear)
+      .single();
 
-  const { data: fallbackWork } = await supabase
-    .from("works")
-    .select("id, title_id, number, year, status, subject_tags, content_verified, source_url, frbr_uri, slug, source_pdf_url")
-    .eq("regulation_type_id", regType.id)
-    .eq("number", parsed.lawNumber)
-    .eq("year", parsed.lawYear)
-    .single();
+    if (fallbackWork) return { regType, work: fallbackWork };
+  }
 
-  return fallbackWork ? { regType, work: fallbackWork } : null;
+  // Stage 3: Strip trailing year segment (handles old UUD URLs like uud-1945-1945 → uud-1945)
+  const lastDash = slug.lastIndexOf("-");
+  if (lastDash > 0) {
+    const slugWithoutYear = slug.substring(0, lastDash);
+    const { data: strippedWork } = await supabase
+      .from("works")
+      .select("id, title_id, number, year, status, subject_tags, content_verified, source_url, frbr_uri, slug, source_pdf_url")
+      .eq("regulation_type_id", regType.id)
+      .eq("slug", slugWithoutYear)
+      .single();
+    if (strippedWork) return { regType, work: strippedWork };
+  }
+
+  return null;
 });
 
 interface PageProps {

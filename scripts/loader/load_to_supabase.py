@@ -86,6 +86,8 @@ def load_work(sb, law: dict) -> int | None:
     # without --upload don't clear a URL set by a previous upload step.
     if law.get("source_pdf_url"):
         work_data["source_pdf_url"] = law["source_pdf_url"]
+    if law.get("slug"):
+        work_data["slug"] = law["slug"]
 
     try:
         result = sb.table("works").upsert(

@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { createClient } from "@/lib/supabase/server";
+import { workSlug } from "@/lib/work-url";
 import LawCarousel, { type LawData } from "./LawCarousel";
 import RevealOnScroll from "./RevealOnScroll";
 
@@ -34,7 +35,7 @@ export default async function CuratedLaws() {
   const { data: works } = await supabase
     .from("works")
     .select(
-      "id, frbr_uri, title_id, number, year, status, regulation_types(code)"
+      "id, frbr_uri, title_id, number, year, status, slug, regulation_types(code)"
     )
     .in(
       "frbr_uri",
@@ -82,7 +83,7 @@ export default async function CuratedLaws() {
       year: work.year,
       status: work.status,
       regType,
-      slug: `${regType.toLowerCase()}-${work.number}-${work.year}`,
+      slug: workSlug(work, regType),
       tagline: work.tagline,
       snippet,
       pasalNumber: pasal?.number ?? null,

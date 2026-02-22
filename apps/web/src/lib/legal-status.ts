@@ -58,7 +58,8 @@ export function formatRegRef(
   const typeStr = label === "long" ? (TYPE_LABELS[type.toUpperCase()] || type.toUpperCase()) : type.toUpperCase();
   const noNomor = NO_NOMOR_TYPES.has(type.toUpperCase()) || !number;
   if (label === "compact") {
-    return number ? `${typeStr} ${number}/${year}` : `${typeStr} ${year}`;
+    if (noNomor) return number ? `${typeStr} ${number}` : `${typeStr} ${year}`;
+    return `${typeStr} ${number}/${year}`;
   }
   return noNomor ? `${typeStr} Tahun ${year}` : `${typeStr} Nomor ${number} Tahun ${year}`;
 }
