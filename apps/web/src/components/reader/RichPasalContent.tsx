@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { Link } from "@/i18n/routing";
 import { tokenize } from "@/lib/crossref";
 
@@ -27,7 +28,7 @@ export default function RichPasalContent({
     <div className="text-sm leading-relaxed whitespace-pre-wrap">
       {tokens.map((token, i) => {
         if (token.type === "text") {
-          return <span key={i}>{token.value}</span>;
+          return <Fragment key={i}>{token.value}</Fragment>;
         }
 
         if (token.type === "pasal") {
@@ -35,7 +36,7 @@ export default function RichPasalContent({
             <a
               key={i}
               href={token.href}
-              className="text-primary underline-offset-2 hover:underline"
+              className="text-primary underline-offset-4 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               {token.value}
             </a>
@@ -46,8 +47,10 @@ export default function RichPasalContent({
           return (
             <Link
               key={i}
+              // token.href is a string path from DB lookup (e.g. "/peraturan/uu/uu-13-2003").
+              // next-intl's Link expects a typed route — cast is safe at runtime.
               href={token.href as Parameters<typeof Link>[0]["href"]}
-              className="text-primary underline-offset-2 hover:underline"
+              className="text-primary underline-offset-4 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               {token.value}
             </Link>
