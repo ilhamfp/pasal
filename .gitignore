@@ -27,6 +27,9 @@ supabase/.temp/
 .cursor/
 .vercel
 
+# Git worktrees
+.worktrees/
+
 # OS
 .DS_Store
 Thumbs.db
