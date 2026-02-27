@@ -93,11 +93,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // TYPE_LABELS stay in Indonesian — they are official legal nomenclature
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
-  const title = `${work.title_id} | ${formatRegRef(type, work.number, work.year, { label: "long" })}`;
+  // Extract topic (e.g. "KETENAGAKERJAAN") from title_id to avoid duplication in <title>
+  const tentangIdx = work.title_id.toLowerCase().indexOf(" tentang ");
+  const topic = tentangIdx >= 0 ? work.title_id.slice(tentangIdx + 9) : work.title_id;
   const regRef = formatRegRef(type, work.number, work.year, { label: "long" });
+  const title = `${topic} — ${formatRegRef(type, work.number, work.year)}`;
   const description = t("readFullText", {
     ref: regRef,
-    title: work.title_id,
+    title: topic,
   }) + ` Status: ${statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}.`;
   const path = `/peraturan/${type.toLowerCase()}/${slug}`;
   const url = `https://pasal.id${path}`;

@@ -8,6 +8,7 @@ import { STATUS_COLORS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { workPath } from "@/lib/work-url";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -120,6 +121,15 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("title"), item: "https://pasal.id/jelajahi" },
+          { "@type": "ListItem", position: 3, name: `${typeLabel} (${typeCode})` },
+        ],
+      }} />
 
       <div className="max-w-5xl mx-auto px-4 lg:px-6 py-8">
         <Link

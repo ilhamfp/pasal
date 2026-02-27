@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       languages: {
         id: `${BASE}${path}`,
         en: `${BASE}/en${path}`,
+        "x-default": `${BASE}${path}`,
       },
     },
     changeFrequency: path === "" ? "weekly" : "monthly",
@@ -45,6 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       languages: {
         id: `${BASE}/topik/${topic.slug}`,
         en: `${BASE}/en/topik/${topic.slug}`,
+        "x-default": `${BASE}/topik/${topic.slug}`,
       },
     },
     changeFrequency: "monthly" as const,
@@ -66,6 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           languages: {
             id: `${BASE}${typePath}`,
             en: `${BASE}/en${typePath}`,
+            "x-default": `${BASE}${typePath}`,
           },
         },
         changeFrequency: "weekly" as const,
@@ -87,6 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           languages: {
             id: `${BASE}${path}`,
             en: `${BASE}/en${path}`,
+            "x-default": `${BASE}${path}`,
           },
         },
         changeFrequency: "yearly" as const,

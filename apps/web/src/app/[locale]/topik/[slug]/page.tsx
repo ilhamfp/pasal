@@ -63,6 +63,20 @@ export default async function TopicDetailPage({ params }: PageProps) {
           { "@type": "ListItem", position: 3, name: topic.title },
         ],
       }} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: topic.questions.map((q) => ({
+          "@type": "Question",
+          name: q.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: q.pasal && q.lawRef
+              ? `Diatur dalam Pasal ${q.pasal} ${q.lawRef}. Baca teks lengkap pasal tersebut di Pasal.id.`
+              : `Cari jawaban lengkap untuk "${q.question}" di Pasal.id.`,
+          },
+        })),
+      }} />
 
       <main className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-8">

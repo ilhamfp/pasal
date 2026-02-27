@@ -116,7 +116,7 @@ Regulations use `{type}-{number}-{year}` slugs (e.g. `uu-13-2003`). Parse with `
 - **Suggestion rate limiting** uses `x-real-ip` header (set by Vercel, not spoofable). Check count of `created_at >= oneHourAgo` from the `suggestions` table.
 - **Stale content detection:** Before accepting a suggestion, compare the submitted `current_content` against the DB to catch concurrent edits.
 - **`createServiceClient()` must only be used in API routes**, never in Server Components or client code.
-- **No middleware.ts.** Auth is handled per-page via `requireAdmin()` and per-API-route with manual checks.
+- **middleware.ts is i18n only.** `src/middleware.ts` handles `next-intl` locale detection and routing — it does NOT handle auth. Auth is per-page via `requireAdmin()` and per-API-route with manual checks.
 - **SEO on every public page.** Use `generateMetadata()` for dynamic OG tags and `<JsonLd>` component for schema.org structured data.
 - **Hreflang on every public page.** Use `alternates: getAlternates(path, locale)` in `generateMetadata()`. Also add the page to `sitemap.ts` with matching `alternates.languages`.
 - **noindex pages.** Pages like `/search` and `/koreksi/` use `robots: { index: false }` in their metadata AND are `Disallow`ed in `robots.ts`. When adding new noindex pages, update both.

@@ -116,7 +116,9 @@ export default async function HomePage({
       url: "https://pasal.id",
       logo: {
         "@type": "ImageObject",
-        url: "https://pasal.id/og-image.png",
+        url: "https://pasal.id/android-chrome-512.png",
+        width: 512,
+        height: 512,
       },
     },
   };

@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 50 migrations (001–050, two 030s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 54 migrations (001–052, two 030s + two 039s) |
 
 ### Key directories
 
@@ -30,7 +30,7 @@ scripts/crawler/               — Mass scraper for peraturan.go.id
 scripts/parser/                — PDF parsing pipeline (PyMuPDF-based)
 scripts/agent/                 — Gemini verification agent + apply_revision()
 scripts/loader/                — DB import scripts
-packages/supabase/migrations/  — All SQL migrations (001–039)
+packages/supabase/migrations/  — All SQL migrations (001–052)
 ```
 
 ## Commands

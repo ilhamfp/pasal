@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TYPE_LABELS } from "@/lib/legal-status";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 import { FileText } from "lucide-react";
 
 export const revalidate = 3600; // ISR: 1 hour
@@ -48,6 +49,14 @@ export default async function JelajahiPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("title") },
+        ],
+      }} />
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12">
         <div className="text-center mb-12">
