@@ -226,7 +226,7 @@ async function LawReaderSection({
   const supabase = await createClient();
 
   // Fire all initial queries in parallel (1 RTT instead of 2)
-  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }, { data: pasalParentIds }] = await Promise.all([
+  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }, { data: pasalParentIds }, { data: worksData }] = await Promise.all([
     supabase
       .from("document_nodes")
       .select("id", { count: "exact", head: true })
@@ -259,7 +259,21 @@ async function LawReaderSection({
       .eq("work_id", workId)
       .eq("node_type", "pasal")
       .not("parent_id", "is", null),
+    supabase
+      .from("works")
+      .select<string, { slug: string | null; regulation_types: { code: string } | { code: string }[] }>("slug, regulation_types!inner(code)")
+      .not("slug", "is", null),
   ]);
+
+  // Build cross-reference lookup: "uu-13-2003" → "/peraturan/uu/uu-13-2003"
+  const worksLookup: Record<string, string> = {};
+  for (const w of worksData ?? []) {
+    const rt = (Array.isArray(w.regulation_types) ? w.regulation_types[0] : w.regulation_types) as { code: string } | null;
+    if (w.slug && rt?.code) {
+      const typeCode = rt.code.toLowerCase();
+      worksLookup[w.slug] = `/peraturan/${typeCode}/${w.slug}`;
+    }
+  }
 
   // Structured laws must always load all pasals SSR so the BAB-grouping logic has the
   // full set. Only use client-side infinite scroll for flat laws (no structural nodes)
@@ -376,7 +390,7 @@ async function LawReaderSection({
               )}
 
               {allBabPasals.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} />
+                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} worksLookup={worksLookup} />
               ))}
             </section>
           );
@@ -391,10 +405,11 @@ async function LawReaderSection({
               totalPasals={totalPasalCount || 0}
               pathname={pathname}
               pageUrl={pageUrl}
+              worksLookup={worksLookup}
             />
           ) : (
             allPasals.map((pasal) => (
-              <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} />
+              <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} worksLookup={worksLookup} />
             ))
           )}
         </>
