@@ -114,4 +114,61 @@ describe("tokenize", () => {
   it("returns single text token for empty string", () => {
     expect(tokenize("", lookup)).toEqual([{ type: "text", value: "" }]);
   });
+
+  it("detects Peraturan Presiden cross-reference", () => {
+    const lookup2 = { "perpres-12-2010": "/peraturan/perpres/perpres-12-2010" };
+    const result = tokenize("diatur dalam Peraturan Presiden Nomor 12 Tahun 2010.", lookup2);
+    expect(result).toMatchObject([
+      { type: "text" },
+      { type: "uu", href: "/peraturan/perpres/perpres-12-2010" },
+      { type: "text" },
+    ]);
+  });
+
+  it("detects Peraturan Daerah cross-reference", () => {
+    const lookup2 = { "perda-5-2015": "/peraturan/perda/perda-5-2015" };
+    const result = tokenize("sebagaimana Peraturan Daerah Nomor 5 Tahun 2015 mengatur.", lookup2);
+    expect(result).toMatchObject([
+      { type: "text" },
+      { type: "uu", href: "/peraturan/perda/perda-5-2015" },
+      { type: "text" },
+    ]);
+  });
+
+  it("detects UU citation without Nomor keyword", () => {
+    // Match starts at index 0 — no leading text token
+    const result = tokenize("Undang-Undang 13 Tahun 2003 berlaku.", lookup);
+    expect(result).toMatchObject([
+      { type: "uu", href: "/peraturan/uu/uu-13-2003" },
+      { type: "text", value: " berlaku." },
+    ]);
+  });
+
+  it("handles mixed Pasal and UU references in one string", () => {
+    const result = tokenize(
+      "Sesuai Pasal 5 Undang-Undang Nomor 13 Tahun 2003 tentang ketenagakerjaan.",
+      lookup
+    );
+    const pasalTokens = result.filter((t) => t.type === "pasal");
+    const uuTokens = result.filter((t) => t.type === "uu");
+    expect(pasalTokens).toHaveLength(1);
+    expect(uuTokens).toHaveLength(1);
+    expect(pasalTokens[0]).toMatchObject({ pasalNumber: "5" });
+    expect(uuTokens[0]).toMatchObject({ href: "/peraturan/uu/uu-13-2003" });
+  });
+
+  it("preserves trailing plain text after last reference", () => {
+    const result = tokenize("Lihat Pasal 3 untuk ketentuan lebih lanjut.", lookup);
+    const last = result[result.length - 1];
+    expect(last).toEqual({ type: "text", value: " untuk ketentuan lebih lanjut." });
+  });
+
+  it("renders unknown regulation type as plain text", () => {
+    // "Keputusan Menteri" is not in TYPE_PREFIX_MAP — should stay as text
+    const result = tokenize("berdasarkan Keputusan Menteri Nomor 5 Tahun 2020.", lookup);
+    expect(result.every((t) => t.type === "text")).toBe(true);
+    expect(result.map((t) => t.value).join("")).toBe(
+      "berdasarkan Keputusan Menteri Nomor 5 Tahun 2020."
+    );
+  });
 });
