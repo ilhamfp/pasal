@@ -131,9 +131,5 @@ export function tokenize(text: string, worksLookup: Record<string, string>): Tok
     tokens.push({ type: "text", value: text.slice(lastIndex) });
   }
 
-  if (tokens.length === 0) {
-    tokens.push({ type: "text", value: text });
-  }
-
   return tokens;
 }

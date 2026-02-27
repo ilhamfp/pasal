@@ -91,8 +91,13 @@ describe("tokenize", () => {
     const lookup2 = { "perppu-1-2022": "/peraturan/perppu/perppu-1-2022" };
     const r1 = tokenize("Perpu Nomor 1 Tahun 2022", lookup2);
     const r2 = tokenize("Perppu Nomor 1 Tahun 2022", lookup2);
-    expect(r1).toBeDefined();
-    expect(r2).toBeDefined();
+    // Both spellings must resolve to the same perppu slug
+    const uuTokens1 = r1.filter((t) => t.type === "uu");
+    const uuTokens2 = r2.filter((t) => t.type === "uu");
+    expect(uuTokens1).toHaveLength(1);
+    expect(uuTokens2).toHaveLength(1);
+    expect(uuTokens1[0]).toMatchObject({ href: "/peraturan/perppu/perppu-1-2022" });
+    expect(uuTokens2[0]).toMatchObject({ href: "/peraturan/perppu/perppu-1-2022" });
   });
 
   it("handles multiple references in one string", () => {
