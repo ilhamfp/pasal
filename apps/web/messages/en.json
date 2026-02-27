@@ -70,9 +70,9 @@
     "noLawsFoundBrowse": "No regulations found",
     "changeFilters": "Try changing the filters or add a search keyword.",
     "suggestion1": "uud 1945",
-    "suggestion2": "contract worker rights",
-    "suggestion3": "consumer protection",
-    "suggestion4": "corruption criminal law"
+    "suggestion2": "hak pekerja kontrak",
+    "suggestion3": "perlindungan konsumen",
+    "suggestion4": "pidana korupsi"
   },
   "filters": {
     "typeLabel": "Filter regulation type",
