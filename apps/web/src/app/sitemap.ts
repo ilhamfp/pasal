@@ -5,7 +5,9 @@ import { workSlug } from "@/lib/work-url";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const BASE = "https://pasal.id";
-const MAX_URLS_PER_SITEMAP = 50000;
+// Vercel ISR fallback pages must be <19MB. With hreflang alternates each URL is ~7KB,
+// so 2500 URLs ≈ 17.5MB — safely under the limit.
+const MAX_URLS_PER_SITEMAP = 2500;
 const SUPABASE_PAGE_SIZE = 1000;
 
 /** Cookie-free Supabase client for build-time sitemap generation (no request scope needed). */
