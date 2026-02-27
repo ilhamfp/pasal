@@ -181,4 +181,29 @@ describe("tokenize", () => {
       { type: "text" },
     ]);
   });
+
+  it("detects all-caps UNDANG-UNDANG citation from scanned PDFs", () => {
+    const result = tokenize(
+      "sebagaimana dimaksud dalam UNDANG-UNDANG Nomor 13 Tahun 2003 tentang Ketenagakerjaan.",
+      lookup
+    );
+    expect(result).toMatchObject([
+      { type: "text" },
+      {
+        type: "uu",
+        value: "UNDANG-UNDANG Nomor 13 Tahun 2003",
+        href: "/peraturan/uu/uu-no-13-tahun-2003",
+      },
+      { type: "text" },
+    ]);
+  });
+
+  it("detects all-caps PASAL reference from scanned PDFs", () => {
+    const result = tokenize("Ketentuan PASAL 5 berlaku.", lookup);
+    expect(result).toMatchObject([
+      { type: "text" },
+      { type: "pasal", pasalNumber: "5", href: "#pasal-5" },
+      { type: "text" },
+    ]);
+  });
 });

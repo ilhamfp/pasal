@@ -17,19 +17,22 @@ export type Token =
  *   - "Pasal 5", "pasal 5A", "Pasal 12 ayat (2)", "Pasal 1 Ayat (a)"
  *
  * Group 2 (UU_RE): Full regulation citations with number and year.
- *   - "Undang-Undang Nomor 13 Tahun 2003"
+ *   - "Undang-Undang Nomor 13 Tahun 2003" / "UNDANG-UNDANG Nomor 13 Tahun 2003"
  *   - "Peraturan Pemerintah Nomor 74 Tahun 2008"
  *   - "Peraturan Presiden Nomor 12 Tahun 2010"
  *   - "Perppu Nomor 1 Tahun 2022" / "Perpu Nomor 1 Tahun 2022"
+ *
+ * The `i` flag makes the entire regex case-insensitive, covering all-caps
+ * variants (UNDANG-UNDANG, PASAL) common in scanned Indonesian PDFs.
  */
 const CROSSREF_RE = new RegExp(
-  // Group 1: Pasal N [ayat (X)] — [Aa]yat handles both capitalizations found in scanned PDFs
-  "((?:Pasal|pasal)\\s+\\d+[A-Za-z]?(?:\\s+[Aa]yat\\s+\\([0-9a-zA-Z]+\\))?)" +
+  // Group 1: Pasal N [ayat (X)]
+  "((?:Pasal)\\s+\\d+[A-Za-z]?(?:\\s+(?:Ayat)\\s+\\([0-9a-zA-Z]+\\))?)" +
     "|" +
     // Group 2: Full regulation citation
     "((?:Undang-Undang|Peraturan\\s+Pemerintah|Peraturan\\s+Presiden|Peraturan\\s+Daerah|Perppu|Perpu)" +
-    "(?:\\s+Nomor)?\\s+\\d+\\s+[Tt]ahun\\s+\\d{4})",
-  "g"
+    "(?:\\s+Nomor)?\\s+\\d+\\s+Tahun\\s+\\d{4})",
+  "gi"
 );
 
 /**
@@ -49,7 +52,7 @@ const TYPE_PREFIX_MAP: [RegExp, string][] = [
  * "Undang-Undang Nomor 13 Tahun 2003" → { number: "13", year: "2003" }
  */
 function extractNumberYear(citation: string): { number: string; year: string } | null {
-  const m = citation.match(/(\d+)\s+[Tt]ahun\s+(\d{4})/);
+  const m = citation.match(/(\d+)\s+Tahun\s+(\d{4})/i);
   if (!m) return null;
   return { number: m[1], year: m[2] };
 }
@@ -101,8 +104,8 @@ export function tokenize(text: string, worksLookup: Record<string, string>): Tok
     }
 
     if (pasalMatch) {
-      // Extract the pasal number from e.g. "Pasal 5A ayat (2)" → "5A"
-      const numMatch = pasalMatch.match(/(?:Pasal|pasal)\s+(\d+[A-Za-z]?)/);
+      // Extract the pasal number from e.g. "Pasal 5A Ayat (2)" / "PASAL 5" → "5A"
+      const numMatch = pasalMatch.match(/(?:Pasal)\s+(\d+[A-Za-z]?)/i);
       const pasalNumber = numMatch ? numMatch[1] : pasalMatch;
       tokens.push({
         type: "pasal",
