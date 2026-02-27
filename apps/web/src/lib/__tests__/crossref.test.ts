@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tokenize, type Token } from "@/lib/crossref";
+import { tokenize } from "@/lib/crossref";
 
 const lookup: Record<string, string> = {
   "uu-13-2003": "/peraturan/uu/uu-13-2003",
