@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 54 migrations (001–052, two 030s + two 039s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 55 migrations (001–053, two 030s + two 039s) |
 
 ### Key directories
 
@@ -30,7 +30,7 @@ scripts/crawler/               — Mass scraper for peraturan.go.id
 scripts/parser/                — PDF parsing pipeline (PyMuPDF-based)
 scripts/agent/                 — Gemini verification agent + apply_revision()
 scripts/loader/                — DB import scripts
-packages/supabase/migrations/  — All SQL migrations (001–052)
+packages/supabase/migrations/  — All SQL migrations (001–053)
 ```
 
 ## Commands
@@ -120,14 +120,14 @@ Uses `next-intl` with `localePrefix: 'as-needed'`. Indonesian (default) has no U
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 053)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 054)
 - Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
 - Computed columns use `GENERATED ALWAYS AS`.
 - Heavy migrations (ALTER TABLE on large tables) timeout via `apply_migration` MCP tool. Use `execute_sql` with `SET statement_timeout = '600s'` and run steps individually.
 - **Use `apply_migration` (not `execute_sql`) for migrations** — `execute_sql` runs SQL but doesn't track it in the migrations table. Only use `execute_sql` for heavy operations that timeout via `apply_migration`, or for one-off queries.
-- **`CREATE OR REPLACE FUNCTION` drops `SET search_path`.** Migration 049 hardened all functions with `SET search_path = 'public', 'extensions'`. When replacing a function, re-apply with `ALTER FUNCTION ... SET search_path = 'public', 'extensions'` after the definition (see migration 050 for inline pattern).
+- **`CREATE OR REPLACE FUNCTION` drops `SET search_path` AND the entire function body.** Migration 049 hardened all functions with `SET search_path = 'public', 'extensions'`. When replacing a function: (1) re-apply `ALTER FUNCTION ... SET search_path = 'public', 'extensions'` after the definition, and (2) preserve all existing logic branches (e.g. `generate_work_slug()` has UUD/UUDS special-case from 052 + double-hyphen collapsing from 053). Always read the current function body before replacing.
 
 ## Brand & Design
 
@@ -184,7 +184,9 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **Metadata layering.** Root `layout.tsx` owns shared static metadata (icons, manifest, metadataBase, msapplication). `[locale]/layout.tsx` owns locale-specific metadata (title template, OG, Twitter). Individual pages add page-specific metadata (hreflang alternates via `getAlternates()`). Never duplicate fields across layers — Next.js merges parent→child automatically.
 - **Title template trap.** A plain string `title` in `generateMetadata` gets the parent layout's `template` applied (`%s | Pasal.id`). Use `title: { absolute: "..." }` on pages like the landing page to prevent doubling.
 - **robots.txt wildcards.** `*` in robots.txt (RFC 9309) matches any character sequence including `/`. `/peraturan/*/koreksi/` correctly matches `/peraturan/uu/uu-13-2003/koreksi/123`.
-- **Sitemap hreflang.** `sitemap.ts` emits `alternates.languages` (id + en) for every URL. The `getAlternates()` helper in `src/lib/i18n-metadata.ts` does the same for `<link rel="alternate">` in page metadata — keep both in sync when adding new public pages.
+- **Sitemap hreflang.** `sitemap.ts` emits `alternates.languages` (id, en, x-default) for every URL. The `getAlternates()` helper in `src/lib/i18n-metadata.ts` does the same for `<link rel="alternate">` in page metadata — keep both in sync when adding new public pages. Always include all 3 hreflang variants.
+- **Law detail title uses topic extraction.** `generateMetadata` extracts the topic from `title_id` (text after " tentang ") to avoid repeating the regulation reference in `<title>`. Falls back to full `title_id` for laws without "tentang" (e.g. UUD).
+- **JSON-LD structured data per page type.** Landing: WebSite + SearchAction. Law detail: Legislation + BreadcrumbList. Topic detail: BreadcrumbList + FAQPage. Browse index/type: BreadcrumbList. Use `<JsonLd>` component from `src/components/JsonLd.tsx`.
 - **Dual worktree.** `main` is checked out at `~/Desktop/personal-project/pasal`. From the `project-improve-scraper` worktree, use `git push origin <branch>:main` instead of `git checkout main && merge`.
 - **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
 - **UUD amendment FRBR URIs.** Amendments use `/akn/id/act/uud/1945/perubahan-1` (not `.../p1`). Slugs are `uud-1945-p1` (from `number: "1945/P1"`). Keep `load_uud.py` slugs in sync with the DB trigger output.
