@@ -36,7 +36,7 @@ export default function RichPasalContent({
             <a
               key={i}
               href={token.href}
-              className="text-primary underline-offset-4 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               {token.value}
             </a>
@@ -50,7 +50,7 @@ export default function RichPasalContent({
               // token.href is a string path from DB lookup (e.g. "/peraturan/uu/uu-13-2003").
               // next-intl's Link expects a typed route — cast is safe at runtime.
               href={token.href as Parameters<typeof Link>[0]["href"]}
-              className="text-primary underline-offset-4 hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               {token.value}
             </Link>
