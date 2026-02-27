@@ -14,6 +14,8 @@ import { workSlug as makeWorkSlug } from "@/lib/work-url";
 import { formatRegRef } from "@/lib/legal-status";
 import { getAlternates } from "@/lib/i18n-metadata";
 
+export const revalidate = 86400; // ISR: 24 hours
+
 export function generateStaticParams() {
   return TOPICS.map((t) => ({ slug: t.slug }));
 }
@@ -38,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: `${topic.description} ${lawList}.`,
     alternates: getAlternates(`/topik/${slug}`, locale),
     openGraph: {
-      title: `${topic.title}: ${t("guideSuffix")} | Pasal.id`,
+      title: `${topic.title}: ${t("guideSuffix")}`,
       description: topic.description,
     },
   };
@@ -62,8 +64,8 @@ export default async function TopicDetailPage({ params }: PageProps) {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
-          { "@type": "ListItem", position: 2, name: "Topik", item: "https://pasal.id/topik" },
+          { "@type": "ListItem", position: 1, name: navT("home"), item: locale === "en" ? "https://pasal.id/en" : "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: navT("topics"), item: locale === "en" ? "https://pasal.id/en/topik" : "https://pasal.id/topik" },
           { "@type": "ListItem", position: 3, name: topic.title },
         ],
       }} />

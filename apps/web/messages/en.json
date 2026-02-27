@@ -88,6 +88,7 @@
   },
   "reader": {
     "readFullText": "Read the full text of {ref} regarding {title}.",
+    "metaStatusSuffix": "Status: {status}.",
     "number": "Number",
     "year": "Year",
     "viewInReader": "View in Reader",
@@ -178,7 +179,7 @@
   },
   "browse": {
     "title": "Browse Regulations",
-    "description": "Browse 22 types of Indonesian regulations — Laws, Government Regulations, Presidential Decrees, and more. Full text structured by article, free and open.",
+    "description": "Browse various types of Indonesian regulations — Laws, Government Regulations, Presidential Decrees, and more. Full text structured by article, free and open.",
     "seeAllTypes": "See all regulation types",
     "readLink": "Read",
     "filterByYear": "Filter by year",
@@ -231,9 +232,9 @@
     "howItWorks": "How It Works",
     "tools": "Available Tools",
     "pageTitle": "Connect to Claude via MCP",
-    "pageDescription": "Give Claude direct access to Indonesian law through Model Context Protocol (MCP). No hallucination, with real citations.",
+    "pageDescription": "Give Claude direct access to Indonesian law through Model Context Protocol (MCP). No hallucinations, with real citations.",
     "heroTitle": "Connect to Claude",
-    "heroTagline": "Give Claude direct access to Indonesian law, no hallucination, with real citations.",
+    "heroTagline": "Give Claude direct access to Indonesian law, no hallucinations, with real citations.",
     "claudeCodeTitle": "Claude Code",
     "claudeCodeInstructions": "Run this command in Claude Code terminal:",
     "claudeDesktopTitle": "Claude Desktop",
@@ -307,7 +308,7 @@
   },
   "topics": {
     "pageTitle": "Know Your Rights",
-    "pageDescription": "Legal guides based on everyday life topics.",
+    "pageDescription": "Legal guides on Indonesian employment law, marriage, data privacy, and criminal law. Know your rights with article citations from official regulations.",
     "questionsCount": "{count} questions",
     "allTopics": "All Topics",
     "relatedRegulations": "Related Regulations",
@@ -318,7 +319,7 @@
   },
   "apiDocs": {
     "pageTitle": "API Documentation",
-    "pageDescription": "Pasal.id public API for accessing Indonesian legal data. Free, no authentication, CORS enabled.",
+    "pageDescription": "Free public REST API to search and access Indonesian laws, regulations, and legal articles. No authentication required, with full-text search.",
     "baseUrl": "Base URL",
     "endpoints": "Endpoints",
     "parameter": "Parameters",

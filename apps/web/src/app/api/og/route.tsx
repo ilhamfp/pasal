@@ -12,7 +12,13 @@ function getStatusStyle(status: string): { bg: string; text: string; label: stri
   return { bg: "#EEE8E4", text: "#524C48", label: status };
 }
 
-function defaultTemplate() {
+function defaultTemplate(locale?: string) {
+  const isEn = locale === "en";
+  const heading = isEn ? "Find the legal article you need" : "Temukan pasal yang Anda butuhkan";
+  const subheading = isEn ? "Indonesian law, open for all" : "Hukum Indonesia, terbuka untuk semua";
+  const placeholder = isEn ? "Search Indonesian law..." : "Cari undang-undang...";
+  const buttonLabel = isEn ? "Search" : "Cari";
+
   return (
     <div
       style={{
@@ -49,7 +55,7 @@ function defaultTemplate() {
           textAlign: "center",
         }}
       >
-        Temukan pasal yang Anda butuhkan
+        {heading}
       </div>
 
       {/* Subheading */}
@@ -61,7 +67,7 @@ function defaultTemplate() {
           marginBottom: "48px",
         }}
       >
-        Hukum Indonesia, terbuka untuk semua
+        {subheading}
       </div>
 
       {/* Search bar mock */}
@@ -88,7 +94,7 @@ function defaultTemplate() {
             fontFamily: "Instrument Sans",
           }}
         >
-          Cari undang-undang...
+          {placeholder}
         </div>
         <div
           style={{
@@ -103,7 +109,7 @@ function defaultTemplate() {
             fontFamily: "Instrument Sans",
           }}
         >
-          Cari
+          {buttonLabel}
         </div>
       </div>
     </div>
@@ -209,6 +215,7 @@ export async function GET(request: NextRequest) {
   const pasalCount = searchParams.get("pasalCount") || "";
   const snippet = searchParams.get("snippet") || "";
   const page = searchParams.get("page") || "default";
+  const locale = searchParams.get("locale") || "";
 
   const [instrumentSerifData, instrumentSerifItalicData, instrumentSansData] = await Promise.all([
     fetch(new URL("./fonts/InstrumentSerif-Regular.ttf", import.meta.url)).then((res) => res.arrayBuffer()),
@@ -222,7 +229,7 @@ export async function GET(request: NextRequest) {
     { name: "Instrument Sans", data: instrumentSansData, weight: 400 as const },
   ];
 
-  if (page === "law") {
+  if (page === "law" && year) {
     return new ImageResponse(
       lawTemplate({ title, type, number, year, status, pasalCount, snippet }),
       {
@@ -237,7 +244,7 @@ export async function GET(request: NextRequest) {
   }
 
   return new ImageResponse(
-    defaultTemplate(),
+    defaultTemplate(locale || undefined),
     {
       width: 1200,
       height: 630,

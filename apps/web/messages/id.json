@@ -88,6 +88,7 @@
   },
   "reader": {
     "readFullText": "Baca teks lengkap {ref} tentang {title}.",
+    "metaStatusSuffix": "Status: {status}.",
     "number": "Nomor",
     "year": "Tahun",
     "viewInReader": "Lihat di Reader",
@@ -178,7 +179,7 @@
   },
   "browse": {
     "title": "Jelajahi Peraturan",
-    "description": "Telusuri 22 jenis peraturan Indonesia — UU, PP, Perpres, Permen, dan lainnya. Teks lengkap terstruktur per pasal, gratis dan terbuka.",
+    "description": "Telusuri berbagai jenis peraturan Indonesia — UU, PP, Perpres, Permen, dan lainnya. Teks lengkap terstruktur per pasal, gratis dan terbuka.",
     "seeAllTypes": "Lihat semua jenis peraturan",
     "readLink": "Baca",
     "filterByYear": "Filter tahun",
@@ -307,7 +308,7 @@
   },
   "topics": {
     "pageTitle": "Kenali Hakmu",
-    "pageDescription": "Panduan hukum berdasarkan topik kehidupan sehari-hari.",
+    "pageDescription": "Panduan hukum tentang ketenagakerjaan, pernikahan, data pribadi, dan hukum pidana Indonesia. Kenali hak Anda dengan kutipan pasal dari peraturan resmi.",
     "questionsCount": "{count} pertanyaan",
     "allTopics": "Semua Topik",
     "relatedRegulations": "Peraturan Terkait",
@@ -317,8 +318,8 @@
     "guideSuffix": "Panduan Hukum"
   },
   "apiDocs": {
-    "pageTitle": "API Dokumentasi",
-    "pageDescription": "API publik Pasal.id untuk mengakses data peraturan Indonesia. Gratis, tanpa autentikasi, mendukung CORS.",
+    "pageTitle": "Dokumentasi API",
+    "pageDescription": "API REST publik untuk mencari dan mengakses undang-undang, peraturan, dan pasal hukum Indonesia. Gratis, tanpa autentikasi, dengan pencarian teks lengkap.",
     "baseUrl": "Base URL",
     "endpoints": "Endpoint",
     "parameter": "Parameter",

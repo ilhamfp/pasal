@@ -21,7 +21,7 @@ import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
 import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 import { workSlug, workPath } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
-import { getAlternates } from "@/lib/i18n-metadata";
+
 
 const PAGE_SIZE = 10;
 
@@ -72,19 +72,9 @@ export async function generateMetadata({
 
   const suffix = parts.length > 0 ? parts.join(", ") : "";
 
-  // Build query string for alternates
-  const queryParts: string[] = [];
-  if (query) queryParts.push(`q=${encodeURIComponent(query)}`);
-  if (params.type) queryParts.push(`type=${params.type}`);
-  if (params.year) queryParts.push(`year=${params.year}`);
-  if (params.status) queryParts.push(`status=${params.status}`);
-  const queryString = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
-  const searchPath = `/search${queryString}`;
-
   return {
     title: suffix ? t("resultsTitle", { query: suffix }) : t("title"),
     robots: { index: false, follow: true },
-    alternates: getAlternates(searchPath, locale),
   };
 }
 

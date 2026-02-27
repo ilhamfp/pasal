@@ -1,17 +1,46 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
+import { formatRegRef } from "@/lib/legal-status";
 import Header from "@/components/Header";
 import KoreksiEditor from "./KoreksiEditor";
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
-
 interface PageProps {
   params: Promise<{ locale: string; type: string; slug: string; nodeId: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale, type, nodeId } = await params;
+  const supabase = await createClient();
+
+  const nodeIdNum = parseInt(nodeId, 10);
+  if (isNaN(nodeIdNum)) return { robots: { index: false, follow: true } };
+
+  const { data: node } = await supabase
+    .from("document_nodes")
+    .select("number, work_id")
+    .eq("id", nodeIdNum)
+    .single();
+
+  if (!node) return { robots: { index: false, follow: true } };
+
+  const { data: work } = await supabase
+    .from("works")
+    .select("number, year")
+    .eq("id", node.work_id)
+    .single();
+
+  const t = await getTranslations({ locale: locale as Locale, namespace: "correction" });
+  const title = work
+    ? `${t("pageTitle", { number: node.number })} — ${formatRegRef(type, work.number, work.year)}`
+    : t("pageTitle", { number: node.number });
+
+  return {
+    title,
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function KoreksiPage({ params }: PageProps) {

@@ -30,6 +30,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: t("typePageTitle", { type: typeLabel }),
     description: t("typePageDescription", { type: typeLabel }),
     alternates: getAlternates(`/jelajahi/${type}`, locale),
+    openGraph: {
+      title: t("typePageTitle", { type: typeLabel }),
+      description: t("typePageDescription", { type: typeLabel }),
+    },
   };
 }
 
@@ -129,8 +133,8 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
-          { "@type": "ListItem", position: 2, name: t("title"), item: "https://pasal.id/jelajahi" },
+          { "@type": "ListItem", position: 1, name: navT("home"), item: locale === "en" ? "https://pasal.id/en" : "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("title"), item: locale === "en" ? "https://pasal.id/en/jelajahi" : "https://pasal.id/jelajahi" },
           { "@type": "ListItem", position: 3, name: `${typeLabel} (${typeCode})` },
         ],
       }} />

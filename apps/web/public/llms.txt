@@ -16,7 +16,7 @@ The MCP server endpoint is `https://pasal-mcp-server-production.up.railway.app/m
 
 - `search_laws(query, type?, limit?)` — Full-text search across Indonesian legislation
 - `get_pasal(type, number, year, pasal)` — Retrieve a specific article from a specific law
-- `get_law_detail(type, number, year)` — Get full metadata and structure of a law
+- `get_law_status(type, number, year)` — Check if a law is still in force, with amendment history
 - `list_laws(type?, year?, status?)` — List available regulations with filters
 
 ## Topics

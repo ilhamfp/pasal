@@ -106,7 +106,7 @@ export default async function HomePage({
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://pasal.id/search?q={search_term_string}",
+        urlTemplate: `https://pasal.id${locale === "en" ? "/en" : ""}/search?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },

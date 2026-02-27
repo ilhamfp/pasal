@@ -191,6 +191,8 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
 - **UUD amendment FRBR URIs.** Amendments use `/akn/id/act/uud/1945/perubahan-1` (not `.../p1`). Slugs are `uud-1945-p1` (from `number: "1945/P1"`). Keep `load_uud.py` slugs in sync with the DB trigger output.
 - **MCP URL referenced in 5 places.** `connect/page.tsx`, `[locale]/page.tsx` (landing MCP card), `server.json`, `public/llms.txt`, `README.md`. Update all when the URL changes. No trailing slash — Starlette 307 redirects break Claude Code's HTTP transport on Railway.
+- **`/topik` pages intentionally NOT in nav.** Topic pages are discoverable via sitemap and internal links only — not linked from header or footer navigation. Do not add them to nav.
+- **MCP tool name mismatch fixed.** The actual server tool is `get_law_status` (not `get_law_detail`). `server.json`, `llms.txt`, and i18n connect strings must all match this.
 
 ## Deployment
 

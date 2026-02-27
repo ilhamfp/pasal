@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: t("pageDescription"),
     alternates: getAlternates("/connect", locale),
     openGraph: {
-      title: `${t("pageTitle")} | Pasal.id`,
+      title: t("pageTitle"),
       description: t("pageDescription"),
     },
   };

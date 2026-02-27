@@ -1,7 +1,6 @@
 "use client";
 
 export default function GlobalError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -9,6 +8,11 @@ export default function GlobalError({
 }) {
   return (
     <html lang="id">
+      <head>
+        <title>Terjadi Kesalahan | Pasal.id</title>
+        <meta name="robots" content="noindex" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body className="flex min-h-screen items-center justify-center bg-background font-sans">
         <div className="text-center">
           <h2 className="font-heading text-xl mb-4">Terjadi Kesalahan</h2>

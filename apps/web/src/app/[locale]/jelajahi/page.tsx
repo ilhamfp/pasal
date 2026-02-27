@@ -23,6 +23,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: t("title"),
     description: t("description"),
     alternates: getAlternates("/jelajahi", locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+    },
   };
 }
 
@@ -57,7 +61,7 @@ export default async function JelajahiPage({ params }: PageProps) {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Beranda", item: "https://pasal.id" },
+          { "@type": "ListItem", position: 1, name: navT("home"), item: locale === "en" ? "https://pasal.id/en" : "https://pasal.id" },
           { "@type": "ListItem", position: 2, name: t("title") },
         ],
       }} />

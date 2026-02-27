@@ -28,13 +28,12 @@ export async function generateMetadata({
       type: "website",
       locale: locale === "id" ? "id_ID" : "en_US",
       alternateLocale: locale === "id" ? ["en_US"] : ["id_ID"],
-      url: "https://pasal.id",
       siteName: t("siteName"),
       title: t("siteTitle"),
       description: t("ogDescription"),
       images: [
         {
-          url: "/api/og",
+          url: locale === "en" ? "/api/og?locale=en" : "/api/og",
           width: 1200,
           height: 630,
           alt: t("ogImageAlt"),
@@ -43,9 +42,6 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: t("siteTitle"),
-      description: t("ogDescription"),
-      images: ["/api/og"],
     },
   };
 }

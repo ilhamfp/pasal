@@ -10,6 +10,8 @@ import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { TOPICS } from "@/data/topics";
 import { formatRegRef } from "@/lib/legal-status";
 
+export const revalidate = 86400; // ISR: 24 hours
+
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
@@ -22,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: t("pageDescription"),
     alternates: getAlternates("/topik", locale),
     openGraph: {
-      title: `${t("pageTitle")} | Pasal.id`,
+      title: t("pageTitle"),
       description: t("pageDescription"),
     },
   };

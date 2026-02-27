@@ -8,7 +8,7 @@
   "tools": [
     { "name": "search_laws", "description": "Full-text search across Indonesian legislation" },
     { "name": "get_pasal", "description": "Retrieve a specific article from a specific law" },
-    { "name": "get_law_detail", "description": "Get full metadata and structure of a law" },
+    { "name": "get_law_status", "description": "Check if a law is still in force, with amendment history" },
     { "name": "list_laws", "description": "List available regulations with filters" }
   ],
   "categories": ["legal", "government", "indonesia", "reference"],

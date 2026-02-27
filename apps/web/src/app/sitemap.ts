@@ -4,30 +4,81 @@ import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { workSlug } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+const BASE = "https://pasal.id";
+const MAX_URLS_PER_SITEMAP = 50000;
+const SUPABASE_PAGE_SIZE = 1000;
+
+// Fixed date for static pages — updated when content changes meaningfully
+const STATIC_DATE = new Date("2026-02-28");
+
+// Static pages with hreflang alternates (no /search — it has noindex)
+const STATIC_PATHS = ["", "/jelajahi", "/connect", "/api", "/topik"];
+
+interface WorkRow {
+  number: string;
+  year: number;
+  slug: string | null;
+  updated_at: string | null;
+  regulation_types: { code: string } | { code: string }[] | null;
+}
+
+/** Fetch all works using paginated .range() calls to bypass Supabase's 1000-row limit. */
+async function fetchAllWorks(): Promise<WorkRow[]> {
   const supabase = await createClient();
-  const now = new Date();
-  const staticDate = new Date();
+  const allWorks: WorkRow[] = [];
+  let offset = 0;
 
-  // Fetch all works with their regulation type codes and updated_at
-  const { data: works } = await supabase
-    .from("works")
-    .select("number, year, slug, updated_at, regulation_types(code)")
-    .order("year", { ascending: false });
+  while (true) {
+    const { data } = await supabase
+      .from("works")
+      .select("number, year, slug, updated_at, regulation_types(code)")
+      .order("year", { ascending: false })
+      .range(offset, offset + SUPABASE_PAGE_SIZE - 1);
 
-  // Fetch regulation types that have at least one work (for /jelajahi/[type] pages)
+    if (!data || data.length === 0) break;
+    allWorks.push(...(data as unknown as WorkRow[]));
+    if (data.length < SUPABASE_PAGE_SIZE) break;
+    offset += SUPABASE_PAGE_SIZE;
+  }
+
+  return allWorks;
+}
+
+export async function generateSitemaps() {
+  const works = await fetchAllWorks();
+
+  const supabase = await createClient();
   const { data: regTypes } = await supabase
     .from("regulation_types")
     .select("code, works(count)")
     .gt("works.count", 0);
 
-  const BASE = "https://pasal.id";
+  // Count total URLs: static + topics + browse-by-type + regulation pages
+  const browseCount = (regTypes || []).filter((rt) => {
+    const count = rt.works as unknown as { count: number }[];
+    return count?.[0]?.count > 0;
+  }).length;
+  const totalUrls = STATIC_PATHS.length + TOPICS.length + browseCount + works.length;
+  const numSitemaps = Math.max(1, Math.ceil(totalUrls / MAX_URLS_PER_SITEMAP));
 
-  // Static pages with language alternates (no /search — it has noindex)
-  const STATIC_PATHS = ["", "/jelajahi", "/connect", "/api", "/topik"];
+  return Array.from({ length: numSitemaps }, (_, i) => ({ id: String(i) }));
+}
+
+export default async function sitemap(props: {
+  id: Promise<string>;
+}): Promise<MetadataRoute.Sitemap> {
+  const sitemapIndex = parseInt(await props.id);
+  const supabase = await createClient();
+
+  // Fetch regulation types with counts (for /jelajahi/[type] pages)
+  const { data: regTypes } = await supabase
+    .from("regulation_types")
+    .select("code, works(count)")
+    .gt("works.count", 0);
+
   const staticPages: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
     url: `${BASE}${path}`,
-    lastModified: staticDate,
+    lastModified: STATIC_DATE,
     alternates: {
       languages: {
         id: `${BASE}${path}`,
@@ -42,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Topic pages with language alternates
   const topicPages: MetadataRoute.Sitemap = TOPICS.map((topic) => ({
     url: `${BASE}/topik/${topic.slug}`,
-    lastModified: staticDate,
+    lastModified: STATIC_DATE,
     alternates: {
       languages: {
         id: `${BASE}/topik/${topic.slug}`,
@@ -64,7 +115,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const typePath = `/jelajahi/${rt.code.toLowerCase()}`;
       return {
         url: `${BASE}${typePath}`,
-        lastModified: staticDate,
+        lastModified: STATIC_DATE,
         alternates: {
           languages: {
             id: `${BASE}${typePath}`,
@@ -77,16 +128,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-  // Regulation detail pages with language alternates
-  const regulationPages: MetadataRoute.Sitemap = (works || [])
-    .filter((work) => getRegTypeCode(work.regulation_types))
-    .map((work) => {
-      const type = getRegTypeCode(work.regulation_types).toLowerCase();
+  // Combine non-regulation URLs
+  const nonRegulationUrls = [...staticPages, ...topicPages, ...browsePages];
+
+  // Calculate which regulation URLs belong to this sitemap index
+  const allNonRegCount = nonRegulationUrls.length;
+  // First sitemap includes non-regulation URLs + as many regulation URLs as fit
+  if (sitemapIndex === 0) {
+    const regSlots = MAX_URLS_PER_SITEMAP - allNonRegCount;
+    const works = await fetchRegulationPage(0, regSlots);
+    return [...nonRegulationUrls, ...works];
+  }
+
+  // Subsequent sitemaps are regulation-only
+  const regOffset = MAX_URLS_PER_SITEMAP - allNonRegCount + (sitemapIndex - 1) * MAX_URLS_PER_SITEMAP;
+  const works = await fetchRegulationPage(regOffset, MAX_URLS_PER_SITEMAP);
+  return works;
+}
+
+/** Fetch a page of regulation URLs for the sitemap. */
+async function fetchRegulationPage(offset: number, limit: number): Promise<MetadataRoute.Sitemap> {
+  const supabase = await createClient();
+  const result: MetadataRoute.Sitemap = [];
+  let fetched = 0;
+  let dbOffset = offset;
+
+  while (fetched < limit) {
+    const batchSize = Math.min(SUPABASE_PAGE_SIZE, limit - fetched);
+    const { data } = await supabase
+      .from("works")
+      .select("number, year, slug, updated_at, regulation_types(code)")
+      .order("year", { ascending: false })
+      .range(dbOffset, dbOffset + batchSize - 1);
+
+    if (!data || data.length === 0) break;
+
+    for (const work of data as unknown as WorkRow[]) {
+      const typeCode = getRegTypeCode(work.regulation_types);
+      if (!typeCode) continue;
+      const type = typeCode.toLowerCase();
       const slug = workSlug(work, type);
       const path = `/peraturan/${type}/${slug}`;
-      return {
+      result.push({
         url: `${BASE}${path}`,
-        lastModified: work.updated_at ? new Date(work.updated_at) : now,
+        lastModified: work.updated_at ? new Date(work.updated_at) : STATIC_DATE,
         alternates: {
           languages: {
             id: `${BASE}${path}`,
@@ -96,8 +181,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
         changeFrequency: "yearly" as const,
         priority: 0.9,
-      };
-    });
+      });
+      fetched++;
+      if (fetched >= limit) break;
+    }
 
-  return [...staticPages, ...topicPages, ...browsePages, ...regulationPages];
+    dbOffset += data.length;
+    if (data.length < batchSize) break;
+  }
+
+  return result;
 }

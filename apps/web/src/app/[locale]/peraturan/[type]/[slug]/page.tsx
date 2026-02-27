@@ -105,7 +105,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = t("readFullText", {
     ref: regRef,
     title: topic,
-  }) + ` Status: ${statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}.`;
+  }) + " " + t("metaStatusSuffix", {
+    status: statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku"),
+  });
   const path = `/peraturan/${type.toLowerCase()}/${slug}`;
   const url = `https://pasal.id${path}`;
 
@@ -133,6 +135,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: ogDescription,
       url,
       type: "article",
+      publishedTime: `${work.year}-01-01T00:00:00Z`,
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: ogTitle }],
     },
     twitter: {
