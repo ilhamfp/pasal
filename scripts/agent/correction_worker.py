@@ -257,7 +257,16 @@ async def run_worker() -> None:
     })
 
     while True:
-        suggestions = fetch_pending_suggestions(MAX_PER_RUN)
+        try:
+            suggestions = fetch_pending_suggestions(MAX_PER_RUN)
+        except Exception as e:
+            print(
+                f"  [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] "
+                f"Polling error: {e} — retrying in {POLL_INTERVAL}s",
+                flush=True,
+            )
+            await asyncio.sleep(POLL_INTERVAL)
+            continue
         if suggestions:
             batch_results = []
             for s in suggestions:

@@ -19,9 +19,17 @@ STORAGE_BUCKET = "regulation-pdfs"
 _pdf_cache: dict[str, bytes] = {}
 
 
+_supabase_client = None
+
+
 def get_supabase():
-    """Create a fresh Supabase client."""
-    return create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+    """Return a reusable Supabase client (singleton)."""
+    global _supabase_client
+    if _supabase_client is None:
+        _supabase_client = create_client(
+            os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"]
+        )
+    return _supabase_client
 
 
 def _get_pdf_bytes(slug: str) -> bytes | None:
