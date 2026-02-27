@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { tokenize } from "@/lib/crossref";
 
 const lookup: Record<string, string> = {
-  "uu-13-2003": "/peraturan/uu/uu-13-2003",
-  "pp-74-2008": "/peraturan/pp/pp-74-2008",
+  "uu-no-13-tahun-2003": "/peraturan/uu/uu-no-13-tahun-2003",
+  "pp-no-74-tahun-2008": "/peraturan/pp/pp-no-74-tahun-2008",
 };
 
 describe("tokenize", () => {
@@ -58,7 +58,7 @@ describe("tokenize", () => {
       {
         type: "uu",
         value: "Undang-Undang Nomor 13 Tahun 2003",
-        href: "/peraturan/uu/uu-13-2003",
+        href: "/peraturan/uu/uu-no-13-tahun-2003",
       },
       { type: "text" },
     ]);
@@ -82,13 +82,13 @@ describe("tokenize", () => {
     );
     expect(result).toMatchObject([
       { type: "text" },
-      { type: "uu", href: "/peraturan/pp/pp-74-2008" },
+      { type: "uu", href: "/peraturan/pp/pp-no-74-tahun-2008" },
       { type: "text" },
     ]);
   });
 
   it("handles both Perpu and Perppu spellings", () => {
-    const lookup2 = { "perppu-1-2022": "/peraturan/perppu/perppu-1-2022" };
+    const lookup2 = { "perppu-no-1-tahun-2022": "/peraturan/perppu/perppu-no-1-tahun-2022" };
     const r1 = tokenize("Perpu Nomor 1 Tahun 2022", lookup2);
     const r2 = tokenize("Perppu Nomor 1 Tahun 2022", lookup2);
     // Both spellings must resolve to the same perppu slug
@@ -96,8 +96,8 @@ describe("tokenize", () => {
     const uuTokens2 = r2.filter((t) => t.type === "uu");
     expect(uuTokens1).toHaveLength(1);
     expect(uuTokens2).toHaveLength(1);
-    expect(uuTokens1[0]).toMatchObject({ href: "/peraturan/perppu/perppu-1-2022" });
-    expect(uuTokens2[0]).toMatchObject({ href: "/peraturan/perppu/perppu-1-2022" });
+    expect(uuTokens1[0]).toMatchObject({ href: "/peraturan/perppu/perppu-no-1-tahun-2022" });
+    expect(uuTokens2[0]).toMatchObject({ href: "/peraturan/perppu/perppu-no-1-tahun-2022" });
   });
 
   it("handles multiple references in one string", () => {
@@ -116,21 +116,21 @@ describe("tokenize", () => {
   });
 
   it("detects Peraturan Presiden cross-reference", () => {
-    const lookup2 = { "perpres-12-2010": "/peraturan/perpres/perpres-12-2010" };
+    const lookup2 = { "perpres-no-12-tahun-2010": "/peraturan/perpres/perpres-no-12-tahun-2010" };
     const result = tokenize("diatur dalam Peraturan Presiden Nomor 12 Tahun 2010.", lookup2);
     expect(result).toMatchObject([
       { type: "text" },
-      { type: "uu", href: "/peraturan/perpres/perpres-12-2010" },
+      { type: "uu", href: "/peraturan/perpres/perpres-no-12-tahun-2010" },
       { type: "text" },
     ]);
   });
 
   it("detects Peraturan Daerah cross-reference", () => {
-    const lookup2 = { "perda-5-2015": "/peraturan/perda/perda-5-2015" };
+    const lookup2 = { "perda-no-5-tahun-2015": "/peraturan/perda/perda-no-5-tahun-2015" };
     const result = tokenize("sebagaimana Peraturan Daerah Nomor 5 Tahun 2015 mengatur.", lookup2);
     expect(result).toMatchObject([
       { type: "text" },
-      { type: "uu", href: "/peraturan/perda/perda-5-2015" },
+      { type: "uu", href: "/peraturan/perda/perda-no-5-tahun-2015" },
       { type: "text" },
     ]);
   });
@@ -139,7 +139,7 @@ describe("tokenize", () => {
     // Match starts at index 0 — no leading text token
     const result = tokenize("Undang-Undang 13 Tahun 2003 berlaku.", lookup);
     expect(result).toMatchObject([
-      { type: "uu", href: "/peraturan/uu/uu-13-2003" },
+      { type: "uu", href: "/peraturan/uu/uu-no-13-tahun-2003" },
       { type: "text", value: " berlaku." },
     ]);
   });
@@ -154,7 +154,7 @@ describe("tokenize", () => {
     expect(pasalTokens).toHaveLength(1);
     expect(uuTokens).toHaveLength(1);
     expect(pasalTokens[0]).toMatchObject({ pasalNumber: "5" });
-    expect(uuTokens[0]).toMatchObject({ href: "/peraturan/uu/uu-13-2003" });
+    expect(uuTokens[0]).toMatchObject({ href: "/peraturan/uu/uu-no-13-tahun-2003" });
   });
 
   it("preserves trailing plain text after last reference", () => {
@@ -170,5 +170,15 @@ describe("tokenize", () => {
     expect(result.map((t) => t.value).join("")).toBe(
       "berdasarkan Keputusan Menteri Nomor 5 Tahun 2020."
     );
+  });
+
+  it("detects Pasal with capital-A Ayat (scanned PDF variant)", () => {
+    // Some PDFs capitalize Ayat — must still produce a pasal link
+    const result = tokenize("sebagaimana dimaksud dalam Pasal 90 Ayat (3).", lookup);
+    expect(result).toMatchObject([
+      { type: "text" },
+      { type: "pasal", value: "Pasal 90 Ayat (3)", href: "#pasal-90" },
+      { type: "text" },
+    ]);
   });
 });
