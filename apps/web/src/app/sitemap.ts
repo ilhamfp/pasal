@@ -2,11 +2,19 @@ import type { MetadataRoute } from "next";
 import { TOPICS } from "@/data/topics";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { workSlug } from "@/lib/work-url";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const BASE = "https://pasal.id";
 const MAX_URLS_PER_SITEMAP = 50000;
 const SUPABASE_PAGE_SIZE = 1000;
+
+/** Cookie-free Supabase client for build-time sitemap generation (no request scope needed). */
+function createClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 // Fixed date for static pages — updated when content changes meaningfully
 const STATIC_DATE = new Date("2026-02-28");
@@ -24,7 +32,7 @@ interface WorkRow {
 
 /** Fetch all works using paginated .range() calls to bypass Supabase's 1000-row limit. */
 async function fetchAllWorks(): Promise<WorkRow[]> {
-  const supabase = await createClient();
+  const supabase = createClient();
   const allWorks: WorkRow[] = [];
   let offset = 0;
 
@@ -47,7 +55,7 @@ async function fetchAllWorks(): Promise<WorkRow[]> {
 export async function generateSitemaps() {
   const works = await fetchAllWorks();
 
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data: regTypes } = await supabase
     .from("regulation_types")
     .select("code, works(count)")
@@ -68,7 +76,7 @@ export default async function sitemap(props: {
   id: Promise<string>;
 }): Promise<MetadataRoute.Sitemap> {
   const sitemapIndex = parseInt(await props.id);
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Fetch regulation types with counts (for /jelajahi/[type] pages)
   const { data: regTypes } = await supabase
@@ -148,7 +156,7 @@ export default async function sitemap(props: {
 
 /** Fetch a page of regulation URLs for the sitemap. */
 async function fetchRegulationPage(offset: number, limit: number): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
+  const supabase = createClient();
   const result: MetadataRoute.Sitemap = [];
   let fetched = 0;
   let dbOffset = offset;
