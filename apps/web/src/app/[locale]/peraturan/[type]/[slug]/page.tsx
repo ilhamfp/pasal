@@ -252,12 +252,18 @@ async function LawReaderSection({
       .order("id"),
   ]);
 
-  const usePagination = (totalPasalCount || 0) >= 100;
+  // Structured (BAB-based) laws must always load all pasals SSR so the BAB-grouping
+  // logic has the full set. Only use client-side infinite scroll for flat laws (no BABs)
+  // with a large pasal count.
+  const hasBABs = (structure || []).some(
+    (n) => n.node_type === "bab" || n.node_type === "aturan" || n.node_type === "lampiran",
+  );
+  const usePagination = (totalPasalCount || 0) >= 100 && !hasBABs;
   const structuralNodes = structure;
   let pasalNodes = initialPasals;
   const relationships = rels;
 
-  // For small documents with >30 pasals, fetch the rest
+  // For documents with >30 pasals not using client-side pagination, fetch the rest SSR
   if (!usePagination && (totalPasalCount || 0) > 30) {
     const { data: remaining } = await supabase
       .from("document_nodes")
