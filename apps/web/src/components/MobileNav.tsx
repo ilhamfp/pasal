@@ -19,7 +19,6 @@ export default function MobileNav() {
   const NAV_LINKS = [
     { href: "/search" as const, label: t("search") },
     { href: "/jelajahi" as const, label: t("browse") },
-    { href: "/topik" as const, label: t("topics") },
     { href: "/api" as const, label: t("api") },
   ];
 

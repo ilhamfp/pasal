@@ -3,7 +3,7 @@ import Link from "next/link";
 import PasalLogo from "@/components/PasalLogo";
 
 export const metadata: Metadata = {
-  title: "Halaman Tidak Ditemukan",
+  title: "Halaman Tidak Ditemukan | Page Not Found",
   robots: { index: false, follow: true },
 };
 
@@ -21,6 +21,9 @@ export default function NotFound() {
       <h1 className="font-heading text-3xl tracking-tight">
         Halaman tidak ditemukan
       </h1>
+      <p className="mt-1 text-lg text-muted-foreground/70">
+        Page not found
+      </p>
       <p className="mt-3 max-w-md text-muted-foreground">
         Pasal yang Anda cari mungkin telah dipindahkan, dicabut, atau tidak pernah ada.
       </p>

@@ -7,8 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
   const now = new Date();
-  // Fixed date for static/topic/browse pages — only update when content actually changes
-  const staticDate = new Date("2026-02-28");
+  const staticDate = new Date();
 
   // Fetch all works with their regulation type codes and updated_at
   const { data: works } = await supabase

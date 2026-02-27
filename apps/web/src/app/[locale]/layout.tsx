@@ -74,7 +74,7 @@ export default async function LocaleLayout({
   const FOOTER_LINKS = [
     { href: "/" as const, label: t("home") },
     { href: "/jelajahi" as const, label: t("browse") },
-    { href: "/topik" as const, label: t("topics") },
+    { href: "/search" as const, label: t("search") },
     { href: "/connect" as const, label: t("connect") },
     { href: "/api" as const, label: t("api") },
   ];

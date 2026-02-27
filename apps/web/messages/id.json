@@ -178,7 +178,7 @@
   },
   "browse": {
     "title": "Jelajahi Peraturan",
-    "description": "Telusuri peraturan Indonesia berdasarkan jenis",
+    "description": "Telusuri 22 jenis peraturan Indonesia — UU, PP, Perpres, Permen, dan lainnya. Teks lengkap terstruktur per pasal, gratis dan terbuka.",
     "seeAllTypes": "Lihat semua jenis peraturan",
     "readLink": "Baca",
     "filterByYear": "Filter tahun",
@@ -193,11 +193,13 @@
     "filterButton": "Filter",
     "regulationsCount": "{count} peraturan",
     "typePageTitle": "Jelajahi {type}",
-    "typePageDescription": "Daftar {type} dalam database hukum Indonesia."
+    "typePageDescription": "Daftar lengkap {type} di Indonesia. Filter berdasarkan tahun dan status, baca teks lengkap per pasal. Akses terbuka untuk semua."
   },
   "curated": {
     "sectionLabel": "Paling Sering Diakses",
-    "sectionTitle": "Peraturan Populer"
+    "sectionTitle": "Peraturan Populer",
+    "directFromDatabase": "Langsung dari database",
+    "read": "Baca"
   },
   "trust": {
     "sectionLabel": "Mengapa Mempercayai Data Ini",

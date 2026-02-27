@@ -4,6 +4,7 @@ import { Link, type Locale } from "@/i18n/routing";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -197,6 +198,10 @@ export default async function ApiDocsPage({ params }: PageProps) {
       }} />
 
       <main className="container mx-auto max-w-4xl px-4 py-12">
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: navT("api") },
+        ]} />
         <h1 className="font-heading text-3xl mb-2">{t("pageTitle")}</h1>
         <p className="text-muted-foreground mb-8">
           {t("pageDescription")}

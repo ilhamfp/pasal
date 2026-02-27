@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { m } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_COLORS, STATUS_LABELS, formatRegRef } from "@/lib/legal-status";
+import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 
 export type LawData = {
   id: string;
@@ -28,11 +29,13 @@ const CarouselCard = memo(function CarouselCard({
   isActive,
   shouldAnimate,
   onClick,
+  statusLabel,
 }: {
   law: LawData;
   isActive: boolean;
   shouldAnimate: boolean;
   onClick: () => void;
+  statusLabel: string;
 }) {
   return (
     <m.div
@@ -67,7 +70,7 @@ const CarouselCard = memo(function CarouselCard({
             className={STATUS_COLORS[law.status] || ""}
             variant="outline"
           >
-            {STATUS_LABELS[law.status] || law.status}
+            {statusLabel}
           </Badge>
         </div>
         <h3 className="font-heading text-lg line-clamp-2">
@@ -95,6 +98,7 @@ const CarouselCard = memo(function CarouselCard({
 });
 
 export default function LawCarousel({ laws }: { laws: LawData[] }) {
+  const statusT = useTranslations("status");
   const n = laws.length;
 
   // Clone cards at both ends for seamless infinite loop
@@ -208,6 +212,7 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
               isActive={i === extIndex}
               shouldAnimate={shouldAnimate}
               onClick={() => setExtIndex(i)}
+              statusLabel={statusT(law.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
             />
           ))}
         </m.div>

@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/routing";
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_COLORS, STATUS_LABELS, formatRegRef } from "@/lib/legal-status";
+import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import { workPath } from "@/lib/work-url";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,11 @@ export default async function FeaturedArticlePreview() {
     .single();
 
   if (!work) return null;
+
+  const [curatedT, statusT] = await Promise.all([
+    getTranslations("curated"),
+    getTranslations("status"),
+  ]);
 
   // Fetch Pasal 1 and ayat children in parallel (both depend only on work.id)
   const [{ data: pasal }, { data: ayats }] = await Promise.all([
@@ -47,7 +53,7 @@ export default async function FeaturedArticlePreview() {
     <section className="py-10 sm:py-12">
       <div className="mx-auto max-w-xl px-4">
         <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Langsung dari database
+          {curatedT("directFromDatabase")}
         </p>
 
         <div className="rounded-lg border bg-card p-5">
@@ -57,7 +63,7 @@ export default async function FeaturedArticlePreview() {
               className={STATUS_COLORS[work.status] || ""}
               variant="outline"
             >
-              {STATUS_LABELS[work.status] || work.status}
+              {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
             </Badge>
             <span className="font-mono text-xs text-muted-foreground">
               {formatRegRef(regCode, work.number, work.year)}
@@ -84,7 +90,7 @@ export default async function FeaturedArticlePreview() {
               href={href}
               className="shrink-0 text-sm font-medium text-primary hover:underline"
             >
-              Baca &rarr;
+              {curatedT("read")} &rarr;
             </Link>
           </div>
         </div>

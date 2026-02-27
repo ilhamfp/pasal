@@ -9,6 +9,7 @@ import { workPath } from "@/lib/work-url";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -37,10 +38,13 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
   setRequestLocale(locale as Locale);
   const { page: pageStr, year, status } = await searchParams;
 
-  const t = await getTranslations("browse");
-  const statusT = await getTranslations("status");
-  const filtersT = await getTranslations("filters");
-  const searchT = await getTranslations("search");
+  const [t, statusT, filtersT, searchT, navT] = await Promise.all([
+    getTranslations("browse"),
+    getTranslations("status"),
+    getTranslations("filters"),
+    getTranslations("search"),
+    getTranslations("navigation"),
+  ]);
   const supabase = await createClient();
 
   const typeCode = type.toUpperCase();
@@ -132,13 +136,11 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
       }} />
 
       <div className="max-w-5xl mx-auto px-4 lg:px-6 py-8">
-        <Link
-          href="/jelajahi"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {t("backToBrowse")}
-        </Link>
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: navT("browse"), href: "/jelajahi" },
+          { label: typeLabel },
+        ]} />
 
         <div className="mb-8">
           <h1 className="font-heading text-3xl tracking-tight mb-2">

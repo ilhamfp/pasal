@@ -7,6 +7,7 @@ import { getAlternates } from "@/lib/i18n-metadata";
 import nextDynamic from "next/dynamic";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import CopyButton from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -90,6 +91,10 @@ export default async function ConnectPage({ params }: PageProps) {
       }} />
 
       <main className="container mx-auto px-4 py-12">
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: navT("connect") },
+        ]} />
         {/* Two-column hero: instructions + demo side by side */}
         <div className="max-w-6xl mx-auto mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">

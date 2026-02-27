@@ -6,6 +6,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui/badge";
 import { getTopicBySlug, TOPICS } from "@/data/topics";
@@ -49,7 +50,10 @@ export default async function TopicDetailPage({ params }: PageProps) {
   const topic = getTopicBySlug(slug);
   if (!topic) notFound();
 
-  const t = await getTranslations("topics");
+  const [t, navT] = await Promise.all([
+    getTranslations("topics"),
+    getTranslations("navigation"),
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -81,14 +85,11 @@ export default async function TopicDetailPage({ params }: PageProps) {
       }} />
 
       <main className="container mx-auto max-w-3xl px-4 py-12">
-        <div className="mb-8">
-          <Link
-            href="/topik"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            &larr; {t("allTopics")}
-          </Link>
-        </div>
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: navT("topics"), href: "/topik" },
+          { label: topic.title },
+        ]} />
 
         <div className="mb-10">
           <h1 className="font-heading text-3xl mb-2">{topic.title}</h1>

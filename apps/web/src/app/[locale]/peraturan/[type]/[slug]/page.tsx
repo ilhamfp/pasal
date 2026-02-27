@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LEGAL_FORCE_MAP, STATUS_COLORS, STATUS_LABELS, TYPE_LABELS, formatRegRef } from "@/lib/legal-status";
 import { parseSlug } from "@/lib/parse-slug";
 import { getAlternates } from "@/lib/i18n-metadata";
+import { toTitleCase } from "@/lib/text-utils";
 import Header from "@/components/Header";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import PasalLogo from "@/components/PasalLogo";
@@ -23,6 +24,7 @@ import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice"
 import PrintButton from "@/components/PrintButton";
 import ShareButton from "@/components/ShareButton";
 import SectionLinkButton from "@/components/SectionLinkButton";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 export const revalidate = 86400; // ISR: 24 hours
 
@@ -95,7 +97,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
   // Extract topic (e.g. "KETENAGAKERJAAN") from title_id to avoid duplication in <title>
   const tentangIdx = work.title_id.toLowerCase().indexOf(" tentang ");
-  const topic = tentangIdx >= 0 ? work.title_id.slice(tentangIdx + 9) : work.title_id;
+  const rawTopic = tentangIdx >= 0 ? work.title_id.slice(tentangIdx + 9) : work.title_id;
+  // Only transform ALL CAPS topics — mixed-case titles are already correct from source
+  const topic = rawTopic === rawTopic.toUpperCase() ? toTitleCase(rawTopic) : rawTopic;
   const regRef = formatRegRef(type, work.number, work.year, { label: "long" });
   const title = `${topic} — ${formatRegRef(type, work.number, work.year)}`;
   const description = t("readFullText", {
@@ -115,6 +119,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     type: type.toUpperCase(),
     number: work.number,
     year: work.year,
+    status: work.status || "",
   });
   const ogImageUrl = `https://pasal.id/api/og?${ogParams.toString()}`;
 
@@ -482,6 +487,11 @@ export default async function LawDetailPage({ params }: PageProps) {
       <JsonLd data={legislationLd} />
 
       <div className="container mx-auto px-4 py-6">
+        <PageBreadcrumb items={[
+          { label: t("breadcrumbHome"), href: "/" },
+          { label: type.toUpperCase(), href: `/jelajahi/${type.toLowerCase()}` },
+          { label: formatRegRef(type, work.number, work.year) },
+        ]} />
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">{type.toUpperCase()}</Badge>

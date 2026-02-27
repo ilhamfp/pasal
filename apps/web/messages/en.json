@@ -178,7 +178,7 @@
   },
   "browse": {
     "title": "Browse Regulations",
-    "description": "Explore Indonesian regulations by type",
+    "description": "Browse 22 types of Indonesian regulations — Laws, Government Regulations, Presidential Decrees, and more. Full text structured by article, free and open.",
     "seeAllTypes": "See all regulation types",
     "readLink": "Read",
     "filterByYear": "Filter by year",
@@ -193,11 +193,13 @@
     "filterButton": "Filter",
     "regulationsCount": "{count} regulations",
     "typePageTitle": "Browse {type}",
-    "typePageDescription": "List of {type} in Indonesia's legal database."
+    "typePageDescription": "Complete list of {type} in Indonesia. Filter by year and status, read full text by article. Open access for everyone."
   },
   "curated": {
     "sectionLabel": "Most Accessed",
-    "sectionTitle": "Popular Regulations"
+    "sectionTitle": "Popular Regulations",
+    "directFromDatabase": "Direct from database",
+    "read": "Read"
   },
   "trust": {
     "sectionLabel": "Why Trust This Data",

@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/routing";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { TOPICS } from "@/data/topics";
 import { formatRegRef } from "@/lib/legal-status";
 
@@ -56,6 +57,10 @@ export default async function TopicsPage({ params }: PageProps) {
       }} />
 
       <main className="container mx-auto max-w-4xl px-4 py-12">
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: t("pageTitle") },
+        ]} />
         <div className="text-center mb-10">
           <h1 className="font-heading text-3xl mb-3">{t("pageTitle")}</h1>
           <p className="text-muted-foreground text-lg">

@@ -7,6 +7,7 @@ import { TYPE_LABELS } from "@/lib/legal-status";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
 import JsonLd from "@/components/JsonLd";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { FileText } from "lucide-react";
 
 export const revalidate = 3600; // ISR: 1 hour
@@ -29,7 +30,10 @@ export default async function JelajahiPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
 
-  const t = await getTranslations("browse");
+  const [t, navT] = await Promise.all([
+    getTranslations("browse"),
+    getTranslations("navigation"),
+  ]);
   const supabase = await createClient();
 
   // Single query with inline count — replaces N+1 pattern
@@ -59,6 +63,10 @@ export default async function JelajahiPage({ params }: PageProps) {
       }} />
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12">
+        <PageBreadcrumb items={[
+          { label: navT("home"), href: "/" },
+          { label: t("title") },
+        ]} />
         <div className="text-center mb-12">
           <h1 className="font-heading text-4xl tracking-tight mb-3">
             {t("title")}
