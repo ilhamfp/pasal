@@ -389,7 +389,7 @@ async function LawReaderSection({
           )}
 
           <div className="rounded-lg border p-4">
-            <h3 className="font-heading text-sm mb-3">Bagikan</h3>
+            <h3 className="font-heading text-sm mb-3">{t("shareLabel")}</h3>
             <ShareButton
               url={pageUrl}
               title={`${formatRegRef(type, work.number, work.year)} — ${work.title_id}`}
@@ -453,7 +453,7 @@ export default async function LawDetailPage({ params }: PageProps) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: t("breadcrumbHome"), item: "https://pasal.id" },
-      { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/search?type=${type.toLowerCase()}` },
+      { "@type": "ListItem", position: 2, name: type.toUpperCase(), item: `https://pasal.id/jelajahi/${type.toLowerCase()}` },
       { "@type": "ListItem", position: 3, name: formatRegRef(type, work.number, work.year) },
     ],
   };

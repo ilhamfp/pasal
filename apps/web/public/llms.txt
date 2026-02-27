@@ -28,11 +28,11 @@ The MCP server endpoint is `https://pasal-mcp-server-production.up.railway.app/m
 
 ## Key Laws
 
-- [UU 13/2003 Ketenagakerjaan](https://pasal.id/peraturan/uu/uu-nomor-13-tahun-2003): Indonesia's primary labor law
-- [UU 1/1974 Perkawinan](https://pasal.id/peraturan/uu/uu-nomor-1-tahun-1974): Marriage law
-- [UU 27/2022 Perlindungan Data Pribadi](https://pasal.id/peraturan/uu/uu-nomor-27-tahun-2022): Personal data protection (Indonesia's GDPR equivalent)
-- [UU 1/2023 KUHP](https://pasal.id/peraturan/uu/uu-nomor-1-tahun-2023): The new Indonesian Criminal Code
-- [UU 6/2023 Cipta Kerja](https://pasal.id/peraturan/uu/uu-nomor-6-tahun-2023): Omnibus Job Creation Law
+- [UU 13/2003 Ketenagakerjaan](https://pasal.id/peraturan/uu/uu-13-2003): Indonesia's primary labor law
+- [UU 1/1974 Perkawinan](https://pasal.id/peraturan/uu/uu-1-1974): Marriage law
+- [UU 27/2022 Perlindungan Data Pribadi](https://pasal.id/peraturan/uu/uu-27-2022): Personal data protection (Indonesia's GDPR equivalent)
+- [UU 1/2023 KUHP](https://pasal.id/peraturan/uu/uu-1-2023): The new Indonesian Criminal Code
+- [UU 6/2023 Cipta Kerja](https://pasal.id/peraturan/uu/uu-6-2023): Omnibus Job Creation Law
 
 ## Optional
 

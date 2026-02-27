@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import type { Locale } from "@/i18n/routing";
+import { Link, type Locale } from "@/i18n/routing";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -43,8 +44,11 @@ export default async function ApiDocsPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
 
-  const t = await getTranslations("apiDocs");
-  const regTypeT = await getTranslations("regulationType");
+  const [t, regTypeT, navT] = await Promise.all([
+    getTranslations("apiDocs"),
+    getTranslations("regulationType"),
+    getTranslations("navigation"),
+  ]);
 
   const endpoints = [
     {
@@ -183,6 +187,14 @@ export default async function ApiDocsPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: navT("home"), item: "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("pageTitle") },
+        ],
+      }} />
 
       <main className="container mx-auto max-w-4xl px-4 py-12">
         <h1 className="font-heading text-3xl mb-2">{t("pageTitle")}</h1>
@@ -430,7 +442,7 @@ for law in data["laws"]:
           <p>
             {t.rich("mcpNote", {
               link: (chunks) => (
-                <a href="/connect" className="text-primary hover:underline">{chunks}</a>
+                <Link href="/connect" className="text-primary hover:underline">{chunks}</Link>
               ),
             })}
           </p>

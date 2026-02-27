@@ -111,6 +111,7 @@
     "pdfSource": "Source PDF",
     "closePdfPanel": "Close PDF panel",
     "pasalPrefix": "Article",
+    "shareLabel": "Share",
     "suggestCorrection": "Suggest Correction",
     "loadMorePasals": "Load {remaining} more articles",
     "loading": "Loading...",

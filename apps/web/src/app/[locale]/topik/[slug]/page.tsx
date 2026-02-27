@@ -71,9 +71,11 @@ export default async function TopicDetailPage({ params }: PageProps) {
           name: q.question,
           acceptedAnswer: {
             "@type": "Answer",
-            text: q.pasal && q.lawRef
-              ? `Diatur dalam Pasal ${q.pasal} ${q.lawRef}. Baca teks lengkap pasal tersebut di Pasal.id.`
-              : `Cari jawaban lengkap untuk "${q.question}" di Pasal.id.`,
+            text: q.answerSummary
+              ? q.answerSummary
+              : q.pasal && q.lawRef
+                ? `Diatur dalam Pasal ${q.pasal} ${q.lawRef}. Baca teks lengkap pasal tersebut di Pasal.id.`
+                : `Cari jawaban lengkap untuk "${q.question}" di Pasal.id.`,
           },
         })),
       }} />

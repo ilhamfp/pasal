@@ -477,6 +477,7 @@ export default async function SearchPage({
       <Header showSearch searchDefault={query} searchPreserveParams={preserveParams} />
 
       <main className="container mx-auto max-w-3xl px-4 py-8">
+        <h1 className="sr-only">{t("title")}</h1>
         {/* Filters */}
         <div className="mb-6">
           <SearchFilters

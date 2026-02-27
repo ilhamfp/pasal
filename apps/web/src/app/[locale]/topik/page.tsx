@@ -5,6 +5,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { getAlternates } from "@/lib/i18n-metadata";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 import { TOPICS } from "@/data/topics";
 import { formatRegRef } from "@/lib/legal-status";
 
@@ -37,11 +38,22 @@ export default async function TopicsPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
 
-  const t = await getTranslations("topics");
+  const [t, navT] = await Promise.all([
+    getTranslations("topics"),
+    getTranslations("navigation"),
+  ]);
 
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: navT("home"), item: "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("pageTitle") },
+        ],
+      }} />
 
       <main className="container mx-auto max-w-4xl px-4 py-12">
         <div className="text-center mb-10">

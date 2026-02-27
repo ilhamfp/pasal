@@ -3,6 +3,7 @@ export interface TopicQuestion {
   searchQuery: string;
   pasal?: string;
   lawRef?: string;
+  answerSummary?: string;
 }
 
 export interface Topic {
@@ -30,30 +31,35 @@ export const TOPICS: Topic[] = [
         searchQuery: "upah minimum pekerja",
         pasal: "88",
         lawRef: "UU 13/2003",
+        answerSummary: "Upah minimum ditetapkan oleh Gubernur berdasarkan kebutuhan hidup layak (KHL) dengan memperhatikan produktivitas dan pertumbuhan ekonomi. Setiap perusahaan dilarang membayar upah lebih rendah dari upah minimum provinsi atau kabupaten/kota. Pelanggaran dikenakan sanksi pidana penjara 1-4 tahun dan/atau denda Rp100 juta - Rp400 juta (Pasal 88-90 UU 13/2003).",
       },
       {
         question: "Apa hak saya jika di-PHK?",
         searchQuery: "pemutusan hubungan kerja",
         pasal: "156",
         lawRef: "UU 13/2003",
+        answerSummary: "Pekerja yang di-PHK berhak atas uang pesangon, uang penghargaan masa kerja, dan uang penggantian hak. Besaran pesangon tergantung masa kerja: 1 bulan upah untuk masa kerja <1 tahun hingga 9 bulan upah untuk masa kerja ≥8 tahun. Pengusaha wajib merundingkan PHK terlebih dahulu, dan jika tidak tercapai kesepakatan, penyelesaian dilakukan melalui lembaga penyelesaian perselisihan hubungan industrial (Pasal 156 UU 13/2003).",
       },
       {
         question: "Berapa lama cuti tahunan yang saya dapatkan?",
         searchQuery: "cuti tahunan pekerja",
         pasal: "79",
         lawRef: "UU 13/2003",
+        answerSummary: "Pekerja berhak atas cuti tahunan sekurang-kurangnya 12 hari kerja setelah bekerja selama 12 bulan secara terus-menerus. Selain cuti tahunan, pekerja juga berhak atas istirahat mingguan, cuti sakit, cuti melahirkan (3 bulan), dan cuti karena alasan penting seperti pernikahan atau kematian keluarga (Pasal 79 UU 13/2003).",
       },
       {
         question: "Bagaimana aturan kerja lembur?",
         searchQuery: "waktu kerja lembur",
         pasal: "78",
         lawRef: "UU 13/2003",
+        answerSummary: "Waktu kerja lembur hanya dapat dilakukan paling banyak 4 jam dalam 1 hari dan 18 jam dalam 1 minggu. Pengusaha wajib membayar upah lembur: jam pertama dibayar 1,5 kali upah sejam, jam berikutnya dibayar 2 kali upah sejam. Kerja lembur harus ada persetujuan tertulis dari pekerja dan pengusaha wajib memberikan makanan/minuman jika lembur >3 jam (Pasal 78 UU 13/2003).",
       },
       {
         question: "Apa hak pekerja kontrak (PKWT)?",
         searchQuery: "perjanjian kerja waktu tertentu",
         pasal: "59",
         lawRef: "UU 13/2003",
+        answerSummary: "Perjanjian Kerja Waktu Tertentu (PKWT) hanya boleh untuk pekerjaan yang bersifat sementara, musiman, atau terkait produk baru. PKWT tidak boleh mensyaratkan masa percobaan. Jangka waktu PKWT maksimal 2 tahun dan hanya boleh diperpanjang 1 kali untuk paling lama 1 tahun. Jika ketentuan dilanggar, PKWT otomatis menjadi Perjanjian Kerja Waktu Tidak Tertentu (PKWTT) atau pekerja tetap (Pasal 59 UU 13/2003).",
       },
     ],
   },

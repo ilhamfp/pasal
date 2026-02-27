@@ -6,6 +6,7 @@ import { BookOpen, Database, FileText, MessageSquare, Quote, Scale, Search, Shie
 import { getAlternates } from "@/lib/i18n-metadata";
 import nextDynamic from "next/dynamic";
 import Header from "@/components/Header";
+import JsonLd from "@/components/JsonLd";
 import CopyButton from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -48,9 +49,10 @@ export default async function ConnectPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale as Locale);
 
-  const [t, commonT] = await Promise.all([
+  const [t, commonT, navT] = await Promise.all([
     getTranslations("connect"),
     getTranslations("common"),
+    getTranslations("navigation"),
   ]);
 
   const steps = [
@@ -78,6 +80,14 @@ export default async function ConnectPage({ params }: PageProps) {
   return (
     <div className="min-h-screen">
       <Header />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: navT("home"), item: "https://pasal.id" },
+          { "@type": "ListItem", position: 2, name: t("pageTitle") },
+        ],
+      }} />
 
       <main className="container mx-auto px-4 py-12">
         {/* Two-column hero: instructions + demo side by side */}
