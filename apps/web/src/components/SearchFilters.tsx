@@ -28,6 +28,7 @@ function CheckboxPopover({
   placeholder,
   selectedLabel,
   ariaLabel,
+  popoverClassName,
 }: {
   options: { value: string; label: string; count?: number }[];
   selected: string[];
@@ -35,6 +36,7 @@ function CheckboxPopover({
   placeholder: string;
   selectedLabel: string;
   ariaLabel: string;
+  popoverClassName?: string;
 }) {
   const displayLabel =
     selected.length === 0
@@ -63,7 +65,7 @@ function CheckboxPopover({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] min-w-56 max-h-72 overflow-y-auto overscroll-contain p-1"
+        className={cn("w-[var(--radix-popover-trigger-width)] min-w-56 max-h-72 overflow-y-auto overscroll-contain p-1", popoverClassName)}
       >
         <div role="group" aria-label={ariaLabel}>
           {options.map((option) => {
@@ -75,11 +77,11 @@ function CheckboxPopover({
                 role="menuitemcheckbox"
                 aria-checked={isSelected}
                 onClick={() => onToggle(option.value)}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none motion-safe:transition-colors"
+                className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-sm text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none motion-safe:transition-colors"
               >
                 <span
                   className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                    "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                     isSelected
                       ? "bg-primary border-primary text-primary-foreground"
                       : "border-border",
@@ -87,7 +89,7 @@ function CheckboxPopover({
                 >
                   {isSelected && <Check className="h-3 w-3" aria-hidden="true" />}
                 </span>
-                <span className="break-words">{option.label}</span>
+                <span className="min-w-0 break-words">{option.label}</span>
                 {option.count != null && option.count > 0 && (
                   <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
                     {option.count}
@@ -188,6 +190,7 @@ export default function SearchFilters({
         placeholder={t("allTypes")}
         selectedLabel={t("typesSelected", { count: selectedTypes.length })}
         ariaLabel={t("typeLabel")}
+        popoverClassName="sm:min-w-80"
       />
 
       {/* Year input */}
