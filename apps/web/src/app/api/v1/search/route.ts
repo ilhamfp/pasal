@@ -18,6 +18,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const q = searchParams.get("q");
   const type = searchParams.get("type");
   const year = searchParams.get("year");
+  const yearFrom = searchParams.get("year_from");
   const status = searchParams.get("status");
   const limitParam = searchParams.get("limit");
   const limit = Math.min(Math.max(parseInt(limitParam || "10"), 1), 50);
@@ -29,9 +30,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  if (year && (!/^\d{4}$/.test(year) || parseInt(year) < 1945)) {
+  const currentYear = new Date().getFullYear();
+
+  if (year && (!/^\d{4}$/.test(year) || parseInt(year) < 1945 || parseInt(year) > currentYear)) {
     return NextResponse.json(
-      { error: "Invalid year parameter. Must be a 4-digit year >= 1945." },
+      { error: `Invalid year parameter. Must be a 4-digit year between 1945 and ${currentYear}.` },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  if (yearFrom && (!/^\d{4}$/.test(yearFrom) || parseInt(yearFrom) < 1945 || parseInt(yearFrom) > currentYear)) {
+    return NextResponse.json(
+      { error: `Invalid year_from parameter. Must be a 4-digit year between 1945 and ${currentYear}.` },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  if (year && yearFrom) {
+    return NextResponse.json(
+      { error: "Cannot use both year and year_from. Use year for exact match or year_from for range." },
       { status: 400, headers: CORS_HEADERS },
     );
   }
@@ -69,6 +86,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const metadataFilter: Record<string, string> = {};
   if (type) metadataFilter.type = type.toUpperCase();
   if (year) metadataFilter.year = year;
+  if (yearFrom) metadataFilter.year_from = yearFrom;
   if (status) metadataFilter.status = status.toLowerCase();
 
   // Over-fetch to account for grouping collapse

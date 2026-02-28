@@ -78,7 +78,7 @@
     "typeLabel": "Filter jenis peraturan",
     "allTypes": "Semua Jenis",
     "yearLabel": "Filter tahun",
-    "yearPlaceholder": "Tahun",
+    "yearPlaceholder": "Tahun…",
     "statusLabel": "Filter status",
     "allStatus": "Semua Status",
     "statusActive": "Berlaku",
@@ -87,7 +87,15 @@
     "statusNotInForce": "Tidak Berlaku",
     "typesSelected": "{count} jenis dipilih",
     "statusesSelected": "{count} status dipilih",
-    "clearFilters": "Hapus filter"
+    "allYears": "Semua Tahun",
+    "last5Years": "5 tahun terakhir",
+    "last10Years": "10 tahun terakhir",
+    "last20Years": "20 tahun terakhir",
+    "specificYear": "Tahun tertentu...",
+    "sinceYear": "Sejak tahun...",
+    "sinceYearDisplay": "Sejak {year}",
+    "clearFilters": "Hapus filter",
+    "applyYear": "Terapkan"
   },
   "reader": {
     "readFullText": "Baca teks lengkap {ref} tentang {title}.",

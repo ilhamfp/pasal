@@ -27,7 +27,7 @@ export default function CopyButton({
     <Button
       variant="ghost"
       size="sm"
-      className="text-xs h-7"
+      className="text-xs h-9 sm:h-7"
       onClick={handleCopy}
     >
       <span aria-live="polite" className="flex items-center gap-1">

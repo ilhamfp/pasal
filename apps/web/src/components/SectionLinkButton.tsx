@@ -15,7 +15,7 @@ export default function SectionLinkButton({ url }: { url: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-muted-foreground hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring no-print"
+      className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-2 sm:p-1 rounded text-muted-foreground hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring no-print"
       aria-label="Salin link bagian ini"
     >
       <span aria-live="polite">

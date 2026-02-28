@@ -95,13 +95,13 @@ export default function ReaderLayout({
 
       {/* 3-column grid: TOC | content | sidebar/PDF */}
       <div
-        className={`grid grid-cols-1 gap-8 transition-[grid-template-columns] duration-300 ease-in-out ${
+        className={`grid grid-cols-1 gap-6 lg:gap-8 transition-[grid-template-columns] duration-300 ease-in-out ${
           showPdf
             ? "lg:grid-cols-[220px_1fr_1fr]"
             : "lg:grid-cols-[220px_1fr_280px]"
         }`}
       >
-        <aside>{toc}</aside>
+        <aside className="hidden lg:block">{toc}</aside>
 
         <main className="min-w-0">{content}</main>
 
@@ -152,7 +152,7 @@ export default function ReaderLayout({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="hidden lg:block sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
+              className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
             >
               {sidebar}
             </m.aside>

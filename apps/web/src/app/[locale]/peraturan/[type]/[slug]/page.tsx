@@ -496,23 +496,11 @@ export default async function LawDetailPage({ params }: PageProps) {
           { label: formatRegRef(type, work.number, work.year) },
         ]} />
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary">{type.toUpperCase()}</Badge>
-            <div className="ml-auto flex items-center gap-1 no-print">
-              <ShareButton
-                url={pageUrl}
-                title={`${formatRegRef(type, work.number, work.year)} — ${work.title_id}`}
-                description={`Baca teks lengkap ${formatRegRef(type, work.number, work.year, { label: "long" })}.`}
-              />
-            </div>
-          </div>
           <h1 className="font-heading text-2xl text-pretty mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
             {formatRegRef(type, work.number, work.year)}
           </p>
         </div>
-
-        <DisclaimerBanner className="mb-6 no-print" />
 
         <Suspense fallback={READER_SKELETON}>
           <LawReaderSection
@@ -523,6 +511,8 @@ export default async function LawDetailPage({ params }: PageProps) {
             pathname={pathname}
           />
         </Suspense>
+
+        <DisclaimerBanner className="mt-6 no-print" />
       </div>
     </div>
   );

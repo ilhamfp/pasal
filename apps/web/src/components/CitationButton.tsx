@@ -32,7 +32,7 @@ export default function CitationButton({ type, number, year, title, url }: Citat
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-xs h-7">
+        <Button variant="ghost" size="sm" className="text-xs h-9 sm:h-7">
           <Quote aria-hidden="true" className="h-3 w-3" />
           Kutip
         </Button>
@@ -42,7 +42,7 @@ export default function CitationButton({ type, number, year, title, url }: Citat
         <div className="rounded border bg-muted/50 p-3 text-sm leading-relaxed whitespace-pre-wrap mb-3">
           {citation}
         </div>
-        <Button size="sm" className="w-full text-xs h-7" onClick={handleCopy}>
+        <Button size="sm" className="w-full text-xs h-9 sm:h-7" onClick={handleCopy}>
           <span aria-live="polite" className="flex items-center gap-1">
             {copied ? (
               <>

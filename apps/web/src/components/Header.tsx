@@ -27,8 +27,8 @@ export default function Header({ showSearch = false, searchDefault, searchPreser
     <header className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 lg:gap-8 py-4 px-4 lg:px-6">
         <Link href="/" className="flex items-center gap-2 text-2xl font-heading shrink-0">
-          <PasalLogo size={32} />
-          <span>Pasal<span className="text-muted-foreground">.id</span></span>
+          <PasalLogo size={32} className={showSearch ? "hidden sm:inline" : undefined} />
+          <span className={showSearch ? "hidden sm:inline" : undefined}>Pasal<span className="text-muted-foreground">.id</span></span>
         </Link>
         {showSearch && (
           <div className="min-w-0 flex-1">

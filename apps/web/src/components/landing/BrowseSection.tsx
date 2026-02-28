@@ -44,7 +44,7 @@ export default async function BrowseSection() {
               <Link
                 key={type.id}
                 href={`/jelajahi/${type.code.toLowerCase()}`}
-                className="rounded-lg border bg-background p-5 hover:border-primary/30 transition-colors"
+                className="rounded-lg border bg-background p-4 hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <FileText className="h-5 w-5 text-primary/60" aria-hidden="true" />

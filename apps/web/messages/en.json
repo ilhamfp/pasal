@@ -78,7 +78,7 @@
     "typeLabel": "Filter regulation type",
     "allTypes": "All Types",
     "yearLabel": "Filter year",
-    "yearPlaceholder": "Year",
+    "yearPlaceholder": "Year…",
     "statusLabel": "Filter status",
     "allStatus": "All Status",
     "statusActive": "In Force",
@@ -87,7 +87,15 @@
     "statusNotInForce": "Not In Force",
     "typesSelected": "{count} types selected",
     "statusesSelected": "{count} statuses selected",
-    "clearFilters": "Clear filters"
+    "allYears": "All Years",
+    "last5Years": "Last 5 years",
+    "last10Years": "Last 10 years",
+    "last20Years": "Last 20 years",
+    "specificYear": "Specific year...",
+    "sinceYear": "Since year...",
+    "sinceYearDisplay": "Since {year}",
+    "clearFilters": "Clear filters",
+    "applyYear": "Apply"
   },
   "reader": {
     "readFullText": "Read the full text of {ref} regarding {title}.",

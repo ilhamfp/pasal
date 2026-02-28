@@ -20,6 +20,7 @@ import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
 import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 import { workSlug, workPath } from "@/lib/work-url";
 import { parseMultiParam } from "@/lib/multi-select-params";
+import { parseYearParam, yearParamToMetadataFilter } from "@/lib/year-filter";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -59,15 +60,24 @@ export async function generateMetadata({
   const { locale } = await localeParams;
   const params = await searchParams;
   const query = params.q;
-  const [t, statusT] = await Promise.all([
+  const [t, statusT, ft] = await Promise.all([
     getTranslations({ locale: locale as Locale, namespace: "search" }),
     getTranslations({ locale: locale as Locale, namespace: "status" }),
+    getTranslations({ locale: locale as Locale, namespace: "filters" }),
   ]);
 
   const parts: string[] = [];
   if (query) parts.push(`"${query}"`);
   if (params.type) parts.push(parseMultiParam(params.type).map((code) => code.toUpperCase()).join(", "));
-  if (params.year) parts.push(params.year);
+  if (params.year) {
+    if (params.year === "5y") parts.push(ft("last5Years"));
+    else if (params.year === "10y") parts.push(ft("last10Years"));
+    else if (params.year === "20y") parts.push(ft("last20Years"));
+    else {
+      const fromMatch = params.year.match(/^from:(\d{4})$/);
+      parts.push(fromMatch ? ft("sinceYearDisplay", { year: fromMatch[1] }) : params.year);
+    }
+  }
   if (params.status) parts.push(parseMultiParam(params.status).map(s => statusT(s as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")).join(", "));
 
   const suffix = parts.length > 0 ? parts.join(", ") : "";
@@ -131,7 +141,7 @@ async function SearchContent({
 
   const metadataFilter: Record<string, string> = {};
   if (filters.type) metadataFilter.type = filters.type.toUpperCase();
-  if (filters.year) metadataFilter.year = filters.year;
+  Object.assign(metadataFilter, yearParamToMetadataFilter(filters.year));
   if (filters.status) metadataFilter.status = filters.status.toLowerCase();
 
   const { data: chunks, error } = await supabase.rpc("search_legal_chunks", {
@@ -217,7 +227,6 @@ async function SearchContent({
     <>
       {filtersEl}
       <div className="space-y-4">
-        <DisclaimerBanner />
         <LegalContentLanguageNotice />
 
         <p className="text-sm text-muted-foreground">
@@ -284,6 +293,8 @@ async function SearchContent({
           pageUrl={(p) => buildPageUrl(query, filters, p)}
           labels={{ pagination: t("pagination"), previousPage: t("previousPage"), nextPage: t("nextPage") }}
         />
+
+        <DisclaimerBanner />
       </div>
     </>
   );
@@ -323,10 +334,9 @@ async function BrowseResults({ filters, page, regulationTypes }: BrowseResultsPr
     }
   }
   if (filters.year) {
-    const parsedYear = parseInt(filters.year);
-    if (!isNaN(parsedYear)) {
-      query = query.eq("year", parsedYear);
-    }
+    const parsed = parseYearParam(filters.year);
+    if (parsed?.type === "exact") query = query.eq("year", parsed.year);
+    else if (parsed?.type === "range") query = query.gte("year", parsed.yearFrom);
   }
   if (filters.status) {
     const statuses = parseMultiParam(filters.status);
@@ -350,8 +360,6 @@ async function BrowseResults({ filters, page, regulationTypes }: BrowseResultsPr
 
   return (
     <div className="space-y-4">
-      <DisclaimerBanner />
-
       <p className="text-sm text-muted-foreground">
         {t("showingResultsBrowse", { count: (count || 0).toLocaleString("id-ID") })}
         {totalPages > 1 && (
@@ -403,6 +411,8 @@ async function BrowseResults({ filters, page, regulationTypes }: BrowseResultsPr
         pageUrl={(p) => buildPageUrl(undefined, filters, p)}
         labels={{ pagination: t("pagination"), previousPage: t("previousPage"), nextPage: t("nextPage") }}
       />
+
+      <DisclaimerBanner />
     </div>
   );
 }
@@ -429,7 +439,7 @@ function Pagination({
         <Link
           href={pageUrl(currentPage - 1)}
           aria-label={labels.previousPage}
-          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
+          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </Link>
@@ -449,7 +459,7 @@ function Pagination({
             key={page}
             href={pageUrl(page)}
             aria-current={page === currentPage ? "page" : undefined}
-            className={`rounded-lg border px-3 py-2 text-sm motion-safe:transition-colors ${
+            className={`rounded-lg border px-3 py-2 text-sm motion-safe:transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
               page === currentPage
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card hover:border-primary/30"
@@ -464,7 +474,7 @@ function Pagination({
         <Link
           href={pageUrl(currentPage + 1)}
           aria-label={labels.nextPage}
-          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
+          className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Link>

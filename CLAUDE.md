@@ -13,7 +13,7 @@ Monorepo with three main pieces:
 | Web app | `apps/web/` | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, shadcn/ui |
 | MCP server | `apps/mcp-server/` | Python 3.12+, FastMCP, supabase-py |
 | Data pipeline | `scripts/` | Python — crawler, parser (PyMuPDF), loader, Gemini verification agent |
-| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 55 migrations (001–053, two 030s + two 039s) |
+| Database | `packages/supabase/migrations/` | Supabase (PostgreSQL), 56 migrations (001–055, two 030s + two 039s) |
 
 ### Key directories
 
@@ -120,7 +120,7 @@ Uses `next-intl` with `localePrefix: 'as-needed'`. Indonesian (default) has no U
 
 ### SQL migrations
 
-- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 054)
+- Numbered sequentially: `packages/supabase/migrations/NNN_description.sql` (next: 056)
 - Always glob `packages/supabase/migrations/*.sql` to verify the next number before creating a new migration.
 - Always add indexes for WHERE/JOIN/ORDER BY columns.
 - Always enable RLS on new tables. Add public read policy for legal data.
