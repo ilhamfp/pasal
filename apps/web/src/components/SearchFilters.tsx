@@ -87,7 +87,7 @@ function CheckboxPopover({
                 >
                   {isSelected && <Check className="h-3 w-3" aria-hidden="true" />}
                 </span>
-                <span className="truncate">{option.label}</span>
+                <span className="break-words">{option.label}</span>
                 {option.count != null && option.count > 0 && (
                   <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
                     {option.count}
