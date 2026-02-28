@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Link } from "@/i18n/routing";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/routing";
 import Header from "@/components/Header";
 import SearchFilters from "@/components/SearchFilters";
@@ -20,6 +19,7 @@ import type { ChunkResult } from "@/lib/group-search-results";
 import { groupChunksByWork, formatPasalList } from "@/lib/group-search-results";
 import { STATUS_COLORS, formatRegRef } from "@/lib/legal-status";
 import { workSlug, workPath } from "@/lib/work-url";
+import { parseMultiParam } from "@/lib/multi-select-params";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -66,9 +66,9 @@ export async function generateMetadata({
 
   const parts: string[] = [];
   if (query) parts.push(`"${query}"`);
-  if (params.type) parts.push(params.type.toUpperCase());
+  if (params.type) parts.push(parseMultiParam(params.type).map((code) => code.toUpperCase()).join(", "));
   if (params.year) parts.push(params.year);
-  if (params.status) parts.push(statusT(params.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku"));
+  if (params.status) parts.push(parseMultiParam(params.status).map(s => statusT(s as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")).join(", "));
 
   const suffix = parts.length > 0 ? parts.join(", ") : "";
 
@@ -111,22 +111,28 @@ function buildPageUrl(query: string | undefined, filters: FilterParams, page: nu
   return `/search?${params.toString()}`;
 }
 
-// -- Search mode: query text + optional filters --
-interface SearchResultsProps {
+// -- Search mode: query text + optional filters, co-located with filters for type counts --
+async function SearchContent({
+  query,
+  filters,
+  page,
+  regulationTypes,
+}: {
   query: string;
   filters: FilterParams;
   page: number;
-}
-
-async function SearchResults({ query, filters, page }: SearchResultsProps) {
-  const t = await getTranslations("search");
-  const statusT = await getTranslations("status");
-  const supabase = await createClient();
+  regulationTypes: { id?: number; code: string; name_id: string }[];
+}) {
+  const [t, statusT, supabase] = await Promise.all([
+    getTranslations("search"),
+    getTranslations("status"),
+    createClient(),
+  ]);
 
   const metadataFilter: Record<string, string> = {};
   if (filters.type) metadataFilter.type = filters.type.toUpperCase();
   if (filters.year) metadataFilter.year = filters.year;
-  if (filters.status) metadataFilter.status = filters.status;
+  if (filters.status) metadataFilter.status = filters.status.toLowerCase();
 
   const { data: chunks, error } = await supabase.rpc("search_legal_chunks", {
     query_text: query,
@@ -134,28 +140,56 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
     metadata_filter: metadataFilter,
   });
 
+  // Compute type counts from grouped results
+  const typeCounts: Record<string, number> = {};
+  const grouped = !error && chunks && chunks.length > 0
+    ? groupChunksByWork(chunks as ChunkResult[])
+    : [];
+
+  for (const group of grouped) {
+    const typeCode = (group.bestChunk.metadata as Record<string, unknown>)?.type as string;
+    if (typeCode) typeCounts[typeCode] = (typeCounts[typeCode] || 0) + 1;
+  }
+
+  const filtersEl = (
+    <div className="mb-6">
+      <SearchFilters
+        regulationTypes={regulationTypes}
+        typeCounts={Object.keys(typeCounts).length > 0 ? typeCounts : undefined}
+        currentType={filters.type}
+        currentYear={filters.year}
+        currentStatus={filters.status}
+        currentQuery={query}
+      />
+    </div>
+  );
+
   if (error) {
     console.error("Search error:", error);
     return (
-      <div className="rounded-lg border border-destructive p-4 text-destructive">
-        {t("errorMessage")}
-      </div>
+      <>
+        {filtersEl}
+        <div className="rounded-lg border border-destructive p-4 text-destructive">
+          {t("errorMessage")}
+        </div>
+      </>
     );
   }
 
-  if (!chunks || chunks.length === 0) {
+  if (grouped.length === 0) {
     return (
-      <div className="rounded-lg border p-8 text-center">
-        <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
-        <p className="text-lg font-medium">{t("noResults", { query })}</p>
-        <p className="mt-2 text-muted-foreground">
-          {t("noResultsSuggestion")}
-        </p>
-      </div>
+      <>
+        {filtersEl}
+        <div className="rounded-lg border p-8 text-center">
+          <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
+          <p className="text-lg font-medium">{t("noResults", { query })}</p>
+          <p className="mt-2 text-muted-foreground">
+            {t("noResultsSuggestion")}
+          </p>
+        </div>
+      </>
     );
   }
-
-  const grouped = groupChunksByWork(chunks as ChunkResult[]);
 
   const totalResults = grouped.length;
   const totalPages = Math.ceil(totalResults / PAGE_SIZE);
@@ -180,74 +214,78 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <DisclaimerBanner />
-      <LegalContentLanguageNotice />
+    <>
+      {filtersEl}
+      <div className="space-y-4">
+        <DisclaimerBanner />
+        <LegalContentLanguageNotice />
 
-      <p className="text-sm text-muted-foreground">
-        {t("showingResults", { total: totalResults, query })}
-        {totalPages > 1 && (
-          <> · {t("pageInfo", { current: currentPage, total: totalPages })}</>
-        )}
-      </p>
+        <p className="text-sm text-muted-foreground">
+          {t("showingResults", { total: totalResults, query })}
+          {totalPages > 1 && (
+            <> · {t("pageInfo", { current: currentPage, total: totalPages })}</>
+          )}
+        </p>
 
-      <StaggeredList className="space-y-4">
-        {pageResults.map((group) => {
-          const work = worksMap.get(group.work_id);
-          if (!work) return null;
+        <StaggeredList className="space-y-4">
+          {pageResults.map((group) => {
+            const work = worksMap.get(group.work_id);
+            if (!work) return null;
 
-          const regType = getRegTypeCode(work.regulation_types);
-          const slug = workSlug(work, regType);
-          const rawSnippet = group.bestChunk.snippet || group.bestChunk.content.split("\n").slice(2).join(" ").slice(0, 250);
-          const snippetHtml = sanitizeSnippet(rawSnippet);
-          const pasalLabel = formatPasalList(group.matchingPasals);
+            const regType = getRegTypeCode(work.regulation_types);
+            const slug = workSlug(work, regType);
+            const rawSnippet = group.bestChunk.snippet || group.bestChunk.content.split("\n").slice(2).join(" ").slice(0, 250);
+            const snippetHtml = sanitizeSnippet(rawSnippet);
+            const pasalLabel = formatPasalList(group.matchingPasals);
 
-          return (
-            <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
-              <Card className="hover:border-primary/50 motion-safe:transition-colors cursor-pointer">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary">{regType}</Badge>
-                    <CardTitle className="text-base">
-                      {formatRegRef(regType, work.number, work.year, { label: "compact" })}
-                    </CardTitle>
-                    <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
-                      {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
-                    </Badge>
-                    {group.totalChunks > 1 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {t("matchingParts", { count: group.totalChunks })}
+            return (
+              <Link key={group.work_id} href={`/peraturan/${regType.toLowerCase()}/${slug}`}>
+                <Card className="hover:border-primary/50 motion-safe:transition-colors cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary">{regType}</Badge>
+                      <CardTitle className="text-base">
+                        {formatRegRef(regType, work.number, work.year, { label: "compact" })}
+                      </CardTitle>
+                      <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
+                        {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                       </Badge>
+                      {group.totalChunks > 1 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {t("matchingParts", { count: group.totalChunks })}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {work.title_id}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {pasalLabel && (
+                      <p className="text-sm font-medium mb-1">{pasalLabel}</p>
                     )}
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    {work.title_id}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {pasalLabel && (
-                    <p className="text-sm font-medium mb-1">{pasalLabel}</p>
-                  )}
-                  <p
-                    className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
-                    dangerouslySetInnerHTML={{ __html: snippetHtml }}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t("relevanceLabel")}: {formatRelevance(group.bestScore)}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </StaggeredList>
+                    <p
+                      className="text-sm text-muted-foreground line-clamp-3 [&_mark]:bg-primary/15 [&_mark]:text-foreground [&_mark]:rounded-sm [&_mark]:px-0.5"
+                      dangerouslySetInnerHTML={{ __html: snippetHtml }}
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t("relevanceLabel")}: {formatRelevance(group.bestScore)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </StaggeredList>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageUrl={(p) => buildPageUrl(query, filters, p)}
-      />
-    </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageUrl={(p) => buildPageUrl(query, filters, p)}
+          labels={{ pagination: t("pagination"), previousPage: t("previousPage"), nextPage: t("nextPage") }}
+        />
+      </div>
+    </>
   );
 }
 
@@ -255,12 +293,15 @@ async function SearchResults({ query, filters, page }: SearchResultsProps) {
 interface BrowseResultsProps {
   filters: FilterParams;
   page: number;
+  regulationTypes: { id: number; code: string; name_id: string }[];
 }
 
-async function BrowseResults({ filters, page }: BrowseResultsProps) {
-  const t = await getTranslations("search");
-  const statusT = await getTranslations("status");
-  const supabase = await createClient();
+async function BrowseResults({ filters, page, regulationTypes }: BrowseResultsProps) {
+  const [t, statusT, supabase] = await Promise.all([
+    getTranslations("search"),
+    getTranslations("status"),
+    createClient(),
+  ]);
 
   const currentPage = Math.max(page, 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
@@ -273,13 +314,12 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (filters.type) {
-    const { data: regType } = await supabase
-      .from("regulation_types")
-      .select("id")
-      .eq("code", filters.type.toUpperCase())
-      .single();
-    if (regType) {
-      query = query.eq("regulation_type_id", regType.id);
+    const typeCodes = parseMultiParam(filters.type).map((code) => code.toUpperCase());
+    const typeIds = regulationTypes
+      .filter((rt) => typeCodes.includes(rt.code))
+      .map((rt) => rt.id);
+    if (typeIds.length > 0) {
+      query = query.in("regulation_type_id", typeIds);
     }
   }
   if (filters.year) {
@@ -289,7 +329,8 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
     }
   }
   if (filters.status) {
-    query = query.eq("status", filters.status);
+    const statuses = parseMultiParam(filters.status);
+    query = query.in("status", statuses);
   }
 
   const { data: works, count } = await query;
@@ -360,31 +401,34 @@ async function BrowseResults({ filters, page }: BrowseResultsProps) {
         currentPage={currentPage}
         totalPages={totalPages}
         pageUrl={(p) => buildPageUrl(undefined, filters, p)}
+        labels={{ pagination: t("pagination"), previousPage: t("previousPage"), nextPage: t("nextPage") }}
       />
     </div>
   );
 }
 
 // -- Shared pagination component --
+// Accepts pre-translated labels as props so it can be rendered from async Server Components
+// without needing useTranslations (which is unsafe in async component subtrees).
 function Pagination({
   currentPage,
   totalPages,
   pageUrl,
+  labels,
 }: {
   currentPage: number;
   totalPages: number;
   pageUrl: (p: number) => string;
+  labels: { pagination: string; previousPage: string; nextPage: string };
 }) {
-  const t = useTranslations("search");
-
   if (totalPages <= 1) return null;
 
   return (
-    <nav aria-label={t("pagination")} className="flex items-center justify-center gap-2 mt-8">
+    <nav aria-label={labels.pagination} className="flex items-center justify-center gap-2 mt-8">
       {currentPage > 1 && (
         <Link
           href={pageUrl(currentPage - 1)}
-          aria-label={t("previousPage")}
+          aria-label={labels.previousPage}
           className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -419,7 +463,7 @@ function Pagination({
       {currentPage < totalPages && (
         <Link
           href={pageUrl(currentPage + 1)}
-          aria-label={t("nextPage")}
+          aria-label={labels.nextPage}
           className="rounded-lg border bg-card px-3 py-2 text-sm hover:border-primary/30 motion-safe:transition-colors"
         >
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -438,8 +482,13 @@ export default async function SearchPage({
 }) {
   const { locale } = await localeParams;
   setRequestLocale(locale as Locale);
-  const t = await getTranslations({ locale: locale as Locale, namespace: "search" });
-  const params = await searchParams;
+
+  const [t, params, supabase] = await Promise.all([
+    getTranslations({ locale: locale as Locale, namespace: "search" }),
+    searchParams,
+    createClient(),
+  ]);
+
   const query = params.q || "";
   const type = params.type;
   const year = params.year;
@@ -455,11 +504,10 @@ export default async function SearchPage({
   if (year) preserveParams.year = year;
   if (status) preserveParams.status = status;
 
-  // Fetch regulation types for the filter dropdown
-  const supabase = await createClient();
+  // Fetch regulation types for the filter dropdown (also passed to BrowseResults to avoid redundant query)
   const { data: regulationTypes } = await supabase
     .from("regulation_types")
-    .select("code, name_id")
+    .select("id, code, name_id")
     .order("hierarchy_level", { ascending: true });
 
   return (
@@ -468,35 +516,68 @@ export default async function SearchPage({
 
       <main className="container mx-auto max-w-3xl px-4 py-8">
         <h1 className="sr-only">{t("title")}</h1>
-        {/* Filters */}
-        <div className="mb-6">
-          <SearchFilters
-            regulationTypes={regulationTypes || []}
-            currentType={type}
-            currentYear={year}
-            currentStatus={status}
-            currentQuery={query || undefined}
-          />
-        </div>
 
         {query ? (
-          /* Search mode: text query + optional filters */
-          <Suspense fallback={SEARCH_SKELETON}>
-            <SearchResults query={query} filters={filters} page={page} />
+          /* Search mode: filters + results co-located inside Suspense for type counts */
+          <Suspense
+            key={`search-${query}-${type}-${year}-${status}-${page}`}
+            fallback={
+              <>
+                <div className="mb-6">
+                  <SearchFilters
+                    regulationTypes={regulationTypes || []}
+                    currentType={type}
+                    currentYear={year}
+                    currentStatus={status}
+                    currentQuery={query || undefined}
+                  />
+                </div>
+                {SEARCH_SKELETON}
+              </>
+            }
+          >
+            <SearchContent
+              query={query}
+              filters={filters}
+              page={page}
+              regulationTypes={regulationTypes || []}
+            />
           </Suspense>
         ) : hasFilters ? (
           /* Browse mode: no text, but filters applied */
-          <Suspense fallback={BROWSE_LIST_SKELETON}>
-            <BrowseResults filters={filters} page={page} />
-          </Suspense>
+          <>
+            <div className="mb-6">
+              <SearchFilters
+                regulationTypes={regulationTypes || []}
+                currentType={type}
+                currentYear={year}
+                currentStatus={status}
+                currentQuery={query || undefined}
+              />
+            </div>
+            <Suspense key={`browse-${type}-${year}-${status}-${page}`} fallback={BROWSE_LIST_SKELETON}>
+              <BrowseResults filters={filters} page={page} regulationTypes={regulationTypes || []} />
+            </Suspense>
+          </>
         ) : (
           /* Empty state: no query and no filters */
-          <div className="text-center py-16">
-            <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
-            <p className="text-lg text-muted-foreground">
-              {t("emptyState")}
-            </p>
-          </div>
+          <>
+            <div className="mb-6">
+              <SearchFilters
+                regulationTypes={regulationTypes || []}
+                currentType={type}
+                currentYear={year}
+                currentStatus={status}
+                currentQuery={query || undefined}
+              />
+            </div>
+            <div className="text-center py-16">
+              <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
+              <p className="text-lg text-muted-foreground">
+                {t("emptyState")}
+              </p>
+            </div>
+          </>
         )}
       </main>
     </div>

@@ -5,6 +5,7 @@ import type { ChunkResult } from "@/lib/group-search-results";
 import { groupChunksByWork } from "@/lib/group-search-results";
 import { CORS_HEADERS } from "@/lib/api/cors";
 import { checkRateLimit } from "@/lib/api/rate-limit";
+import { parseMultiParam } from "@/lib/multi-select-params";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return NextResponse.json(null, { headers: CORS_HEADERS });
@@ -36,11 +37,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const VALID_STATUSES = ["berlaku", "diubah", "dicabut", "tidak_berlaku"];
-  if (status && !VALID_STATUSES.includes(status.toLowerCase())) {
-    return NextResponse.json(
-      { error: "Invalid status parameter. Must be one of: berlaku, diubah, dicabut, tidak_berlaku." },
-      { status: 400, headers: CORS_HEADERS },
-    );
+  if (status) {
+    const statusValues = parseMultiParam(status);
+    const invalidStatuses = statusValues.filter((s) => !VALID_STATUSES.includes(s.toLowerCase()));
+    if (invalidStatuses.length > 0) {
+      return NextResponse.json(
+        { error: `Invalid status value(s): ${invalidStatuses.join(", ")}. Must be one of: berlaku, diubah, dicabut, tidak_berlaku.` },
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
   }
 
   const VALID_TYPES = [
@@ -49,11 +54,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     "PERDA_PROV", "PERDA_KAB", "KEPMEN", "SE", "TAP_MPR", "PERMA",
     "PBI", "UUDRT", "UUDS", "UUD",
   ];
-  if (type && !VALID_TYPES.includes(type.toUpperCase())) {
-    return NextResponse.json(
-      { error: "Invalid type parameter. See /api documentation for valid regulation types." },
-      { status: 400, headers: CORS_HEADERS },
-    );
+  if (type) {
+    const typeValues = parseMultiParam(type);
+    const invalidTypes = typeValues.filter((t) => !VALID_TYPES.includes(t.toUpperCase()));
+    if (invalidTypes.length > 0) {
+      return NextResponse.json(
+        { error: `Invalid type value(s): ${invalidTypes.join(", ")}. See /api documentation for valid regulation types.` },
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
   }
 
   const supabase = await createClient();

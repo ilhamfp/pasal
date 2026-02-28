@@ -84,6 +84,9 @@
     "statusActive": "Berlaku",
     "statusAmended": "Diubah",
     "statusRevoked": "Dicabut",
+    "statusNotInForce": "Tidak Berlaku",
+    "typesSelected": "{count} jenis dipilih",
+    "statusesSelected": "{count} status dipilih",
     "clearFilters": "Hapus filter"
   },
   "reader": {

@@ -84,6 +84,9 @@
     "statusActive": "In Force",
     "statusAmended": "Amended",
     "statusRevoked": "Revoked",
+    "statusNotInForce": "Not In Force",
+    "typesSelected": "{count} types selected",
+    "statusesSelected": "{count} statuses selected",
     "clearFilters": "Clear filters"
   },
   "reader": {
