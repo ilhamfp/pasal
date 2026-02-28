@@ -84,7 +84,7 @@ function citationToSlugKey(citation: string): string | null {
  * Tokenizes `text` into an array of plain-text and link tokens.
  *
  * @param text        The raw content_text of a document node
- * @param worksLookup Map of slug key → absolute pathname, e.g. { "uu-no-13-tahun-2003": "/peraturan/uu/uu-no-13-tahun-2003" }
+ * @param worksLookup Map of slug key → absolute pathname, e.g. { "uu-13-2003": "/peraturan/uu/uu-13-2003" }
  */
 export function tokenize(text: string, worksLookup: Record<string, string>): Token[] {
   if (!text) return [{ type: "text", value: "" }];
