@@ -301,7 +301,7 @@ async function LawReaderSection({
 
   const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
 
-  // Build a set of structural node IDs that have at least one pasal child.
+  // Build a set of structural node IDs that have at least one pasal child (at any depth).
   // Used to skip empty structural nodes (e.g. TOC entries parsed as BAB nodes).
   const structuralIdsWithPasals = new Set(
     (pasalParentIds || []).map((r) => r.parent_id).filter(Boolean),
@@ -310,6 +310,25 @@ async function LawReaderSection({
   // Build tree structure
   const allStructuralNodes = structuralNodes || [];
   const allPasals = pasalNodes || [];
+
+  // Pre-build a parent→children map for O(n) descendant traversal.
+  const structuralChildrenMap = new Map<number, number[]>();
+  for (const n of allStructuralNodes) {
+    if (n.parent_id !== null) {
+      const siblings = structuralChildrenMap.get(n.parent_id) ?? [];
+      siblings.push(n.id);
+      structuralChildrenMap.set(n.parent_id, siblings);
+    }
+  }
+
+  /** Returns true if nodeId or any of its structural descendants has a pasal. */
+  function hasDescendantPasal(nodeId: number): boolean {
+    if (structuralIdsWithPasals.has(nodeId)) return true;
+    for (const childId of structuralChildrenMap.get(nodeId) ?? []) {
+      if (hasDescendantPasal(childId)) return true;
+    }
+    return false;
+  }
 
   // Filter out structural nodes (BABs, Bagians) that have no pasal content in the DB.
   // This removes table-of-contents entries that the parser mistakenly captures as structural
@@ -320,15 +339,9 @@ async function LawReaderSection({
   const babNodes = allStructuralNodes.filter((node) => {
     // Keep sub-sections unconditionally — they're filtered indirectly via their parent BAB.
     if (node.parent_id !== null) return true;
-    // For top-level structural nodes, keep only those that have at least one pasal
-    // directly or through any of their direct children (Bagian/Paragraf).
-    const childIds = new Set(
-      allStructuralNodes.filter((n) => n.parent_id === node.id).map((n) => n.id),
-    );
-    return (
-      structuralIdsWithPasals.has(node.id) ||
-      [...childIds].some((id) => structuralIdsWithPasals.has(id))
-    );
+    // For top-level structural nodes, keep only those with at least one pasal at any depth
+    // (handles BAB → Bagian → Paragraf → Pasal nesting, not just direct children).
+    return hasDescendantPasal(node.id);
   });
 
   const mainContent = (
