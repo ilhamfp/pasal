@@ -226,7 +226,7 @@ async function LawReaderSection({
   const supabase = await createClient();
 
   // Fire all initial queries in parallel (1 RTT instead of 2)
-  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }] = await Promise.all([
+  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }, { data: pasalParentIds }] = await Promise.all([
     supabase
       .from("document_nodes")
       .select("id", { count: "exact", head: true })
@@ -250,6 +250,15 @@ async function LawReaderSection({
       .select("*, relationship_types(code, name_id, name_en)")
       .or(`source_work_id.eq.${workId},target_work_id.eq.${workId}`)
       .order("id"),
+    // Lightweight query: just parent_id values for all pasals, used to filter
+    // structural nodes (BABs, Bagians) that have no pasal content — these are
+    // typically table-of-contents entries parsed as structural nodes.
+    supabase
+      .from("document_nodes")
+      .select("parent_id")
+      .eq("work_id", workId)
+      .eq("node_type", "pasal")
+      .not("parent_id", "is", null),
   ]);
 
   // Structured laws must always load all pasals SSR so the BAB-grouping logic has the
@@ -292,19 +301,46 @@ async function LawReaderSection({
 
   const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
 
+  // Build a set of structural node IDs that have at least one pasal child.
+  // Used to skip empty structural nodes (e.g. TOC entries parsed as BAB nodes).
+  const structuralIdsWithPasals = new Set(
+    (pasalParentIds || []).map((r) => r.parent_id).filter(Boolean),
+  );
+
   // Build tree structure
-  const babNodes = structuralNodes || [];
+  const allStructuralNodes = structuralNodes || [];
   const allPasals = pasalNodes || [];
+
+  // Filter out structural nodes (BABs, Bagians) that have no pasal content in the DB.
+  // This removes table-of-contents entries that the parser mistakenly captures as structural
+  // nodes — common in ratification laws (e.g. UU 6/2023) where the attached law's TOC
+  // appears verbatim and gets parsed as BAB markers without any associated Pasal content.
+  // Only top-level structural nodes (BAB / aturan / lampiran — those without a parent) are
+  // filtered; sub-sections (Bagian, Paragraf) are kept as-is under their parent BAB.
+  const babNodes = allStructuralNodes.filter((node) => {
+    // Keep sub-sections unconditionally — they're filtered indirectly via their parent BAB.
+    if (node.parent_id !== null) return true;
+    // For top-level structural nodes, keep only those that have at least one pasal
+    // directly or through any of their direct children (Bagian/Paragraf).
+    const childIds = new Set(
+      allStructuralNodes.filter((n) => n.parent_id === node.id).map((n) => n.id),
+    );
+    return (
+      structuralIdsWithPasals.has(node.id) ||
+      [...childIds].some((id) => structuralIdsWithPasals.has(id))
+    );
+  });
 
   const mainContent = (
     <>
       {babNodes.length > 0 ? (
         babNodes.map((bab) => {
-          // Filter pasals for this BAB
-          const directPasals = allPasals.filter((p) => p.parent_id === bab.id);
+          // Find direct sub-sections (Bagian/Paragraf) of this BAB
           const subSectionIds = new Set(
             babNodes.filter((n) => n.parent_id === bab.id).map((n) => n.id),
           );
+          // Filter pasals for this BAB
+          const directPasals = allPasals.filter((p) => p.parent_id === bab.id);
           const nestedPasals = allPasals.filter(
             (p) => subSectionIds.has(p.parent_id ?? -1),
           );
