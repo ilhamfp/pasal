@@ -252,13 +252,12 @@ async function LawReaderSection({
       .order("id"),
   ]);
 
-  // Structured (BAB-based) laws must always load all pasals SSR so the BAB-grouping
-  // logic has the full set. Only use client-side infinite scroll for flat laws (no BABs)
-  // with a large pasal count.
-  const hasBABs = (structure || []).some(
-    (n) => n.node_type === "bab" || n.node_type === "aturan" || n.node_type === "lampiran",
-  );
-  const usePagination = (totalPasalCount || 0) >= 100 && !hasBABs;
+  // Structured laws must always load all pasals SSR so the BAB-grouping logic has the
+  // full set. Only use client-side infinite scroll for flat laws (no structural nodes)
+  // with a large pasal count. Check all node types that trigger the tree-rendering path:
+  // bab, aturan, lampiran, bagian, paragraf.
+  const hasStructure = (structure || []).length > 0;
+  const usePagination = (totalPasalCount || 0) >= 100 && !hasStructure;
   const structuralNodes = structure;
   let pasalNodes = initialPasals;
   const relationships = rels;
