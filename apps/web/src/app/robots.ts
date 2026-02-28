@@ -20,9 +20,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    // generateSitemaps() creates individual sitemaps at /sitemap/{id}.xml.
-    // List them here since Next.js 16 doesn't auto-generate a sitemap index.
-    // Crawlers ignore 404s, so a generous upper bound is safe.
-    sitemap: Array.from({ length: 20 }, (_, i) => `https://pasal.id/sitemap/${i}.xml`),
+    sitemap: "https://pasal.id/sitemap.xml",
   };
 }
