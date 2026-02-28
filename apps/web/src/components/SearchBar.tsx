@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { m } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +20,6 @@ export default function SearchBar({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(defaultValue);
-  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     if (autoFocus && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
@@ -39,11 +37,9 @@ export default function SearchBar({
   }
 
   return (
-    <m.form
+    <form
       onSubmit={handleSubmit}
       className="flex w-full max-w-2xl gap-2"
-      animate={{ scale: isFocused ? 1.02 : 1 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <Input
         type="search"
@@ -54,12 +50,10 @@ export default function SearchBar({
         onChange={(e) => setQuery(e.target.value)}
         className="h-12 text-base"
         ref={inputRef}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
       />
       <Button type="submit" size="lg" className="h-12 px-6">
         {navT("search")}
       </Button>
-    </m.form>
+    </form>
   );
 }
