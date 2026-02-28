@@ -226,7 +226,7 @@ async function LawReaderSection({
   const supabase = await createClient();
 
   // Fire all initial queries in parallel (1 RTT instead of 2)
-  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }] = await Promise.all([
+  const [{ count: totalPasalCount }, { data: structure }, { data: initialPasals }, { data: rels }, { data: pasalParentIds }, { data: worksData }] = await Promise.all([
     supabase
       .from("document_nodes")
       .select("id", { count: "exact", head: true })
@@ -250,14 +250,42 @@ async function LawReaderSection({
       .select("*, relationship_types(code, name_id, name_en)")
       .or(`source_work_id.eq.${workId},target_work_id.eq.${workId}`)
       .order("id"),
+    // Lightweight query: just parent_id values for all pasals, used to filter
+    // structural nodes (BABs, Bagians) that have no pasal content — these are
+    // typically table-of-contents entries parsed as structural nodes.
+    supabase
+      .from("document_nodes")
+      .select("parent_id")
+      .eq("work_id", workId)
+      .eq("node_type", "pasal")
+      .not("parent_id", "is", null),
+    supabase
+      .from("works")
+      .select<string, { slug: string | null; regulation_types: { code: string } | { code: string }[] }>("slug, regulation_types!inner(code)")
+      .not("slug", "is", null),
   ]);
 
-  const usePagination = (totalPasalCount || 0) >= 100;
+  // Build cross-reference lookup: "uu-13-2003" → "/peraturan/uu/uu-13-2003"
+  const worksLookup: Record<string, string> = {};
+  for (const w of worksData ?? []) {
+    const rt = (Array.isArray(w.regulation_types) ? w.regulation_types[0] : w.regulation_types) as { code: string } | null;
+    if (w.slug && rt?.code) {
+      const typeCode = rt.code.toLowerCase();
+      worksLookup[w.slug] = `/peraturan/${typeCode}/${w.slug}`;
+    }
+  }
+
+  // Structured laws must always load all pasals SSR so the BAB-grouping logic has the
+  // full set. Only use client-side infinite scroll for flat laws (no structural nodes)
+  // with a large pasal count. Check all node types that trigger the tree-rendering path:
+  // bab, aturan, lampiran, bagian, paragraf.
+  const hasStructure = (structure || []).length > 0;
+  const usePagination = (totalPasalCount || 0) >= 100 && !hasStructure;
   const structuralNodes = structure;
   let pasalNodes = initialPasals;
   const relationships = rels;
 
-  // For small documents with >30 pasals, fetch the rest
+  // For documents with >30 pasals not using client-side pagination, fetch the rest SSR
   if (!usePagination && (totalPasalCount || 0) > 30) {
     const { data: remaining } = await supabase
       .from("document_nodes")
@@ -287,19 +315,60 @@ async function LawReaderSection({
 
   const pageUrl = `https://pasal.id/peraturan/${type.toLowerCase()}/${slug}`;
 
+  // Build a set of structural node IDs that have at least one pasal child (at any depth).
+  // Used to skip empty structural nodes (e.g. TOC entries parsed as BAB nodes).
+  const structuralIdsWithPasals = new Set(
+    (pasalParentIds || []).map((r) => r.parent_id).filter(Boolean),
+  );
+
   // Build tree structure
-  const babNodes = structuralNodes || [];
+  const allStructuralNodes = structuralNodes || [];
   const allPasals = pasalNodes || [];
+
+  // Pre-build a parent→children map for O(n) descendant traversal.
+  const structuralChildrenMap = new Map<number, number[]>();
+  for (const n of allStructuralNodes) {
+    if (n.parent_id !== null) {
+      const siblings = structuralChildrenMap.get(n.parent_id) ?? [];
+      siblings.push(n.id);
+      structuralChildrenMap.set(n.parent_id, siblings);
+    }
+  }
+
+  /** Returns true if nodeId or any of its structural descendants has a pasal. */
+  function hasDescendantPasal(nodeId: number): boolean {
+    if (structuralIdsWithPasals.has(nodeId)) return true;
+    for (const childId of structuralChildrenMap.get(nodeId) ?? []) {
+      if (hasDescendantPasal(childId)) return true;
+    }
+    return false;
+  }
+
+  // Filter out structural nodes (BABs, Bagians, etc.) that have no pasal content in the DB.
+  // This removes table-of-contents entries that the parser mistakenly captures as structural
+  // nodes — common in ratification laws (e.g. UU 6/2023) where the attached law's TOC
+  // appears verbatim and gets parsed as BAB markers without any associated Pasal content.
+  //
+  // We apply hasDescendantPasal() to EVERY structural node regardless of depth or parent_id.
+  // Previously there was a short-circuit `if (node.parent_id !== null) return true` here,
+  // but that incorrectly passed phantom TOC-BABs that live inside a LAMPIRAN node (they have
+  // a non-null parent_id pointing to the lampiran, but still have zero pasal descendants).
+  // Real Bagian/Paragraf nodes also have non-null parent_ids but pass the check because they
+  // ARE in structuralIdsWithPasals (pasals are direct children). The renderer handles
+  // sub-section grouping via subSectionIds — it never renders a structural node independently
+  // unless it's the top-level BAB iteration below.
+  const babNodes = allStructuralNodes.filter((node) => hasDescendantPasal(node.id));
 
   const mainContent = (
     <>
       {babNodes.length > 0 ? (
         babNodes.map((bab) => {
-          // Filter pasals for this BAB
-          const directPasals = allPasals.filter((p) => p.parent_id === bab.id);
+          // Find direct sub-sections (Bagian/Paragraf) of this BAB
           const subSectionIds = new Set(
             babNodes.filter((n) => n.parent_id === bab.id).map((n) => n.id),
           );
+          // Filter pasals for this BAB
+          const directPasals = allPasals.filter((p) => p.parent_id === bab.id);
           const nestedPasals = allPasals.filter(
             (p) => subSectionIds.has(p.parent_id ?? -1),
           );
@@ -321,7 +390,7 @@ async function LawReaderSection({
               )}
 
               {allBabPasals.map((pasal) => (
-                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} />
+                <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} worksLookup={worksLookup} />
               ))}
             </section>
           );
@@ -336,10 +405,11 @@ async function LawReaderSection({
               totalPasals={totalPasalCount || 0}
               pathname={pathname}
               pageUrl={pageUrl}
+              worksLookup={worksLookup}
             />
           ) : (
             allPasals.map((pasal) => (
-              <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} />
+              <PasalBlock key={pasal.id} pasal={pasal} pathname={pathname} pageUrl={pageUrl} worksLookup={worksLookup} />
             ))
           )}
         </>

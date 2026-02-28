@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import PasalLogo from "@/components/PasalLogo";
 import CopyButton from "@/components/CopyButton";
+import RichPasalContent from "@/components/reader/RichPasalContent";
 import { Pencil, Link2 } from "lucide-react";
 
 interface PasalNode {
@@ -17,9 +18,10 @@ interface PasalBlockProps {
   pasal: PasalNode;
   pathname: string;
   pageUrl: string;
+  worksLookup: Record<string, string>;
 }
 
-export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps) {
+export default function PasalBlock({ pasal, pathname, pageUrl, worksLookup }: PasalBlockProps) {
   const t = useTranslations("reader");
   const content = pasal.content_text || "";
   const koreksiHref = `${pathname}/koreksi/${pasal.id}`;
@@ -48,7 +50,7 @@ export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps
           <CopyButton text={content} />
         </div>
       </div>
-      <div className="text-sm leading-relaxed whitespace-pre-wrap">{content}</div>
+      <RichPasalContent content={content} worksLookup={worksLookup} />
     </article>
   );
 }
