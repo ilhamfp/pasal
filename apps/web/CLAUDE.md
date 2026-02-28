@@ -17,7 +17,7 @@ Add shadcn components with `npx shadcn@latest add <component>` (config: `compone
 ## Config
 
 - **Path alias:** `@/*` maps to `src/*` — use `@/components/...`, `@/lib/...` for imports.
-- **`next.config.ts`:** Turbopack file cache enabled, images unoptimized (Vercel), security headers (CSP, X-Frame-Options, etc.) applied to all routes.
+- **`next.config.ts`:** Turbopack file cache enabled, images unoptimized (Vercel), security headers (CSP, X-Frame-Options, etc.) applied to all routes, rewrite `/sitemap.xml` → `/api/sitemap-index`.
 
 ## Routes
 
@@ -46,6 +46,7 @@ Add shadcn components with `npx shadcn@latest add <component>` (config: `compone
 | `/api/v1/laws/[...frbr]` | GET | Public | Law detail by FRBR URI |
 | `/api/suggestions` | POST | Public | Submit correction (rate limited 10/IP/hour) |
 | `/api/admin/*` | POST | Admin | Approve/reject suggestions, trigger scraper, verify with AI |
+| `/api/sitemap-index` | GET | Public | `<sitemapindex>` XML listing all `/sitemap/{id}.xml` (rewritten from `/sitemap.xml`) |
 
 ## Key Patterns
 

@@ -62,7 +62,7 @@ Core tables — all have RLS enabled with public read policies for legal data:
 | `revisions` | **Append-only** audit log for content changes. Never UPDATE or DELETE rows |
 | `suggestions` | Crowd-sourced corrections. Anyone submits, admin approves |
 | `work_relationships` | Cross-references between regulations |
-| `regulation_types` | ~22 regulation types (UU, PP, PERPRES, UUD, PERPPU, PERMEN, PERDA, etc.) |
+| `regulation_types` | ~26 regulation types (UU, PP, PERPRES, UUD, PERPPU, PERMEN, PERDA, etc.) |
 | `crawl_jobs` | Scraper job queue and state tracking |
 | `scraper_runs` | Scraper session tracking (jobs discovered/processed/failed) |
 | `discovery_progress` | Crawl freshness cache per regulation type |
@@ -184,13 +184,14 @@ Root `.env` holds all keys (never committed). Each sub-project has its own env f
 - **Metadata layering.** Root `layout.tsx` owns shared static metadata (icons, manifest, metadataBase, msapplication). `[locale]/layout.tsx` owns locale-specific metadata (title template, OG, Twitter). Individual pages add page-specific metadata (hreflang alternates via `getAlternates()`). Never duplicate fields across layers — Next.js merges parent→child automatically.
 - **Title template trap.** A plain string `title` in `generateMetadata` gets the parent layout's `template` applied (`%s | Pasal.id`). Use `title: { absolute: "..." }` on pages like the landing page to prevent doubling.
 - **robots.txt wildcards.** `*` in robots.txt (RFC 9309) matches any character sequence including `/`. `/peraturan/*/koreksi/` correctly matches `/peraturan/uu/uu-13-2003/koreksi/123`.
+- **Sitemap index is custom.** Next.js 16 `generateSitemaps()` creates individual `/sitemap/{id}.xml` files but does NOT auto-generate a `/sitemap.xml` index. We use a custom route handler at `apps/web/src/app/api/sitemap-index/route.ts` + a rewrite in `next.config.ts` (`/sitemap.xml` → `/api/sitemap-index`). If the number of sitemaps changes, the route handler picks it up automatically via `generateSitemaps()`.
 - **Sitemap hreflang.** `sitemap.ts` emits `alternates.languages` (id, en, x-default) for every URL. The `getAlternates()` helper in `src/lib/i18n-metadata.ts` does the same for `<link rel="alternate">` in page metadata — keep both in sync when adding new public pages. Always include all 3 hreflang variants.
 - **Law detail title uses topic extraction.** `generateMetadata` extracts the topic from `title_id` (text after " tentang ") to avoid repeating the regulation reference in `<title>`. Falls back to full `title_id` for laws without "tentang" (e.g. UUD).
 - **JSON-LD structured data per page type.** Landing: WebSite + SearchAction. Law detail: Legislation + BreadcrumbList. Topic detail: BreadcrumbList + FAQPage. Browse index/type: BreadcrumbList. Use `<JsonLd>` component from `src/components/JsonLd.tsx`.
 - **Dual worktree.** `main` is checked out at `~/Desktop/personal-project/pasal`. From the `project-improve-scraper` worktree, use `git push origin <branch>:main` instead of `git checkout main && merge`.
 - **Test slugs:** Use `uu-13-2003` format (not `uu-nomor-13-tahun-2003`) when verifying law detail pages locally.
 - **UUD amendment FRBR URIs.** Amendments use `/akn/id/act/uud/1945/perubahan-1` (not `.../p1`). Slugs are `uud-1945-p1` (from `number: "1945/P1"`). Keep `load_uud.py` slugs in sync with the DB trigger output.
-- **MCP URL referenced in 5 places.** `connect/page.tsx`, `[locale]/page.tsx` (landing MCP card), `server.json`, `public/llms.txt`, `README.md`. Update all when the URL changes. No trailing slash — Starlette 307 redirects break Claude Code's HTTP transport on Railway.
+- **MCP URL referenced in 5 places.** `connect/page.tsx`, `[locale]/page.tsx` (landing MCP card), `server.json`, `apps/web/public/llms.txt`, `README.md`. Update all when the URL changes. No trailing slash — Starlette 307 redirects break Claude Code's HTTP transport on Railway.
 - **`/topik` pages intentionally NOT in nav.** Topic pages are discoverable via sitemap and internal links only — not linked from header or footer navigation. Do not add them to nav.
 - **MCP tool name mismatch fixed.** The actual server tool is `get_law_status` (not `get_law_detail`). `server.json`, `llms.txt`, and i18n connect strings must all match this.
 
