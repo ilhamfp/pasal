@@ -330,19 +330,20 @@ async function LawReaderSection({
     return false;
   }
 
-  // Filter out structural nodes (BABs, Bagians) that have no pasal content in the DB.
+  // Filter out structural nodes (BABs, Bagians, etc.) that have no pasal content in the DB.
   // This removes table-of-contents entries that the parser mistakenly captures as structural
   // nodes — common in ratification laws (e.g. UU 6/2023) where the attached law's TOC
   // appears verbatim and gets parsed as BAB markers without any associated Pasal content.
-  // Only top-level structural nodes (BAB / aturan / lampiran — those without a parent) are
-  // filtered; sub-sections (Bagian, Paragraf) are kept as-is under their parent BAB.
-  const babNodes = allStructuralNodes.filter((node) => {
-    // Keep sub-sections unconditionally — they're filtered indirectly via their parent BAB.
-    if (node.parent_id !== null) return true;
-    // For top-level structural nodes, keep only those with at least one pasal at any depth
-    // (handles BAB → Bagian → Paragraf → Pasal nesting, not just direct children).
-    return hasDescendantPasal(node.id);
-  });
+  //
+  // We apply hasDescendantPasal() to EVERY structural node regardless of depth or parent_id.
+  // Previously there was a short-circuit `if (node.parent_id !== null) return true` here,
+  // but that incorrectly passed phantom TOC-BABs that live inside a LAMPIRAN node (they have
+  // a non-null parent_id pointing to the lampiran, but still have zero pasal descendants).
+  // Real Bagian/Paragraf nodes also have non-null parent_ids but pass the check because they
+  // ARE in structuralIdsWithPasals (pasals are direct children). The renderer handles
+  // sub-section grouping via subSectionIds — it never renders a structural node independently
+  // unless it's the top-level BAB iteration below.
+  const babNodes = allStructuralNodes.filter((node) => hasDescendantPasal(node.id));
 
   const mainContent = (
     <>
