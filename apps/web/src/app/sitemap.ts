@@ -32,43 +32,23 @@ interface WorkRow {
   regulation_types: { code: string } | { code: string }[] | null;
 }
 
-/** Fetch all works using paginated .range() calls to bypass Supabase's 1000-row limit. */
-async function fetchAllWorks(): Promise<WorkRow[]> {
-  const supabase = createClient();
-  const allWorks: WorkRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data } = await supabase
-      .from("works")
-      .select("number, year, slug, updated_at, regulation_types(code)")
-      .order("year", { ascending: false })
-      .range(offset, offset + SUPABASE_PAGE_SIZE - 1);
-
-    if (!data || data.length === 0) break;
-    allWorks.push(...(data as unknown as WorkRow[]));
-    if (data.length < SUPABASE_PAGE_SIZE) break;
-    offset += SUPABASE_PAGE_SIZE;
-  }
-
-  return allWorks;
-}
-
 export async function generateSitemaps() {
-  const works = await fetchAllWorks();
-
   const supabase = createClient();
-  const { data: regTypes } = await supabase
-    .from("regulation_types")
-    .select("code, works(count)")
-    .gt("works.count", 0);
 
-  // Count total URLs: static + topics + browse-by-type + regulation pages
+  const [{ count: worksCount }, { data: regTypes }] = await Promise.all([
+    supabase.from("works").select("id", { count: "exact", head: true }),
+    supabase
+      .from("regulation_types")
+      .select("code, works(count)")
+      .gt("works.count", 0),
+  ]);
+
   const browseCount = (regTypes || []).filter((rt) => {
     const count = rt.works as unknown as { count: number }[];
     return count?.[0]?.count > 0;
   }).length;
-  const totalUrls = STATIC_PATHS.length + TOPICS.length + browseCount + works.length;
+  const totalUrls =
+    STATIC_PATHS.length + TOPICS.length + browseCount + (worksCount || 0);
   const numSitemaps = Math.max(1, Math.ceil(totalUrls / MAX_URLS_PER_SITEMAP));
 
   return Array.from({ length: numSitemaps }, (_, i) => ({ id: String(i) }));
