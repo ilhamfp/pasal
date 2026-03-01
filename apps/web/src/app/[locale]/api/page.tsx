@@ -192,7 +192,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: navT("home"), item: "https://pasal.id" },
+          { "@type": "ListItem", position: 1, name: navT("home"), item: locale === "en" ? "https://pasal.id/en" : "https://pasal.id" },
           { "@type": "ListItem", position: 2, name: t("pageTitle") },
         ],
       }} />
@@ -220,12 +220,12 @@ export default async function ApiDocsPage({ params }: PageProps) {
           {endpoints.map((ep) => (
             <div key={ep.path} className="rounded-lg border bg-card" id={ep.path.replace(/[/{}.]/g, "-")}>
               <div className="border-b p-4">
-                <div className="flex items-center gap-2 mb-1">
+                <h3 className="flex items-center gap-2 mb-1">
                   <span className="bg-primary/10 text-primary text-xs font-bold font-mono px-2 py-0.5 rounded">
                     {ep.method}
                   </span>
                   <code className="text-sm font-medium font-mono">{ep.path}</code>
-                </div>
+                </h3>
                 <p className="text-sm text-muted-foreground">{ep.description}</p>
               </div>
 

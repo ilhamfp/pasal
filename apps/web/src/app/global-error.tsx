@@ -15,7 +15,7 @@ export default function GlobalError({
       </head>
       <body className="flex min-h-screen items-center justify-center bg-background font-sans">
         <div className="text-center">
-          <h2 className="font-heading text-xl mb-4">Terjadi Kesalahan</h2>
+          <h1 className="font-heading text-xl mb-4">Terjadi Kesalahan</h1>
           <p className="text-sm text-muted-foreground mb-4">
             Maaf, terjadi kesalahan yang tidak terduga.
           </p>

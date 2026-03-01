@@ -14,7 +14,6 @@ export default function robots(): MetadataRoute.Robots {
           "/en/peraturan/*/koreksi/",
           "/api/v1/",
           "/api/suggestions",
-          "/api/laws/",
           "/api/og",
           "/api/admin/",
         ],

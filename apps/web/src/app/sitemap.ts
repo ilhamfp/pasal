@@ -19,7 +19,7 @@ function createClient() {
 }
 
 // Fixed date for static pages — updated when content changes meaningfully
-const STATIC_DATE = new Date("2026-02-28");
+const STATIC_DATE = new Date("2026-03-01");
 
 // Static pages with hreflang alternates (no /search — it has noindex)
 const STATIC_PATHS = ["", "/jelajahi", "/connect", "/api", "/topik"];

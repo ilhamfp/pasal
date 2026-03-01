@@ -22,14 +22,18 @@ interface PageProps {
   searchParams: Promise<{ page?: string; year?: string; status?: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { locale, type } = await params;
+  const { page: pageStr, year, status } = await searchParams;
   const t = await getTranslations({ locale: locale as Locale, namespace: "browse" });
   const typeLabel = TYPE_LABELS[type.toUpperCase()] || type.toUpperCase();
+  const currentPage = parseInt(pageStr || "1", 10) || 1;
+  const hasFilters = !!(year || status);
   return {
     title: t("typePageTitle", { type: typeLabel }),
     description: t("typePageDescription", { type: typeLabel }),
     alternates: getAlternates(`/jelajahi/${type}`, locale),
+    ...(currentPage > 1 || hasFilters ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title: t("typePageTitle", { type: typeLabel }),
       description: t("typePageDescription", { type: typeLabel }),
@@ -215,7 +219,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
                       {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                     </Badge>
                   )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 </div>
               </div>
             </Link>

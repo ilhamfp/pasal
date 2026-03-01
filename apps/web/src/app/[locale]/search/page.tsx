@@ -12,7 +12,7 @@ import LegalContentLanguageNotice from "@/components/LegalContentLanguageNotice"
 import PasalLogo from "@/components/PasalLogo";
 import StaggeredList from "@/components/StaggeredList";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getRegTypeCode } from "@/lib/get-reg-type-code";
 import type { ChunkResult } from "@/lib/group-search-results";
@@ -253,9 +253,9 @@ async function SearchContent({
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary">{regType}</Badge>
-                      <CardTitle className="text-base">
+                      <h2 className="text-base font-semibold leading-none tracking-tight">
                         {formatRegRef(regType, work.number, work.year, { label: "compact" })}
-                      </CardTitle>
+                      </h2>
                       <Badge className={STATUS_COLORS[work.status] || ""} variant="outline">
                         {statusT(work.status as "berlaku" | "diubah" | "dicabut" | "tidak_berlaku")}
                       </Badge>

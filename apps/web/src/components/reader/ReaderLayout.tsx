@@ -103,7 +103,7 @@ export default function ReaderLayout({
       >
         <aside className="hidden lg:block">{toc}</aside>
 
-        <main className="min-w-0">{content}</main>
+        <div className="min-w-0">{content}</div>
 
         {/* Right column: context sidebar OR PDF */}
         <AnimatePresence mode="wait" initial={false}>

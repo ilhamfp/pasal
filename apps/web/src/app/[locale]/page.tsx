@@ -153,18 +153,18 @@ export default async function HomePage({
       <RevealOnScroll>
         <section className="border-y bg-card py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-4">
-            <p className="mb-4 sm:mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <h2 className="mb-4 sm:mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
               {devT("sectionLabel")}
-            </p>
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* MCP Card */}
               <Link
                 href="/connect"
                 className="rounded-lg bg-[#1D1A18] p-4 sm:p-6 transition-colors hover:bg-[#2D2826]"
               >
-                <p className="mb-3 font-medium text-[#EEE8E4]">
+                <h3 className="mb-3 font-medium text-[#EEE8E4]">
                   {devT("mcpTitle")}
-                </p>
+                </h3>
                 <code className="block break-all rounded bg-black/30 px-3 py-2 font-mono text-sm text-[#96C3B1]">
                   claude mcp add --transport http pasal-id
                   https://pasal-mcp-server-production.up.railway.app/mcp
@@ -179,7 +179,7 @@ export default async function HomePage({
                 href="/api"
                 className="rounded-lg border bg-card p-4 sm:p-6 transition-colors hover:border-primary/30"
               >
-                <p className="mb-3 font-medium">{devT("apiTitle")}</p>
+                <h3 className="mb-3 font-medium">{devT("apiTitle")}</h3>
                 <code className="block break-all rounded bg-muted px-3 py-2 font-mono text-sm">
                   curl https://pasal.id/api/v1/search?q=ketenagakerjaan
                 </code>
