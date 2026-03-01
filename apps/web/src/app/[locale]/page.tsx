@@ -36,8 +36,8 @@ export async function generateMetadata({
 const STATS_SKELETON = (
   <section className="border-y bg-card py-12 sm:py-16">
     <div className="mx-auto max-w-5xl px-4">
-      <div className="mx-auto mb-8 h-4 w-56 rounded bg-muted animate-pulse" />
-      <div className="grid gap-8 sm:grid-cols-3">
+      <div className="mx-auto mb-4 sm:mb-8 h-4 w-56 rounded bg-muted animate-pulse" />
+      <div className="grid gap-4 sm:gap-8 sm:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex flex-col items-center gap-2">
             <div className="h-10 w-20 rounded bg-muted animate-pulse" />
@@ -153,14 +153,14 @@ export default async function HomePage({
       <RevealOnScroll>
         <section className="border-y bg-card py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-4">
-            <p className="mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <p className="mb-4 sm:mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
               {devT("sectionLabel")}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* MCP Card */}
               <Link
                 href="/connect"
-                className="rounded-lg bg-[#1D1A18] p-6 transition-colors hover:bg-[#2D2826]"
+                className="rounded-lg bg-[#1D1A18] p-4 sm:p-6 transition-colors hover:bg-[#2D2826]"
               >
                 <p className="mb-3 font-medium text-[#EEE8E4]">
                   {devT("mcpTitle")}
@@ -177,7 +177,7 @@ export default async function HomePage({
               {/* API Card */}
               <Link
                 href="/api"
-                className="rounded-lg border bg-card p-6 transition-colors hover:border-primary/30"
+                className="rounded-lg border bg-card p-4 sm:p-6 transition-colors hover:border-primary/30"
               >
                 <p className="mb-3 font-medium">{devT("apiTitle")}</p>
                 <code className="block break-all rounded bg-muted px-3 py-2 font-mono text-sm">
@@ -203,7 +203,7 @@ export default async function HomePage({
                 {ctaT("heading2")}
               </em>
             </h2>
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <Link
                 href="/search"
                 className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 font-sans text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"

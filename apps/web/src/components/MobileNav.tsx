@@ -89,7 +89,7 @@ export default function MobileNav() {
           />
           {/* Panel — right side */}
           <div ref={panelRef} className="absolute right-0 top-0 bottom-0 w-[min(18rem,85vw)] bg-background border-l overflow-y-auto overscroll-contain p-4 animate-in slide-in-from-right duration-200 motion-reduce:animate-none">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <Link
                 href="/"
                 onClick={close}

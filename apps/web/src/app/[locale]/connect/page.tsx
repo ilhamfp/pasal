@@ -97,7 +97,7 @@ export default async function ConnectPage({ params }: PageProps) {
         ]} />
         {/* Two-column hero: instructions + demo side by side */}
         <div className="max-w-6xl mx-auto mb-8 sm:mb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-12 items-start">
             {/* Left column: Connect instructions */}
             <div className="space-y-4 sm:space-y-8">
               <div className="space-y-3">
@@ -181,7 +181,7 @@ export default async function ConnectPage({ params }: PageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {steps.map((item, i) => (
                 <Card key={item.title}>
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-6 space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-sans font-semibold">
                         {i + 1}
@@ -209,7 +209,7 @@ export default async function ConnectPage({ params }: PageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {tools.map((tool) => (
                 <Card key={tool.name}>
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-6 space-y-3">
                     <div className="flex items-center gap-3">
                       <tool.icon className="w-5 h-5 text-primary" aria-hidden="true" />
                       <code className="font-mono text-sm text-primary">{tool.name}</code>
@@ -262,7 +262,7 @@ export default async function ConnectPage({ params }: PageProps) {
           <div className="text-center pt-4">
             <Link
               href="/search"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-sans font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 sm:px-6 py-3 text-sm font-sans font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               {t("ctaButton")}
             </Link>

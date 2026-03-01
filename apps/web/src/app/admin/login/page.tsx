@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-8">
           <PasalLogo size={48} className="mx-auto mb-3" />
           <h1 className="font-heading text-2xl">Admin Panel</h1>
           <p className="text-sm text-muted-foreground">Masuk untuk mengelola Pasal.id</p>

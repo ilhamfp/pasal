@@ -65,7 +65,7 @@ export default function ReaderLayout({
     <div>
       {/* PDF toggle toolbar — only shown when a source PDF exists */}
       {sourcePdfUrl && (
-        <div className="flex items-center justify-end gap-3 mb-6">
+        <div className="flex items-center justify-end gap-3 mb-4 sm:mb-6">
           {/* Desktop toggle */}
           <button
             onClick={() => setShowPdf(!showPdf)}

@@ -34,12 +34,12 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-8">
         <h1 className="font-heading text-3xl tracking-tight">Dashboard</h1>
         <RevalidateButton />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 sm:mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-lg border bg-card p-5">
             <div className="flex items-center justify-between mb-2">
@@ -83,7 +83,7 @@ export default async function AdminDashboardPage() {
             </div>
           ))}
           {(!recentSuggestions || recentSuggestions.length === 0) && (
-            <div className="p-8 text-center text-muted-foreground text-sm">
+            <div className="p-4 sm:p-8 text-center text-muted-foreground text-sm">
               Belum ada saran.
             </div>
           )}

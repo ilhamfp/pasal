@@ -203,11 +203,11 @@ export default async function ApiDocsPage({ params }: PageProps) {
           { label: navT("api") },
         ]} />
         <h1 className="font-heading text-3xl mb-2">{t("pageTitle")}</h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-4 sm:mb-8">
           {t("pageDescription")}
         </p>
 
-        <div className="rounded-lg border bg-card p-4 mb-8">
+        <div className="rounded-lg border bg-card p-4 mb-4 sm:mb-8">
           <h2 className="font-heading text-sm mb-2">{t("baseUrl")}</h2>
           <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
             https://pasal.id/api/v1
@@ -267,7 +267,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
         <p className="text-sm text-muted-foreground mb-4">
           {t("regulationTypeCodesHint")}
         </p>
-        <div className="rounded-lg border bg-card overflow-hidden mb-12">
+        <div className="rounded-lg border bg-card overflow-hidden mb-6 sm:mb-12">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -301,7 +301,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
         <p className="text-sm text-muted-foreground mb-4">
           {t("statusValuesHint")}
         </p>
-        <div className="rounded-lg border bg-card overflow-hidden mb-12">
+        <div className="rounded-lg border bg-card overflow-hidden mb-6 sm:mb-12">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
@@ -334,7 +334,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
 
         {/* Quick Start */}
         <h2 className="font-heading text-2xl mb-4">{t("quickStart")}</h2>
-        <div className="rounded-lg border bg-card p-6 mb-12 space-y-4">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 mb-6 sm:mb-12 space-y-4">
           <CodeBlock title={t("quickStartSearch")}>
             {`curl "https://pasal.id/api/v1/search?q=ketenagakerjaan"`}
           </CodeBlock>
@@ -367,7 +367,7 @@ for law in data["laws"]:
 
         {/* Error Responses */}
         <h2 className="font-heading text-2xl mb-4">{t("errorResponse")}</h2>
-        <div className="rounded-lg border bg-card overflow-hidden mb-12">
+        <div className="rounded-lg border bg-card overflow-hidden mb-6 sm:mb-12">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
@@ -399,7 +399,7 @@ for law in data["laws"]:
         </div>
 
         {/* Rate Limiting */}
-        <div className="rounded-lg border p-6 space-y-4">
+        <div className="rounded-lg border p-4 sm:p-6 space-y-4">
           <h2 className="font-heading text-xl">{t("rateLimit")}</h2>
           <p className="text-sm text-muted-foreground">
             {t("rateLimitIntro")}
@@ -428,7 +428,7 @@ for law in data["laws"]:
         </div>
 
         {/* Contact for higher limits */}
-        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-6 space-y-3">
+        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4 sm:p-6 space-y-3">
           <h2 className="font-heading text-xl">{t("needHigherLimits")}</h2>
           <p className="text-sm text-muted-foreground">
             {t("needHigherLimitsDesc")}
@@ -443,7 +443,7 @@ for law in data["laws"]:
           </a>
         </div>
 
-        <div className="mt-8 text-sm text-muted-foreground">
+        <div className="mt-4 sm:mt-8 text-sm text-muted-foreground">
           <p>
             {t.rich("mcpNote", {
               link: (chunks) => (

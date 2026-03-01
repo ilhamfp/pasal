@@ -63,7 +63,7 @@ export default function TrustBlock() {
           variants={container}
           initial="hidden"
           animate={isInView ? "show" : "hidden"}
-          className="mt-10 grid gap-4 sm:grid-cols-3"
+          className="mt-6 sm:mt-10 grid gap-4 sm:grid-cols-3"
         >
           {ITEMS.map((item) => (
             <m.div

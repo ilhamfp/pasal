@@ -85,7 +85,7 @@ export default async function JelajahiPage({ params }: PageProps) {
             <Link
               key={type.id}
               href={`/jelajahi/${type.code.toLowerCase()}`}
-              className="rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors"
+              className="rounded-lg border bg-card p-4 sm:p-6 hover:border-primary/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <FileText className="h-5 w-5 text-primary/60" />
@@ -102,7 +102,7 @@ export default async function JelajahiPage({ params }: PageProps) {
         </div>
 
         {typesWithCounts.length === 0 && (
-          <div className="rounded-lg border p-12 text-center text-muted-foreground">
+          <div className="rounded-lg border p-6 sm:p-12 text-center text-muted-foreground">
             {t("noRegulationsYet")}
           </div>
         )}

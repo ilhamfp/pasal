@@ -87,9 +87,9 @@ export default async function LocaleLayout({
         <MotionProvider>
           <main id="main-content">{children}</main>
         </MotionProvider>
-        <footer className="border-t mt-8 sm:mt-16 py-8 px-4">
+        <footer className="border-t mt-8 sm:mt-16 py-4 sm:py-8 px-4">
           <div className="mx-auto max-w-5xl">
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-sm">
               {FOOTER_LINKS.map(({ href, label }) => (
                 <Link
                   key={href}
@@ -100,7 +100,7 @@ export default async function LocaleLayout({
                 </Link>
               ))}
             </div>
-            <div className="mt-6 flex flex-col items-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-4 sm:mt-6 flex flex-col items-center gap-3 text-xs text-muted-foreground">
               <PasalLogo size={24} className="text-muted-foreground/60" />
               <div className="space-y-1 text-center">
                 <p>{footerT("disclaimer")}</p>

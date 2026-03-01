@@ -70,12 +70,12 @@ export default async function TopicsPage({ params }: PageProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {TOPICS.map((topic) => {
             const Icon = ICONS[topic.icon] || Scale;
             return (
               <Link key={topic.slug} href={`/topik/${topic.slug}`}>
-                <div className="rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors h-full">
+                <div className="rounded-lg border bg-card p-4 sm:p-6 hover:border-primary/30 transition-colors h-full">
                   <div className="flex items-start gap-4">
                     <div className="rounded-lg bg-primary/10 p-3 shrink-0">
                       <Icon className="h-6 w-6 text-primary" />

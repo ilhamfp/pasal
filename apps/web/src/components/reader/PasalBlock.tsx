@@ -28,7 +28,7 @@ export default function PasalBlock({ pasal, pathname, pageUrl }: PasalBlockProps
     <article
       id={`pasal-${pasal.number}`}
       data-pdf-page={pasal.pdf_page_start ?? undefined}
-      className="mb-8 scroll-mt-20"
+      className="mb-4 sm:mb-8 scroll-mt-20"
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="flex items-center gap-1.5 font-heading text-base">

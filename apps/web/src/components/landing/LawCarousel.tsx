@@ -219,7 +219,7 @@ export default function LawCarousel({ laws }: { laws: LawData[] }) {
       </div>
 
       {/* Indicator dots with progress fill */}
-      <div className="mt-8 flex justify-center" role="tablist" aria-label="Carousel navigation">
+      <div className="mt-4 sm:mt-8 flex justify-center" role="tablist" aria-label="Carousel navigation">
         {laws.map((law, i) => (
           <button
             key={i}

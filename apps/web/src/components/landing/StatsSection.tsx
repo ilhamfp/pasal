@@ -28,7 +28,7 @@ export default async function StatsSection() {
   return (
     <section className="border-y bg-card py-12 sm:py-16">
       <div className="mx-auto max-w-5xl px-4">
-        <p className="mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="mb-4 sm:mb-8 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
           {t("sectionLabel")}
         </p>
         <AnimatedStats stats={stats} />

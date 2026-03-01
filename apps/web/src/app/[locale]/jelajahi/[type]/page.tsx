@@ -156,7 +156,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
         </div>
 
         {/* Filters — native form GET submission for Server Component */}
-        <form className="flex flex-wrap gap-3 mb-6" method="get">
+        <form className="flex flex-wrap gap-3 mb-4 sm:mb-6" method="get">
           <select
             name="year"
             defaultValue={year || ""}
@@ -222,7 +222,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
           ))}
 
           {(!works || works.length === 0) && (
-            <div className="rounded-lg border p-8 text-center text-muted-foreground">
+            <div className="rounded-lg border p-4 sm:p-8 text-center text-muted-foreground">
               {t("noRegulationsFound")}
             </div>
           )}
@@ -230,7 +230,7 @@ export default async function TypeListingPage({ params, searchParams }: PageProp
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <nav aria-label={searchT("pagination")} className="flex items-center justify-center gap-2 mt-8">
+          <nav aria-label={searchT("pagination")} className="flex items-center justify-center gap-2 mt-4 sm:mt-8">
             {currentPage > 1 && (
               <Link
                 href={pageUrl(currentPage - 1)}

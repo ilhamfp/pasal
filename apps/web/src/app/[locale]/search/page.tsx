@@ -162,7 +162,7 @@ async function SearchContent({
   }
 
   const filtersEl = (
-    <div className="mb-6">
+    <div className="mb-4 sm:mb-6">
       <SearchFilters
         regulationTypes={regulationTypes}
         typeCounts={Object.keys(typeCounts).length > 0 ? typeCounts : undefined}
@@ -190,7 +190,7 @@ async function SearchContent({
     return (
       <>
         {filtersEl}
-        <div className="rounded-lg border p-8 text-center">
+        <div className="rounded-lg border p-4 sm:p-8 text-center">
           <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
           <p className="text-lg font-medium">{t("noResults", { query })}</p>
           <p className="mt-2 text-muted-foreground">
@@ -348,7 +348,7 @@ async function BrowseResults({ filters, page, regulationTypes }: BrowseResultsPr
 
   if (!works || works.length === 0) {
     return (
-      <div className="rounded-lg border p-8 text-center">
+      <div className="rounded-lg border p-4 sm:p-8 text-center">
         <PasalLogo size={56} className="mx-auto mb-4 text-muted-foreground/20" />
         <p className="text-lg font-medium">{t("noLawsFoundBrowse")}</p>
         <p className="mt-2 text-muted-foreground">
@@ -434,7 +434,7 @@ function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <nav aria-label={labels.pagination} className="flex items-center justify-center gap-2 mt-8">
+    <nav aria-label={labels.pagination} className="flex items-center justify-center gap-2 mt-4 sm:mt-8">
       {currentPage > 1 && (
         <Link
           href={pageUrl(currentPage - 1)}
@@ -533,7 +533,7 @@ export default async function SearchPage({
             key={`search-${query}-${type}-${year}-${status}-${page}`}
             fallback={
               <>
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <SearchFilters
                     regulationTypes={regulationTypes || []}
                     currentType={type}
@@ -556,7 +556,7 @@ export default async function SearchPage({
         ) : hasFilters ? (
           /* Browse mode: no text, but filters applied */
           <>
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <SearchFilters
                 regulationTypes={regulationTypes || []}
                 currentType={type}
@@ -572,7 +572,7 @@ export default async function SearchPage({
         ) : (
           /* Empty state: no query and no filters */
           <>
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <SearchFilters
                 regulationTypes={regulationTypes || []}
                 currentType={type}
@@ -582,7 +582,7 @@ export default async function SearchPage({
               />
             </div>
             <div className="text-center py-8 sm:py-16">
-              <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
+              <PasalLogo size={72} className="mx-auto mb-3 sm:mb-6 text-muted-foreground/15" />
               <p className="text-lg text-muted-foreground">
                 {t("emptyState")}
               </p>

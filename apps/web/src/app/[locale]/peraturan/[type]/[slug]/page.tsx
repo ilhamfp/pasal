@@ -315,7 +315,7 @@ async function LawReaderSection({
                 <SectionLinkButton url={`${pageUrl}#bab-${bab.number}`} />
               </div>
               {bab.heading && bab.node_type !== "aturan" && bab.node_type !== "lampiran" && (
-                <p className="text-center text-base font-heading text-muted-foreground mb-6">
+                <p className="text-center text-base font-heading text-muted-foreground mb-3 sm:mb-6">
                   {bab.heading}
                 </p>
               )}
@@ -346,7 +346,7 @@ async function LawReaderSection({
       )}
 
       {allPasals.length === 0 && (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border p-4 sm:p-8 text-center text-muted-foreground">
           <PasalLogo size={48} className="mx-auto mb-3 opacity-20" />
           {t("noContentYet")}
         </div>
@@ -495,7 +495,7 @@ export default async function LawDetailPage({ params }: PageProps) {
           { label: type.toUpperCase(), href: `/jelajahi/${type.toLowerCase()}` },
           { label: formatRegRef(type, work.number, work.year) },
         ]} />
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <h1 className="font-heading text-2xl text-pretty mb-2">{work.title_id}</h1>
           <p className="text-sm text-muted-foreground">
             {formatRegRef(type, work.number, work.year)}

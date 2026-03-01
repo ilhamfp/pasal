@@ -15,7 +15,7 @@ export default function HeroSection() {
       variants={staggerContainer}
       initial="hidden"
       animate="show"
-      className="flex flex-col items-center justify-center px-4 pb-24 pt-28 sm:pb-32 sm:pt-36"
+      className="flex flex-col items-center justify-center px-4 pb-12 sm:pb-24 md:pb-32 pt-16 sm:pt-28 md:pt-36"
     >
       <div className="flex flex-col items-center gap-6 text-center">
         <m.div variants={fadeUp}>
