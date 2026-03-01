@@ -87,7 +87,7 @@ export default async function LocaleLayout({
         <MotionProvider>
           <main id="main-content">{children}</main>
         </MotionProvider>
-        <footer className="border-t mt-16 py-8 px-4">
+        <footer className="border-t mt-8 sm:mt-16 py-8 px-4">
           <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
               {FOOTER_LINKS.map(({ href, label }) => (

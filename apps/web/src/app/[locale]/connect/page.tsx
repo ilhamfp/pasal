@@ -90,16 +90,16 @@ export default async function ConnectPage({ params }: PageProps) {
         ],
       }} />
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-6 sm:py-12">
         <PageBreadcrumb items={[
           { label: navT("home"), href: "/" },
           { label: navT("connect") },
         ]} />
         {/* Two-column hero: instructions + demo side by side */}
-        <div className="max-w-6xl mx-auto mb-16">
+        <div className="max-w-6xl mx-auto mb-8 sm:mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left column: Connect instructions */}
-            <div className="space-y-8">
+            <div className="space-y-4 sm:space-y-8">
               <div className="space-y-3">
                 <h1 className="font-heading text-4xl tracking-tight text-pretty">
                   {t("heroTitle")}
@@ -172,7 +172,7 @@ export default async function ConnectPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-12">
+        <div className="max-w-3xl mx-auto space-y-6 sm:space-y-12">
           {/* Cara Kerjanya — How it works */}
           <section className="space-y-6">
             <h2 className="font-heading text-2xl tracking-tight text-center text-pretty">

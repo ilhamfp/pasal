@@ -60,7 +60,7 @@ export default function PdfViewer({ slug, sourcePdfUrl: rawPdfUrl, page, onPageC
 
       <div className="relative min-h-[400px] flex items-center justify-center">
         {hasError ? (
-          <div className="text-center p-8 text-muted-foreground">
+          <div className="text-center p-4 sm:p-8 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" aria-hidden="true" />
             <p className="text-sm mb-2">Pratinjau halaman tidak tersedia.</p>
             {sourcePdfUrl && (

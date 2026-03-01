@@ -30,6 +30,8 @@ function CheckboxPopover({
   selectedLabel,
   ariaLabel,
   popoverClassName,
+  open,
+  onOpenChange,
 }: {
   options: { value: string; label: string; count?: number }[];
   selected: string[];
@@ -38,6 +40,8 @@ function CheckboxPopover({
   selectedLabel: string;
   ariaLabel: string;
   popoverClassName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const displayLabel =
     selected.length === 0
@@ -47,7 +51,7 @@ function CheckboxPopover({
         : selectedLabel;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -124,7 +128,9 @@ export default function SearchFilters({
   const initialMode: YearMode = isExactYear ? "exact" : isRange ? "range" : "none";
   const [customMode, setCustomMode] = useState<YearMode>(initialMode);
   const [yearInput, setYearInput] = useState(isExactYear ? currentYear! : rangeYear);
+  const [typePopoverOpen, setTypePopoverOpen] = useState(false);
   const [yearPopoverOpen, setYearPopoverOpen] = useState(false);
+  const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
   const [prevYear, setPrevYear] = useState(currentYear);
   if (currentYear !== prevYear) {
     setPrevYear(currentYear);
@@ -132,6 +138,24 @@ export default function SearchFilters({
     setYearInput(isExactYear ? currentYear! : rangeYear);
     setYearPopoverOpen(false);
   }
+
+  // Close popovers on scroll for touch devices (prevents jitter from portal repositioning)
+  useEffect(() => {
+    const anyOpen = typePopoverOpen || yearPopoverOpen || statusPopoverOpen;
+    if (!anyOpen) return;
+
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    if (!isTouch) return;
+
+    function handleScroll() {
+      setTypePopoverOpen(false);
+      setYearPopoverOpen(false);
+      setStatusPopoverOpen(false);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [typePopoverOpen, yearPopoverOpen, statusPopoverOpen]);
 
   const hasFilters = currentType || currentYear || currentStatus;
 
@@ -230,6 +254,8 @@ export default function SearchFilters({
         selectedLabel={t("typesSelected", { count: selectedTypes.length })}
         ariaLabel={t("typeLabel")}
         popoverClassName="sm:min-w-80"
+        open={typePopoverOpen}
+        onOpenChange={setTypePopoverOpen}
       />
 
       {/* Year filter */}
@@ -362,6 +388,8 @@ export default function SearchFilters({
         placeholder={t("allStatus")}
         selectedLabel={t("statusesSelected", { count: selectedStatuses.length })}
         ariaLabel={t("statusLabel")}
+        open={statusPopoverOpen}
+        onOpenChange={setStatusPopoverOpen}
       />
 
       {/* Clear filters */}

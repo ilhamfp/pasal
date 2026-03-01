@@ -86,14 +86,14 @@ export default async function TopicDetailPage({ params }: PageProps) {
         })),
       }} />
 
-      <main className="container mx-auto max-w-3xl px-4 py-12">
+      <main className="container mx-auto max-w-3xl px-4 py-6 sm:py-12">
         <PageBreadcrumb items={[
           { label: navT("home"), href: "/" },
           { label: navT("topics"), href: "/topik" },
           { label: topic.title },
         ]} />
 
-        <div className="mb-10">
+        <div className="mb-6 sm:mb-10">
           <h1 className="font-heading text-3xl mb-2">{topic.title}</h1>
           <p className="text-muted-foreground text-lg">{topic.description}</p>
           <div className="mt-4">
@@ -105,7 +105,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="mb-10">
+        <div className="mb-6 sm:mb-10">
           <h2 className="font-heading text-xl mb-4">{t("relatedRegulations")}</h2>
           <div className="flex flex-wrap gap-2">
             {topic.relatedLaws.map((law) => {

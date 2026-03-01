@@ -110,7 +110,7 @@ export default function PasalList({
 
       {/* Loading state */}
       {loading && (
-        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 py-4 sm:py-8 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span>{t("loading")}</span>
         </div>
@@ -118,7 +118,7 @@ export default function PasalList({
 
       {/* Error state with retry */}
       {error && !loading && (
-        <div className="flex flex-col items-center gap-2 py-8">
+        <div className="flex flex-col items-center gap-2 py-4 sm:py-8">
           <p className="text-sm text-destructive">
             Error: {error}
           </p>
@@ -133,10 +133,10 @@ export default function PasalList({
 
       {/* Load more button (fallback if infinite scroll doesn't work) */}
       {hasMore && !loading && !error && (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-4 sm:py-8">
           <button
             onClick={loadMore}
-            className="rounded-lg border border-input bg-background px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="rounded-lg border border-input bg-background px-4 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             {t("loadMorePasals", { remaining: totalPasals - pasals.length })}
           </button>
@@ -145,7 +145,7 @@ export default function PasalList({
 
       {/* All loaded message */}
       {!hasMore && pasals.length > 0 && (
-        <div className="py-8 text-center text-sm text-muted-foreground">
+        <div className="py-4 sm:py-8 text-center text-sm text-muted-foreground">
           {t("noMorePasals")}
         </div>
       )}

@@ -197,7 +197,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
         ],
       }} />
 
-      <main className="container mx-auto max-w-4xl px-4 py-12">
+      <main className="container mx-auto max-w-4xl px-4 py-6 sm:py-12">
         <PageBreadcrumb items={[
           { label: navT("home"), href: "/" },
           { label: navT("api") },
@@ -216,7 +216,7 @@ export default async function ApiDocsPage({ params }: PageProps) {
 
         {/* Endpoints */}
         <h2 className="font-heading text-2xl mb-4">{t("endpoints")}</h2>
-        <div className="space-y-8 mb-12">
+        <div className="space-y-4 sm:space-y-8 mb-6 sm:mb-12">
           {endpoints.map((ep) => (
             <div key={ep.path} className="rounded-lg border bg-card" id={ep.path.replace(/[/{}.]/g, "-")}>
               <div className="border-b p-4">

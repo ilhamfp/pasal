@@ -58,12 +58,12 @@ export default async function TopicsPage({ params }: PageProps) {
         ],
       }} />
 
-      <main className="container mx-auto max-w-4xl px-4 py-12">
+      <main className="container mx-auto max-w-4xl px-4 py-6 sm:py-12">
         <PageBreadcrumb items={[
           { label: navT("home"), href: "/" },
           { label: t("pageTitle") },
         ]} />
-        <div className="text-center mb-10">
+        <div className="text-center mb-6 sm:mb-10">
           <h1 className="font-heading text-3xl mb-3">{t("pageTitle")}</h1>
           <p className="text-muted-foreground text-lg">
             {t("pageDescription")}

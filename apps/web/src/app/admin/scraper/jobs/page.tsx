@@ -107,7 +107,7 @@ async function JobsList({ status, type, page }: { status?: string; type?: string
           <tbody>
             {(!jobs || jobs.length === 0) ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="py-4 sm:py-8 text-center text-muted-foreground">
                   Tidak ada jobs ditemukan
                 </td>
               </tr>

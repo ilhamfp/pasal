@@ -307,7 +307,7 @@ async function LawReaderSection({
             .sort((a, b) => a.sort_order - b.sort_order);
 
           return (
-            <section key={bab.id} id={`bab-${bab.number}`} className="mb-12 scroll-mt-20">
+            <section key={bab.id} id={`bab-${bab.number}`} className="mb-6 sm:mb-12 scroll-mt-20">
               <div className="group flex justify-center items-center gap-2 mb-1">
                 <h2 className="font-heading text-xl">
                   {bab.node_type === "aturan" ? bab.number : bab.node_type === "lampiran" ? "LAMPIRAN" : `BAB ${bab.number}`}

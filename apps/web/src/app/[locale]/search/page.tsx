@@ -524,7 +524,7 @@ export default async function SearchPage({
     <div className="min-h-screen">
       <Header showSearch searchDefault={query} searchPreserveParams={preserveParams} />
 
-      <main className="container mx-auto max-w-3xl px-4 py-8">
+      <main className="container mx-auto max-w-3xl px-4 py-4 sm:py-8">
         <h1 className="sr-only">{t("title")}</h1>
 
         {query ? (
@@ -581,7 +581,7 @@ export default async function SearchPage({
                 currentQuery={query || undefined}
               />
             </div>
-            <div className="text-center py-16">
+            <div className="text-center py-8 sm:py-16">
               <PasalLogo size={72} className="mx-auto mb-6 text-muted-foreground/15" />
               <p className="text-lg text-muted-foreground">
                 {t("emptyState")}

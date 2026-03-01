@@ -93,7 +93,7 @@ export default function MCPDemo() {
   // Reduced-motion fallback: show static screenshot
   if (prefersReduced) {
     return (
-      <div ref={containerRef} className="rounded-lg border bg-card p-6">
+      <div ref={containerRef} className="rounded-lg border bg-card p-4 sm:p-6">
         <p className="text-center text-sm text-muted-foreground">
           Demo animasi tidak ditampilkan karena preferensi gerakan dikurangi.
           Lihat contoh penggunaan MCP di bagian{" "}

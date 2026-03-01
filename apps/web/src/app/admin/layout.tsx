@@ -49,7 +49,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className="text-xs text-muted-foreground">{admin.email}</span>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {children}
       </main>
     </div>

@@ -231,7 +231,7 @@ async function RegulationList({
                   <tr>
                     <td
                       colSpan={6}
-                      className="py-8 text-center text-muted-foreground"
+                      className="py-4 sm:py-8 text-center text-muted-foreground"
                     >
                       Tidak ada peraturan ditemukan.
                     </td>

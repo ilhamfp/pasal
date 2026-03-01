@@ -15,7 +15,7 @@ export default function AnimatedStats({ stats }: { stats: Stat[] }) {
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
-    <div ref={ref} className="grid gap-8 sm:grid-cols-3">
+    <div ref={ref} className="grid gap-4 sm:gap-8 sm:grid-cols-3">
       {stats.map((stat) => (
         <div key={stat.label} className="text-center">
           <p className="font-heading text-4xl">

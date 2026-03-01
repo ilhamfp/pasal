@@ -54,7 +54,7 @@ export default function TrustBlock() {
           initial={{ opacity: 0, y: 16 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.05 }}
-          className="font-heading text-center text-4xl tracking-tight sm:text-5xl"
+          className="font-heading text-center text-3xl tracking-tight sm:text-4xl md:text-5xl"
         >
           {t("sectionTitle")}
         </m.h2>
@@ -69,7 +69,7 @@ export default function TrustBlock() {
             <m.div
               key={item.title}
               variants={slideIn}
-              className="rounded-lg border bg-card p-6"
+              className="rounded-lg border bg-card p-4 sm:p-6"
             >
               <m.span
                 variants={dotPop}

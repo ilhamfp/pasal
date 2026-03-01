@@ -23,12 +23,12 @@ export default function HeroSection() {
         </m.div>
         <m.h1
           variants={fadeUp}
-          className="font-heading text-5xl leading-[1.1] tracking-tight text-balance sm:text-7xl"
+          className="font-heading text-4xl leading-[1.1] tracking-tight text-balance sm:text-5xl md:text-7xl"
         >
           {t("heading")}
         </m.h1>
         <m.p variants={fadeUp} className="text-muted-foreground">
-          <em className="font-heading text-2xl sm:text-3xl">
+          <em className="font-heading text-xl sm:text-2xl md:text-3xl">
             {t("subheading")}
           </em>
         </m.p>

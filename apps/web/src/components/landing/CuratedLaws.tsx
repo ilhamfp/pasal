@@ -97,7 +97,7 @@ export default async function CuratedLaws() {
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
             {t("sectionLabel")}
           </p>
-          <h2 className="font-heading text-center text-4xl tracking-tight text-pretty sm:text-5xl">
+          <h2 className="font-heading text-center text-3xl tracking-tight text-pretty sm:text-4xl md:text-5xl">
             {t("sectionTitle")}
           </h2>
         </div>
