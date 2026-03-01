@@ -39,7 +39,7 @@ export default async function BrowseSection() {
             {t("sectionTitle")}
           </h2>
 
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="mt-6 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             {typesWithCounts.map((type) => (
               <Link
                 key={type.id}

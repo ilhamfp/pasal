@@ -141,7 +141,7 @@ async function DashboardContent() {
     .sort((a, b) => b.worksCount - a.worksCount || b.crawlCount - a.crawlCount);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <Card>
@@ -360,7 +360,7 @@ export default async function ScraperDashboardPage() {
 
   return (
     <>
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <h1 className="text-3xl font-heading">Monitor Scraper</h1>
         <p className="text-muted-foreground mt-1">
           Status pipeline scraping peraturan.go.id

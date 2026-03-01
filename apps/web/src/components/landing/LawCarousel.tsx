@@ -58,7 +58,7 @@ const CarouselCard = memo(function CarouselCard({
             onClick();
           }
         }}
-        className={`flex h-full flex-col rounded-lg border bg-card p-5 transition-colors ${
+        className={`flex h-full flex-col rounded-lg border bg-card p-4 sm:p-5 transition-colors ${
           isActive
             ? "border-primary/30"
             : "hover:border-primary/20"

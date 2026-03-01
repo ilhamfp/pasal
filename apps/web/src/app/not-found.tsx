@@ -13,7 +13,7 @@ export default function NotFound() {
       {/* Giant faded § mark as the background "404" */}
       <div className="relative mb-4 sm:mb-8">
         <PasalLogo size={180} className="text-muted-foreground/10" />
-        <span className="absolute inset-0 flex items-center justify-center font-heading text-6xl text-foreground">
+        <span className="absolute inset-0 flex items-center justify-center font-heading text-5xl sm:text-6xl text-foreground">
           404
         </span>
       </div>

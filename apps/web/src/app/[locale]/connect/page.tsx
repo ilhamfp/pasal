@@ -101,7 +101,7 @@ export default async function ConnectPage({ params }: PageProps) {
             {/* Left column: Connect instructions */}
             <div className="space-y-4 sm:space-y-8">
               <div className="space-y-3">
-                <h1 className="font-heading text-4xl tracking-tight text-pretty">
+                <h1 className="font-heading text-3xl sm:text-4xl tracking-tight text-pretty">
                   {t("heroTitle")}
                 </h1>
                 <p className="text-lg text-muted-foreground">
@@ -174,7 +174,7 @@ export default async function ConnectPage({ params }: PageProps) {
 
         <div className="max-w-3xl mx-auto space-y-6 sm:space-y-12">
           {/* Cara Kerjanya — How it works */}
-          <section className="space-y-6">
+          <section className="space-y-4 sm:space-y-6">
             <h2 className="font-heading text-2xl tracking-tight text-center text-pretty">
               {t("howItWorks")}
             </h2>
@@ -197,7 +197,7 @@ export default async function ConnectPage({ params }: PageProps) {
           </section>
 
           {/* MCP Tools Grid */}
-          <section className="space-y-6">
+          <section className="space-y-4 sm:space-y-6">
             <div className="text-center space-y-2">
               <h2 className="font-heading text-2xl tracking-tight text-pretty">
                 {t("toolsTitle")}
@@ -223,7 +223,7 @@ export default async function ConnectPage({ params }: PageProps) {
           </section>
 
           {/* Example Prompts */}
-          <section id="coba-sekarang" className="space-y-6 scroll-mt-20">
+          <section id="coba-sekarang" className="space-y-4 sm:space-y-6 scroll-mt-20">
             <h2 className="font-heading text-2xl tracking-tight text-center text-pretty">
               {t("tryNowTitle")}
             </h2>

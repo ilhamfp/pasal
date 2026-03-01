@@ -238,7 +238,7 @@ export default function TableOfContents({
           <button
             ref={mobileTriggerRef}
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden fixed bottom-8 left-6 z-40 flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-sm text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
+            className="lg:hidden fixed bottom-6 left-4 sm:bottom-8 sm:left-6 z-40 flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-sm text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
             aria-label={t("openToc")}
           >
             <PasalLogo size={18} />

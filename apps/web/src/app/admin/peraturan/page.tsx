@@ -50,13 +50,13 @@ async function TypeGrid() {
   const typesWithout = allTypes.filter((t) => t.count === 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {typesWithWorks.map((type) => (
           <Link
             key={type.id}
             href={`/admin/peraturan?type=${type.code.toLowerCase()}`}
-            className="group rounded-lg border bg-card p-6 hover:border-primary/30 transition-colors"
+            className="group rounded-lg border bg-card p-4 sm:p-6 hover:border-primary/30 transition-colors"
           >
             <div className="flex items-start justify-between mb-3">
               <FileText className="h-5 w-5 text-primary/60" aria-hidden="true" />
@@ -116,7 +116,7 @@ async function RegulationList({
 
   if (!regType) {
     return (
-      <div className="rounded-lg border p-8 text-center text-muted-foreground">
+      <div className="rounded-lg border p-4 sm:p-8 text-center text-muted-foreground">
         Jenis peraturan &quot;{typeCode}&quot; tidak ditemukan.
       </div>
     );
@@ -192,7 +192,7 @@ async function RegulationList({
           name="q"
           defaultValue={q || ""}
           placeholder="Cari judul..."
-          className="rounded-lg border bg-card px-3 py-2 text-sm w-56"
+          className="rounded-lg border bg-card px-3 py-2 text-sm w-full sm:w-56"
         />
         <select
           name="year"
@@ -345,7 +345,7 @@ export default async function AdminPeraturanPage({
 
   return (
     <>
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <h1 className="text-3xl font-heading">Kelola Peraturan</h1>
         <p className="text-muted-foreground mt-1">
           {type

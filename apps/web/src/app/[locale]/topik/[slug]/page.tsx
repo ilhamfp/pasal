@@ -128,7 +128,7 @@ export default async function TopicDetailPage({ params }: PageProps) {
           <h2 className="font-heading text-xl mb-4">{t("commonQuestions")}</h2>
           <div className="space-y-4">
             {topic.questions.map((q, i) => (
-              <div key={i} className="rounded-lg border bg-card p-5">
+              <div key={i} className="rounded-lg border bg-card p-4 sm:p-5">
                 <h3 className="font-medium mb-2">{q.question}</h3>
                 <div className="flex flex-wrap items-center gap-3">
                   <Link

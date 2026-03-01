@@ -90,7 +90,7 @@ export default async function AdminPeraturanDetailPage({ params }: PageProps) {
       </div>
 
       {/* Title */}
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <h1 className="text-3xl font-heading mb-2">
           {formatRegRef(regType.code, work.number, work.year)}
         </h1>

@@ -416,7 +416,7 @@ async function LawReaderSection({
 }
 
 const READER_SKELETON = (
-  <div className="grid grid-cols-1 gap-8 lg:grid-cols-[220px_1fr_280px]">
+  <div className="grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-[220px_1fr_280px]">
     <aside>
       <div className="space-y-2">
         {[1, 2, 3, 4, 5].map((i) => (
@@ -424,7 +424,7 @@ const READER_SKELETON = (
         ))}
       </div>
     </aside>
-    <main className="space-y-6">
+    <main className="space-y-4 sm:space-y-6">
       {[1, 2, 3].map((i) => (
         <div key={i} className="space-y-2">
           <div className="h-5 w-24 rounded bg-muted animate-pulse" />

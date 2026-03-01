@@ -105,7 +105,7 @@ export default function SuggestionReviewClient({
   return (
     <div>
       <h1 className="font-heading text-3xl tracking-tight mb-2">Saran Koreksi</h1>
-      <p className="text-muted-foreground mb-8">
+      <p className="text-muted-foreground mb-4 sm:mb-8">
         {suggestions.filter((s) => s.status === "pending").length} saran menunggu review
       </p>
 
@@ -207,7 +207,7 @@ export default function SuggestionReviewClient({
             )}
 
             {s.status === "pending" && (
-              <div className="flex items-center gap-2 p-4 border-t">
+              <div className="flex flex-wrap items-center gap-2 p-4 border-t">
                 <button
                   onClick={() => handleVerify(s.id)}
                   disabled={actionLoading === s.id}
@@ -234,31 +234,32 @@ export default function SuggestionReviewClient({
                     Terapkan Versi AI
                   </button>
                 )}
-                <div className="flex-1" />
-                <input
-                  type="text"
-                  name="reject-reason"
-                  autoComplete="off"
-                  placeholder="Alasan penolakan..."
-                  value={rejectNote[s.id] || ""}
-                  onChange={(e) => setRejectNote({ ...rejectNote, [s.id]: e.target.value })}
-                  className="rounded-lg border px-2 py-1.5 text-sm w-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                />
-                <button
-                  onClick={() => handleReject(s.id)}
-                  disabled={actionLoading === s.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  Tolak
-                </button>
+                <div className="flex items-center gap-2 ml-auto">
+                  <input
+                    type="text"
+                    name="reject-reason"
+                    autoComplete="off"
+                    placeholder="Alasan penolakan..."
+                    value={rejectNote[s.id] || ""}
+                    onChange={(e) => setRejectNote({ ...rejectNote, [s.id]: e.target.value })}
+                    className="rounded-lg border px-2 py-1.5 text-sm w-40 sm:w-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  />
+                  <button
+                    onClick={() => handleReject(s.id)}
+                    disabled={actionLoading === s.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    Tolak
+                  </button>
+                </div>
               </div>
             )}
           </div>
         ))}
 
         {suggestions.length === 0 && (
-          <div className="rounded-lg border p-12 text-center text-muted-foreground">
+          <div className="rounded-lg border p-6 sm:p-12 text-center text-muted-foreground">
             Belum ada saran koreksi.
           </div>
         )}

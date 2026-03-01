@@ -72,7 +72,7 @@ export default async function JelajahiPage({ params }: PageProps) {
           { label: t("title") },
         ]} />
         <div className="text-center mb-6 sm:mb-12">
-          <h1 className="font-heading text-4xl tracking-tight mb-3">
+          <h1 className="font-heading text-3xl sm:text-4xl tracking-tight mb-3">
             {t("title")}
           </h1>
           <p className="text-muted-foreground text-lg">

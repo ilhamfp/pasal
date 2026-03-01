@@ -53,7 +53,7 @@ const CURATED_SKELETON = (
   <section className="border-b py-16 sm:py-20">
     <div className="mx-auto max-w-5xl px-4">
       <div className="mx-auto h-10 w-64 rounded bg-muted animate-pulse" />
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 sm:mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -69,7 +69,7 @@ const BROWSE_SKELETON = (
   <section className="border-b bg-card py-16 sm:py-20">
     <div className="mx-auto max-w-5xl px-4">
       <div className="mx-auto h-10 w-64 rounded bg-muted animate-pulse" />
-      <div className="mt-10 grid gap-3 grid-cols-2 sm:grid-cols-3">
+      <div className="mt-6 sm:mt-10 grid gap-3 grid-cols-2 sm:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
@@ -196,7 +196,7 @@ export default async function HomePage({
       <RevealOnScroll>
         <section className="py-20 sm:py-32">
           <div className="mx-auto max-w-5xl px-4 text-center">
-            <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">
+            <h2 className="font-heading text-3xl tracking-tight sm:text-4xl md:text-5xl">
               {ctaT("heading1")}
               <br />
               <em className="text-muted-foreground">

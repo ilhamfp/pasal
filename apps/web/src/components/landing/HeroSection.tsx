@@ -23,7 +23,7 @@ export default function HeroSection() {
         </m.div>
         <m.h1
           variants={fadeUp}
-          className="font-heading text-4xl leading-[1.1] tracking-tight text-balance sm:text-5xl md:text-7xl"
+          className="font-heading text-3xl leading-[1.1] tracking-tight text-balance sm:text-5xl md:text-7xl"
         >
           {t("heading")}
         </m.h1>

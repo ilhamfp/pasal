@@ -25,8 +25,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen">
       <header className="border-b bg-card/95 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between py-3 px-6">
-          <div className="flex items-center gap-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between py-3 px-4 sm:px-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <Link href="/admin" className="flex items-center gap-2 font-heading text-lg">
               <PasalLogo size={24} />
               Admin
